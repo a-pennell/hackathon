@@ -284,11 +284,26 @@ def compose_doc(pid: str, body: ComposeBody):
 PRISTINE = DATA_DIR / ".pristine"   # snapshot of every chart at server start; gitignored
 
 
+def _is_clean(chart: dict) -> bool:
+    """A chart with nothing AI-signed on it: the state the demo starts from."""
+    return not chart.get("documents") and all(
+        x["provenance"]["source"] == "fhir_import"
+        for k in ("problems", "observations", "medications", "links", "insights") for x in chart.get(k, []))
+
+
 def _snapshot_charts():
-    """Taken fresh on every server start, so 'Reset demo' always returns to the chart you started with."""
+    """Snapshot each chart for 'Reset demo'. Only a clean chart is ever snapshotted: uvicorn's
+    reloader restarts this process on every code edit, and mid-demo state must not become the
+    thing reset returns to. If the chart is dirty at start, the previous snapshot is kept."""
     PRISTINE.mkdir(exist_ok=True)
     for p in DATA_DIR.glob("pt_*.json"):
-        (PRISTINE / p.name).write_bytes(p.read_bytes())
+        if p.name.endswith(".import-report.json"):
+            continue
+        chart = json.loads(p.read_text())
+        if _is_clean(chart):
+            (PRISTINE / p.name).write_bytes(p.read_bytes())
+        elif not (PRISTINE / p.name).exists():
+            print(f"warning: {p.name} has AI-signed items and no clean snapshot exists; 'Reset demo' unavailable until you start from a clean chart")
 
 
 _snapshot_charts()
