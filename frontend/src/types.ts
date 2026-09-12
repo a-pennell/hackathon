@@ -196,3 +196,29 @@ export type PatientSummary = {
   insights: Insight[];
   documents: Document[];
 };
+
+export type BriefLine = { kind: string; text: string; ids: string[]; code?: string };
+export type Brief = {
+  patient_id: string;
+  problem_id: string;
+  window: { start: string; end: string };
+  source: string; // "computed" or "brief-v1/<model>"
+  lines: BriefLine[];
+  pending: number;
+  dropped_citations?: string[];
+};
+
+export type TrailEntry = {
+  id: string;
+  kind: string;
+  what: string;
+  queue: string | null;
+  source: string | null;
+  confidence: number | null;
+  quote: string | null;
+  decision: "accepted" | "rejected" | "pending";
+  reason_code: string | null;
+  reason: string | null;
+  by: string | null;
+  at: string;
+};

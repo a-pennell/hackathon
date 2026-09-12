@@ -21,8 +21,9 @@ sys.path.insert(0, str(ROOT))
 
 from ehr.extract import PROPOSED_DIR, load_note_file, run_extraction  # noqa: E402
 from ehr.reason import monitored_codes, run_reasoning  # noqa: E402
+from ehr.brief import deterministic_brief, run_live_brief  # noqa: E402
 from ehr.compose import run_compose  # noqa: E402
-from ehr.review import REASON_CODES, apply_review, list_queues  # noqa: E402
+from ehr.review import REASON_CODES, apply_review, ledger_for_problem, list_queues  # noqa: E402
 from ehr.trend import DATA_DIR, load_patient, trend_from_patient  # noqa: E402
 
 NOTES_DIR = ROOT / "data" / "notes"
@@ -146,6 +147,60 @@ def timeline(pid: str, prob: str, window: str = "1y", all_meds: bool = True):
     return {"patient": d["patient"], "problem": problem, "window": win, "series": series, "medications": meds,
             "encounters": encounters, "links": links,
             "insights": [i for i in d["insights"] if i["problem_id"] == prob], "proposed": proposed}
+
+
+@app.get("/api/patients/{pid}/problems/{prob}/brief")
+def brief(pid: str, prob: str, window: str = "90d"):
+    d = _patient(pid)
+    if not any(p["id"] == prob for p in d["problems"]):
+        raise HTTPException(404, f"no problem {prob}")
+    return deterministic_brief(d, prob, window, proposed_dir=PROPOSED_DIR)
+
+
+class BriefBody(BaseModel):
+    mode: str = "live"  # live | replay
+    window: str = "90d"
+
+
+@app.post("/api/patients/{pid}/problems/{prob}/brief")
+def brief_live(pid: str, prob: str, body: BriefBody):
+    replay = None
+    if body.mode == "replay":
+        replay = PROPOSED_DIR / pid / f"brief_{prob}.raw.json"
+        if not replay.exists():
+            raise HTTPException(400, "no saved model response to replay for this brief; run live once")
+    try:
+        return run_live_brief(pid, prob, body.window, replay=replay, data_dir=DATA_DIR)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+    except Exception as e:
+        raise HTTPException(502, f"brief failed: {type(e).__name__}: {e}")
+
+
+@app.get("/api/patients/{pid}/problems/{prob}/trail")
+def trail(pid: str, prob: str, pending: bool = True):
+    d = _patient(pid)
+    if not any(p["id"] == prob for p in d["problems"]):
+        raise HTTPException(404, f"no problem {prob}")
+    entries = ledger_for_problem(d, prob, PROPOSED_DIR, include_pending=pending)
+    # Resolve ids inside link / med-change summaries to names the clinician recognises.
+    names = {p["id"]: p["name"] for p in d["problems"]}
+    names.update({m["id"]: m["name"] for m in d["medications"]})
+    names.update({o["id"]: f"{o['name']} {o['value']} {o['unit'] or ''} · {o['effective_time'][:10]}" for o in d["observations"]})
+    names.update({n["id"]: f"note {n['id'].replace('note_', '')} · {n['time'][:10]}" for n in d["notes"]})
+    for b in list_queues(pid, PROPOSED_DIR):
+        for k in ("problems", "medications", "observations"):
+            for it in b["proposed"].get(k, []):
+                names.setdefault(it["id"], it.get("name") or it["id"])
+    for e in entries:
+        if e["kind"] in ("link", "medication_change"):
+            e["what"] = " ".join(names.get(w, w) for w in e["what"].split(" "))
+    signed_docs = [{"id": x["id"], "kind": "document", "what": f"{x['kind']} to {x['audience']}: {x['title']}", "queue": None,
+                    "source": x["provenance"]["source"], "confidence": x["provenance"].get("confidence"), "quote": None,
+                    "decision": "accepted", "reason_code": (x.get("review") or {}).get("reason_code"), "reason": (x.get("review") or {}).get("reason"),
+                    "by": (x.get("review") or {}).get("by"), "at": (x.get("review") or {}).get("at") or x["created_at"]}
+                   for x in d.get("documents", []) if x["problem_id"] == prob and not any(e["id"] == x["id"] for e in entries)]
+    return sorted(entries + signed_docs, key=lambda e: e["at"] or "")
 
 
 @app.get("/api/patients/{pid}/trend/{code}")

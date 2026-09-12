@@ -19,6 +19,7 @@ human accepts it.
 | `ehr/reason.py` | TrendSummaries + chart context -> proposed Insights (§10) |
 | `ehr/review.py` | accept / reject queue items into the chart, recording who, when and why |
 | `ehr/compose.py` | chart state + signed insights + review decisions -> a generated referral letter with citations |
+| `ehr/brief.py` | pre-visit brief per problem: computed on open (no model), or Claude-written over the same evidence |
 | `ehr/llm.py` | the single Claude API call site (`claude-opus-5`, structured output) |
 | `tests/` | `python3 -m pytest tests -q` |
 
@@ -47,7 +48,10 @@ The two Claude calls have been run live once (`claude-opus-5`) and their respons
 `data/proposed/pt_001/*.raw.json`, so the demo replays them offline and byte-for-byte. Live mode
 needs `ANTHROPIC_API_KEY` exported in the shell that starts the server.
 
-In the UI, from a fresh chart (CKD stage 3 selected):
+In the UI, from a fresh chart (CKD stage 3 selected). The sheet opens with a **pre-visit brief**
+(what moved, what changed on the medication list, what is waiting, what was decided last time)
+and closes with the **decision trail** (every proposal that touched the problem, with who decided
+what and why). Both update as you sign and reject.
 
 1. **A note arrives** → pick note 2 → **Extract (replay)**. 42 pencil items land in the queue:
    the naproxen course (dashed, "cause?"), a stage-4 problem, hypotension, the HCTZ hold.

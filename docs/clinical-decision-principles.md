@@ -186,8 +186,9 @@ Weed's intent that the record show reasoning [1].
 - Do reasons persist on the item, attributed and dated?
 - Are they consumed by later steps rather than filed away?
 
-**Chart desk: 2.** Reasons are captured with a code and free text and flow into the generated
-referral as the reasoning ledger. There is no decision-trail view per problem yet.
+**Chart desk: 3.** Reasons are captured with a code and free text, flow into the generated
+referral as the reasoning ledger, and are listed per problem in the decision trail under the
+timeline, with the pending proposals alongside the decided ones.
 
 ### P7. Cut extraneous load, protect germane load
 
@@ -267,8 +268,11 @@ from writing to reviewing [16]; Weed's plans tied to problems [1].
 - Is the clinician's in-visit work deciding, not typing?
 - Are all outward documents produced from the record after the decisions are made?
 
-**Chart desk: 1.** Reasoning runs on demand, not ahead of the visit, and the referral is the only
-generated document. The extraction assumes a written note rather than ambient capture.
+**Chart desk: 2.** A pre-visit brief is computed the moment a problem opens: what moved, what
+changed on the medication list, what is waiting, what was decided last time and why, each
+sentence lit up on the sheet on hover; Claude can rewrite it over the same evidence. The referral
+is still the only generated document, and extraction assumes a written note rather than ambient
+capture.
 
 ---
 
@@ -281,16 +285,16 @@ generated document. The extraction assumes a written note rather than ambient ca
 | P3 Meet the decision where it lives | 3 | |
 | P4 Pencil then ink | 3 | |
 | P5 Every claim is a citation | 3 | |
-| P6 Capture deviating judgment | 2 | decision-trail panel per problem |
+| P6 Capture deviating judgment | 3 | |
 | P7 Extraneous out, germane kept | 2 | collapse the suggested action by default; fewer cards per note |
 | P8 Quiet is valid | 2 | make the rules fallback threshold-based |
 | P9 Reconcile before showing | 3 | |
 | P10 Calibrate in the open | 2 | score extraction against the answer key on every run |
 | P11 Reversible and replayable | 3 | |
-| P12 The visit is for deciding | 1 | pre-visit brief; ambient-capture input; generated visit note |
+| P12 The visit is for deciding | 2 | ambient-capture input; generated visit note |
 
-29 of 36. The gaps cluster on two things: the pre-visit and post-visit ends of the encounter
-(P12), and keeping the clinician's own reasoning in the loop (P6, P7, P8).
+31 of 36. What remains clusters on the encounter itself (P12: ambient input, a generated visit
+note) and on how much the clinician is asked to review (P7, P8, P10).
 
 ---
 

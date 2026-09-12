@@ -27,7 +27,7 @@ from pathlib import Path
 
 from ehr.extract import PROPOSED_DIR, record_response
 from ehr.reason import build_context as reasoning_context
-from ehr.review import list_queues
+from ehr.review import ledger_for_problem
 from ehr.trend import DATA_DIR
 
 DEFAULT_MODEL = "claude-opus-5"
@@ -68,21 +68,6 @@ OUTPUT_SCHEMA = {
 }
 
 
-def _summary_of(kind: str, it: dict) -> str:
-    if kind == "insights":
-        return it["statement"]
-    if kind == "problems":
-        return f"problem: {it['name']}"
-    if kind == "medications":
-        s = it["segments"][0]
-        return f"medication: {it['name']} {s.get('dose') or ''} {s.get('start') or ''}..{s.get('end') or 'ongoing'}"
-    if kind == "observations":
-        return f"result: {it['name']} {it['value']} {it.get('unit') or ''} on {it['effective_time'][:10]}"
-    if kind == "links":
-        return f"link: {it['from']} {it['type']} {it['to']}"
-    return it.get("title") or it["id"]
-
-
 def build_context(patient: dict, problem_id: str, *, kind: str, audience: str, window="1y",
                   proposed_dir: Path = PROPOSED_DIR) -> dict:
     """Reuses the reasoning context (trends, meds, note findings, catalog) and adds the ledger."""
@@ -95,30 +80,10 @@ def build_context(patient: dict, problem_id: str, *, kind: str, audience: str, w
         catalog[i["id"]] = f"signed insight: {i['statement'][:80]!r}"
 
     # Reasoning ledger: every reviewed proposal that touches this problem, with the clinician's reason.
-    focus = {problem_id} | {f"LOINC:{t['code']}" for t in ctx["trends"]}
-    ledger = []
-    for b in list_queues(pid, proposed_dir):
-        for k, items in b["proposed"].items():
-            for it in items:
-                rv = it.get("review")
-                if not rv:
-                    continue
-                hint = (b.get("review_hints") or {}).get(it.get("id"), "")
-                touches = (it.get("problem_id") == problem_id or it.get("id") == problem_id
-                           or it.get("to") in focus or it.get("from") in focus
-                           or problem_id in hint  # e.g. a proposed stage that "supersedes prob_0057"
-                           or any((l.get("to") in focus and l.get("from") == it.get("id"))
-                                  or (l.get("from") in focus and l.get("to") == it.get("id"))
-                                  for l in b["proposed"].get("links", [])))
-                if touches:
-                    ledger.append({"id": it["id"], "kind": k[:-1], "what": _summary_of(k, it), "decision": rv["decision"],
-                                   "reason_code": rv.get("reason_code"), "reason": rv.get("reason"), "by": rv["by"], "at": rv["at"][:10]})
-                    catalog.setdefault(it["id"], f"{rv['decision']} {k[:-1]}: {_summary_of(k, it)[:70]}")
-        for ch in b.get("medication_changes", []):
-            rv = ch.get("review")
-            if rv:
-                ledger.append({"id": ch["med_id"], "kind": "medication_change", "what": f"{ch['change']} {ch['med_id']} effective {ch['effective']}",
-                               "decision": rv["decision"], "reason_code": rv.get("reason_code"), "reason": rv.get("reason"), "by": rv["by"], "at": rv["at"][:10]})
+    ledger = [{k: v for k, v in l.items() if k in ("id", "kind", "what", "decision", "reason_code", "reason", "by")} | {"at": l["at"][:10]}
+              for l in ledger_for_problem(patient, problem_id, proposed_dir)]
+    for l in ledger:
+        catalog.setdefault(l["id"], f"{l['decision']} {l['kind']}: {l['what'][:70]}")
 
     other_active = [{"id": p["id"], "name": p["name"]} for p in patient["problems"]
                     if p["status"] == "active" and p["id"] != problem_id and not p["name"].startswith(("Gingiv", "Loss of teeth"))]

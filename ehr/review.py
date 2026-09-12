@@ -152,6 +152,66 @@ def list_queue(batch: dict) -> str:
     return "\n".join(lines)
 
 
+def _summary_of(kind: str, it: dict) -> str:
+    if kind == "insights":
+        return it["statement"]
+    if kind == "problems":
+        return f"problem: {it['name']}"
+    if kind == "medications":
+        s = it["segments"][0]
+        return f"medication: {it['name']} {s.get('dose') or ''} {s.get('start') or ''}..{s.get('end') or 'ongoing'}"
+    if kind == "observations":
+        return f"result: {it['name']} {it['value']} {it.get('unit') or ''} on {it['effective_time'][:10]}"
+    if kind == "links":
+        return f"link: {it['from']} {it['type']} {it['to']}"
+    if kind == "documents":
+        return f"{it.get('kind', 'document')} to {it.get('audience', '')}: {it.get('title', '')}"
+    return it.get("title") or it["id"]
+
+
+def ledger_for_problem(patient: dict, problem_id: str, proposed_dir: Path = PROPOSED_DIR,
+                       include_pending: bool = False) -> list[dict]:
+    """The decision trail: every reviewed proposal that touches this problem, with who/when/why.
+
+    Touches = about the problem, about one of its monitored series, linked to it by a proposed
+    link in the same batch, or a proposal that supersedes it (review hint). Oldest first."""
+    from ehr.reason import monitored_codes
+    focus = {problem_id} | {f"LOINC:{c}" for c in monitored_codes(patient, problem_id)}
+    out = []
+    for b in list_queues(patient["patient"]["id"], proposed_dir):
+        links = b["proposed"].get("links", [])
+        hints = b.get("review_hints") or {}
+        for k, items in b["proposed"].items():
+            for it in items:
+                rv = it.get("review")
+                if not rv and not (include_pending and it.get("status") == "proposed"):
+                    continue
+                touches = (it.get("problem_id") == problem_id or it.get("id") == problem_id
+                           or it.get("to") in focus or it.get("from") in focus
+                           or problem_id in hints.get(it.get("id"), "")
+                           or any((l.get("to") in focus and l.get("from") == it.get("id"))
+                                  or (l.get("from") in focus and l.get("to") == it.get("id")) for l in links))
+                if not touches:
+                    continue
+                out.append({"id": it["id"], "kind": k[:-1], "what": _summary_of(k, it), "queue": b["stem"],
+                            "source": (it.get("provenance") or {}).get("source"), "confidence": (it.get("provenance") or {}).get("confidence"),
+                            "quote": (it.get("provenance") or {}).get("quote"),
+                            "decision": rv["decision"] if rv else "pending", "reason_code": rv.get("reason_code") if rv else None,
+                            "reason": rv.get("reason") if rv else None, "by": rv["by"] if rv else None,
+                            "at": rv["at"] if rv else (b.get("extracted_at") or b.get("reasoned_at") or b.get("composed_at") or "")})
+        for ch in b.get("medication_changes", []):
+            rv = ch.get("review")
+            if rv or (include_pending and ch["status"] == "proposed"):
+                out.append({"id": ch["med_id"], "kind": "medication_change", "what": f"{ch['change'].replace('_', ' ')} {ch['med_id']} effective {ch['effective']}",
+                            "queue": b["stem"], "source": ch["provenance"].get("source"), "confidence": ch["provenance"].get("confidence"),
+                            "quote": ch["provenance"].get("quote"),
+                            "decision": rv["decision"] if rv else "pending", "reason_code": rv.get("reason_code") if rv else None,
+                            "reason": rv.get("reason") if rv else None, "by": rv["by"] if rv else None,
+                            "at": rv["at"] if rv else (b.get("extracted_at") or "")})
+    out.sort(key=lambda x: x["at"] or "")
+    return out
+
+
 def list_queues(patient_id: str, proposed_dir: Path = PROPOSED_DIR) -> list[dict]:
     """Every queue batch for a patient (note extractions and reasoning runs), newest first."""
     d = proposed_dir / patient_id

@@ -3,7 +3,9 @@ import { api } from "./api";
 import Inbox from "./Inbox";
 import ProblemList from "./ProblemList";
 import Timeline from "./Timeline";
-import type { Document, NoteFile, PatientSummary, QueueBatch, Timeline as TL } from "./types";
+import Brief from "./Brief";
+import Trail from "./Trail";
+import type { Brief as BriefT, Document, NoteFile, PatientSummary, QueueBatch, Timeline as TL, TrailEntry } from "./types";
 
 const PID = "pt_001";
 const WINDOWS = ["3m", "6m", "1y", "2y", "5y", "all"];
@@ -18,6 +20,8 @@ export default function App() {
   const [problem, setProblem] = useState<string | null>(null);
   const [window_, setWindow] = useState("1y");
   const [tl, setTl] = useState<TL | null>(null);
+  const [brief, setBrief] = useState<BriefT | null>(null);
+  const [trail, setTrail] = useState<TrailEntry[]>([]);
   const [queues, setQueues] = useState<QueueBatch[]>([]);
   const [notes, setNotes] = useState<NoteFile[]>([]);
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
@@ -43,10 +47,25 @@ export default function App() {
     if (!problem) return;
     let live = true;
     api.timeline(PID, problem, window_).then((d) => live && setTl(d)).catch((e) => setError(String(e.message ?? e)));
+    api.brief(PID, problem).then((b) => live && setBrief(b)).catch(() => live && setBrief(null));
+    api.trail(PID, problem).then((t) => live && setTrail(t)).catch(() => live && setTrail([]));
     return () => {
       live = false;
     };
   }, [problem, window_, queues, summary]);
+
+  const askBrief = async (mode: "live" | "replay") => {
+    if (!problem) return;
+    setBusy("brief");
+    setError(null);
+    try {
+      setBrief(await api.briefLive(PID, problem, mode));
+    } catch (e) {
+      setError(String((e as Error).message ?? e));
+    } finally {
+      setBusy(null);
+    }
+  };
 
   // id -> human label, for chips and link rows
   const labels = useMemo(() => {
@@ -180,7 +199,7 @@ export default function App() {
           </small>
         </div>
         <span className="spacer" />
-        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Reasoning…" : busy === "compose" ? "Composing the referral…" : busy === "reset" ? "Resetting…" : "Signing…"}</span>}
+        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Reasoning…" : busy === "compose" ? "Composing the referral…" : busy === "brief" ? "Writing the brief…" : busy === "reset" ? "Resetting…" : "Signing…"}</span>}
         <button className="btn ghost small" disabled={!!busy} onClick={runReset} title="Restore the chart to its state at server start">
           Reset demo
         </button>
@@ -256,11 +275,13 @@ export default function App() {
             </span>
           </div>
         )}
+        {selected && <Brief brief={brief} highlight={highlight} onHover={hover} onAskClaude={askBrief} busy={!!busy} />}
         {tl && tl.series.length > 0 ? (
           <Timeline data={tl} highlight={highlight} onHover={(id) => hover(id ? [id] : null)} onOpenNote={openChartNote} />
         ) : (
           <div className="empty">{selected ? `No monitored lab series is linked to ${selected.name} in this window.` : "Pick a problem."}</div>
         )}
+        {selected && <Trail entries={trail} labels={labels} highlight={highlight} onHover={hover} />}
       </main>
 
       <Inbox queues={queues} problemId={problem} focusIds={focusIds} chartMedIds={new Set((tl?.medications ?? []).map((m) => m.id))} chartInsights={summary.insights} chartDocuments={summary.documents ?? []} labels={labels} highlight={highlight} onHover={hover} onReview={review} onReadDocument={setReadingDoc} busy={busy} />

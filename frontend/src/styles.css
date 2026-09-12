@@ -244,3 +244,33 @@ svg.tl .relation.cause { fill: var(--flag); }
 .letter ol { padding-left: 20px; }
 .letter .from { margin-top: calc(var(--u) * 6); font-size: 12px; color: var(--graphite); font-family: var(--sans); }
 .modal.wide { width: 820px; }
+
+/* pre-visit brief: the synthesis that is simply there when the problem opens */
+.brief { margin: 0 calc(var(--u) * 6) calc(var(--u) * 3); padding: calc(var(--u) * 3) calc(var(--u) * 4); background: var(--paper-2); border: 1px solid var(--rule); border-left: 3px solid var(--select); }
+.brief .brief-head { display: flex; align-items: baseline; gap: calc(var(--u) * 3); margin-bottom: calc(var(--u) * 1.5); }
+.brief .brief-head h2 { font-family: var(--sans); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--select); margin: 0; }
+.brief .brief-head .win { font-family: var(--mono); font-size: 10px; color: var(--graphite); }
+.brief .brief-head .spacer { flex: 1; }
+.brief .brief-head .src { font-size: 10px; color: var(--graphite); }
+.brief p { margin: 0; font-family: var(--serif); font-size: 14px; line-height: 1.55; color: var(--ink); }
+.brief .line { cursor: default; border-radius: var(--r-sm); padding: 0 2px; }
+.brief .line:hover, .brief .line.hi { background: var(--select-wash); }
+.brief .line.queue { color: var(--pending); }
+.brief .line.ledger { font-style: italic; color: var(--ink-2); }
+.brief .empty-brief { color: var(--graphite); font-style: italic; }
+
+/* decision trail */
+.trail { margin: calc(var(--u) * 6) calc(var(--u) * 6) calc(var(--u) * 10); }
+.trail h2 { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--graphite); margin: 0 0 calc(var(--u) * 2); padding-bottom: var(--u); border-bottom: 1px solid var(--rule); }
+.trail .quiet { font-size: 12px; color: var(--graphite); font-style: italic; }
+.trail .row { display: grid; grid-template-columns: 96px 76px 1fr; gap: calc(var(--u) * 3); align-items: baseline; padding: calc(var(--u) * 1.5) 2px; border-bottom: 1px solid var(--rule-soft); }
+.trail .row:hover, .trail .row.hi { background: var(--select-wash); }
+.trail .when { font-family: var(--mono); font-size: 11px; color: var(--graphite); }
+.trail .dec { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border-radius: var(--r-sm); justify-self: start; }
+.trail .dec.accepted { color: var(--accepted); background: rgba(47, 107, 79, 0.10); }
+.trail .dec.rejected { color: var(--ink-2); background: var(--paper-inset); }
+.trail .dec.pending { color: var(--pending); background: var(--pending-wash); }
+.trail .what { font-size: 13px; color: var(--ink); }
+.trail .what .k { font-family: var(--mono); font-size: 10px; color: var(--graphite); margin-right: 6px; }
+.trail .why { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+.trail .who { font-size: 11px; color: var(--graphite); margin-left: 6px; }
