@@ -174,42 +174,9 @@ def build_messages(patient: dict, note: dict) -> tuple[list[dict], list[dict]]:
 # ------------------------------------------------------------------------------ model
 
 def call_model(system_blocks, messages, model: str = DEFAULT_MODEL) -> dict:
-    """One structured-output request. Returns {"parsed": dict, "usage": dict, "model": str}."""
-    import anthropic  # imported here so tests and --dry-run work without the SDK/API key
-
-    client = anthropic.Anthropic()
-    kwargs = dict(
-        model=model,
-        max_tokens=16000,
-        system=system_blocks,
-        messages=messages,
-        output_config={"effort": "high", "format": {"type": "json_schema", "schema": OUTPUT_SCHEMA}},
-    )
-    try:
-        # Server-side refusal fallbacks (routes a policy decline to a fallback model in the same call).
-        response = client.beta.messages.create(
-            betas=["server-side-fallback-2026-07-01"], fallbacks="default", **kwargs)
-    except anthropic.BadRequestError as e:
-        if "fallback" not in str(e).lower() and "beta" not in str(e).lower():
-            raise
-        response = client.messages.create(**kwargs)
-
-    if response.stop_reason == "refusal":
-        details = getattr(response, "stop_details", None)
-        raise RuntimeError(f"model refused the request: {getattr(details, 'category', None)} "
-                           f"{getattr(details, 'explanation', '')}")
-    if response.stop_reason == "max_tokens":
-        raise RuntimeError("model output truncated (max_tokens); raise max_tokens or shorten the note")
-    text = next(b.text for b in response.content if b.type == "text")
-    usage = response.usage
-    return {
-        "parsed": json.loads(text),
-        "model": response.model,
-        "usage": {"input_tokens": usage.input_tokens, "output_tokens": usage.output_tokens,
-                  "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", None),
-                  "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", None)},
-        "request_id": getattr(response, "_request_id", None),
-    }
+    """One structured-output request (see ehr.llm.call_structured)."""
+    from ehr.llm import call_structured
+    return call_structured(system_blocks, messages, OUTPUT_SCHEMA, model=model)
 
 
 # --------------------------------------------------------------------------- validate

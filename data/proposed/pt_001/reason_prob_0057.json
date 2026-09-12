@@ -1,0 +1,62 @@
+{
+  "patient_id": "pt_001",
+  "problem_id": "prob_0057",
+  "window": {
+    "start": "2025-08-19",
+    "end": "2026-08-19"
+  },
+  "model": "reasoner-v1/rules",
+  "reasoned_at": "2026-09-11T19:28:08-07:00",
+  "proposed": {
+    "insights": [
+      {
+        "id": "ins_0057_01",
+        "patient_id": "pt_001",
+        "problem_id": "prob_0057",
+        "statement": "Creatinine (whole blood) has been rising over the window 2025-08-19 to 2026-08-19: 1.62 on 2025-09-10 to 5.7 on 2026-08-19 (+252%). It has been above the reference range since 2025-09-10. Medication events in the window: Sodium fluoride 0.0272 mg/mg start 2025-10-30. Currently on board: Clopidogrel 75 mg, Simvastatin 20 mg, Metoprolol succinate 100 mg, Nitroglycerin 0.4 mg/actuat, Hydrochlorothiazide 25 mg, Metformin hydrochloride 500 mg, Lisinopril 10 mg, AmLODIPine 2.5 mg, Tropicamide (ophthalmic) 5 mg/ml, Sodium fluoride 0.0272 mg/mg, Insulin isophane, human / insulin, regular, human (injectable) 70 units/ml / 30 units/ml, Furosemide 40 mg.",
+        "evidence": [
+          "obs_03175",
+          "obs_03878",
+          "med_sodium_fluoride",
+          "prob_0057"
+        ],
+        "suggested_action": "Review the creatinine (whole blood) trend and the medications on board against current kidney function.",
+        "status": "proposed",
+        "provenance": {
+          "source": "reasoning",
+          "model": "reasoner-v1/rules",
+          "trend_codes": [
+            "38483-4"
+          ],
+          "confidence": 0.5
+        },
+        "created_at": "2026-09-11T19:28:08-07:00"
+      },
+      {
+        "id": "ins_0057_02",
+        "patient_id": "pt_001",
+        "problem_id": "prob_0057",
+        "statement": "eGFR has been falling over the window 2025-08-19 to 2026-08-19: 78.043 on 2025-09-10 to 15.6 on 2026-08-19 (-80%). It has been below the reference range since 2025-09-10. Medication events in the window: Sodium fluoride 0.0272 mg/mg start 2025-10-30. Currently on board: Clopidogrel 75 mg, Simvastatin 20 mg, Metoprolol succinate 100 mg, Nitroglycerin 0.4 mg/actuat, Hydrochlorothiazide 25 mg, Metformin hydrochloride 500 mg, Lisinopril 10 mg, AmLODIPine 2.5 mg, Tropicamide (ophthalmic) 5 mg/ml, Sodium fluoride 0.0272 mg/mg, Insulin isophane, human / insulin, regular, human (injectable) 70 units/ml / 30 units/ml, Furosemide 40 mg.",
+        "evidence": [
+          "obs_03157",
+          "obs_03889",
+          "med_sodium_fluoride",
+          "prob_0057"
+        ],
+        "suggested_action": "Review the egfr trend and the medications on board against current kidney function.",
+        "status": "proposed",
+        "provenance": {
+          "source": "reasoning",
+          "model": "reasoner-v1/rules",
+          "trend_codes": [
+            "33914-3"
+          ],
+          "confidence": 0.5
+        },
+        "created_at": "2026-09-11T19:28:08-07:00"
+      }
+    ]
+  },
+  "rejected": [],
+  "usage": null
+}

@@ -4,6 +4,7 @@
     python3 -m ehr.review pt_001 note_demo_002 --accept obs_demo_002_01 lnk_demo_002_03
     python3 -m ehr.review pt_001 note_demo_002 --accept-all
     python3 -m ehr.review pt_001 note_demo_002 --reject med_demo_002_01
+    python3 -m ehr.review pt_001 reason_prob_0057 --accept-all      # insight queues work the same way
 
 Accepting an item copies it into the patient file with status "accepted" (provenance is kept,
 so the chart still shows it came from a note). Accepting a link whose endpoints are still
@@ -21,7 +22,7 @@ from pathlib import Path
 from ehr.extract import PROPOSED_DIR, queue_path, save_patient
 from ehr.trend import DATA_DIR, load_patient
 
-KINDS = ("problems", "observations", "medications", "links")
+KINDS = ("problems", "observations", "medications", "links", "insights")
 
 
 def load_queue(patient_id: str, note_id: str, proposed_dir: Path = PROPOSED_DIR) -> tuple[Path, dict]:
@@ -31,7 +32,7 @@ def load_queue(patient_id: str, note_id: str, proposed_dir: Path = PROPOSED_DIR)
 
 def _find(batch: dict, item_id: str) -> tuple[str, dict] | tuple[None, None]:
     for kind in KINDS:
-        for it in batch["proposed"][kind]:
+        for it in batch["proposed"].get(kind, []):
             if it["id"] == item_id:
                 return kind, it
     return None, None
@@ -93,18 +94,20 @@ def accept_medication_change(patient: dict, change: dict) -> str:
 
 
 def list_queue(batch: dict) -> str:
-    lines = [f"queue {batch['note_id']} for {batch['patient_id']} ({batch['model']})"]
+    lines = [f"queue {batch.get('note_id') or 'reason ' + batch.get('problem_id', '')} for {batch['patient_id']} ({batch['model']})"]
     for kind in KINDS:
-        for it in batch["proposed"][kind]:
+        for it in batch["proposed"].get(kind, []):
             hint = batch.get("review_hints", {}).get(it["id"])
             desc = {
                 "problems": lambda x: x["name"],
                 "observations": lambda x: f"{x['name']} = {x['value']} {x['unit']} @ {x['effective_time'][:10]}",
                 "medications": lambda x: f"{x['name']} {x['segments'][0]['dose']} {x['segments'][0]['frequency']}",
                 "links": lambda x: f"{x['from']} -{x['type']}-> {x['to']}",
+                "insights": lambda x: f"{x['statement']}\n{'':14}action: {x['suggested_action']}\n{'':14}evidence: {x['evidence']}",
             }[kind](it)
+            tail = (f"  quote={it['provenance']['quote']!r}" if "quote" in it["provenance"] else "")
             lines.append(f"  [{it['status']:<8}] {it['id']:<22} {desc}"
-                         f"  conf={it['provenance']['confidence']}  quote={it['provenance']['quote']!r}"
+                         f"  conf={it['provenance'].get('confidence')}{tail}"
                          + (f"\n{'':14}hint: {hint}" if hint else ""))
     for ch in batch.get("medication_changes", []):
         lines.append(f"  [{ch['status']:<8}] change {ch['med_id']}: {ch['change']} effective {ch['effective']}"
@@ -117,7 +120,7 @@ def list_queue(batch: dict) -> str:
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("patient_id")
-    ap.add_argument("note_id")
+    ap.add_argument("note_id", help="queue file stem: a note id, or reason_<problem_id>")
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--accept", nargs="*", default=[])
     ap.add_argument("--reject", nargs="*", default=[])
@@ -135,7 +138,7 @@ def main(argv: list[str]) -> int:
         done.append(reject_item(batch, iid))
     ids = args.accept
     if args.accept_all:
-        ids = [it["id"] for k in KINDS for it in batch["proposed"][k] if it["status"] == "proposed"]
+        ids = [it["id"] for k in KINDS for it in batch["proposed"].get(k, []) if it["status"] == "proposed"]
     for iid in ids:
         done += accept_item(patient, batch, iid)
     if args.accept_changes:
