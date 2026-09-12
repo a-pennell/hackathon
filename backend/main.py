@@ -176,6 +176,19 @@ def review(pid: str, stem: str, body: ReviewBody):
     return {"done": done}
 
 
+@app.get("/api/patients/{pid}/notes/{note_id}")
+def chart_note(pid: str, note_id: str):
+    d = _patient(pid)
+    n = next((x for x in d["notes"] if x["id"] == note_id), None)
+    if not n:
+        raise HTTPException(404, f"no note {note_id}")
+    demo = next((p for p in NOTES_DIR.glob("*.json") if load_note_file(p)[0]["id"] == note_id), None)
+    raw = PROPOSED_DIR / pid / f"{note_id}.raw.json"
+    return {**n, "file": str(demo.relative_to(ROOT)) if demo else None,
+            "excerpt": n["text"].strip()[:200], "has_replay": raw.exists(),
+            "has_queue": (PROPOSED_DIR / pid / f"{note_id}.json").exists()}
+
+
 @app.get("/api/notes")
 def notes():
     out = []

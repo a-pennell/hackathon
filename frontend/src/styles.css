@@ -215,3 +215,10 @@ svg.tl .relation.cause { fill: var(--flag); }
 .menu .x small { color: var(--graphite); }
 .rel { position: relative; }
 .busy { color: var(--graphite); font-size: 12px; font-style: italic; }
+
+/* inbox: low-confidence items recede; routine confirmations fold */
+.card.dim { opacity: 0.55; }
+.card.dim:hover { opacity: 1; }
+.inbox .fold { display: block; width: 100%; text-align: left; padding: calc(var(--u) * 1.5) calc(var(--u) * 5); font-size: 11px; color: var(--graphite); }
+.inbox .fold:hover { color: var(--ink); }
+.inbox .focus-head { padding: calc(var(--u) * 1.5) calc(var(--u) * 5) 0; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--select); }

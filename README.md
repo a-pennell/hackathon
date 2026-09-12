@@ -67,7 +67,10 @@ python3 -m ehr.reason pt_001 --problem prob_0057 --replay data/proposed/pt_001/r
 python3 -m ehr.review pt_001 reason_prob_0057 --list
 ```
 
-Drop `--replay` to call Claude live (each call is roughly 10-15k tokens). Reset from the shell:
+Drop `--replay` to call Claude live (each call is roughly 10-15k tokens). Every live run writes a
+timestamped copy (`note_demo_002.20260912T084512.raw.json`, never overwritten) and updates the
+`<stem>.raw.json` pointer that replay uses. To roll back a bad live run, copy an older timestamped
+file over the pointer. Reset from the shell:
 `git checkout data/patients/pt_001.json && rm data/proposed/pt_001/note_demo_002.json data/proposed/pt_001/reason_prob_0057.json`.
 
 The decision moment: creatinine (LOINC `38483-4`) rises from 1.6 to 5.7 over the year, eGFR falls

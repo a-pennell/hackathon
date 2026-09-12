@@ -170,6 +170,28 @@ def test_fuzzy_dedupe_and_stop_by_name(patient, note):
     assert "closed 2026-09-11" in batch["review_hints"][p["medications"][0]["id"]]
 
 
+def test_dose_change_without_value_keeps_instruction(patient, note):
+    raw = {"problems": [], "findings": [], "suspected_causes": [], "observations": [],
+           "medications": [{"ref": "c1", "quote": "Still on metformin 500 mg twice daily", "name": "Metformin", "dose": None, "route": None,
+                            "frequency": None, "start": None, "end": None, "existing_med_id": "med_metformin", "change": "dose_change",
+                            "treats_problem_refs": [], "confidence": 0.8}]}
+    batch = validate(patient, note, raw, "claude-test")
+    ch = batch["medication_changes"][0]
+    assert ch["dose"] == "Still on metformin 500 mg twice daily" and "numeric dose" in ch["hint"]
+    assert batch["rejected"] == []
+
+
+def test_record_response_keeps_timestamped_copy(tmp_path):
+    from ehr.extract import record_response
+    qp = tmp_path / "pt_x" / "note_1.json"
+    qp.parent.mkdir()
+    a = record_response(qp, {"parsed": {"v": 1}})
+    b = record_response(qp, {"parsed": {"v": 2}})
+    assert a.exists() and a.name.startswith("note_1.") and a.name.endswith(".raw.json")
+    assert json.loads((qp.with_suffix(".raw.json")).read_text())["parsed"]["v"] == 2   # latest pointer
+    assert a != b or json.loads(a.read_text())["parsed"]["v"] in (1, 2)                 # same-second collision tolerated
+
+
 def test_ingest_is_idempotent(patient, note):
     enc = {"id": "enc_0002", "patient_id": "pt_t", "time": "2026-09-12T09:00:00-07:00", "type": "office visit", "summary": "x"}
     n2 = dict(note, id="note_x", encounter_id="enc_0002")

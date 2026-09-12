@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Encounter, Medication, Observation, Series, Timeline as TL } from "./types";
 
-type Props = { data: TL; highlight: Set<string>; onHover?: (id: string | null) => void };
+type Props = { data: TL; highlight: Set<string>; onHover?: (id: string | null) => void; onOpenNote?: (noteId: string) => void };
 
 const GUTTER = 176; // the flowsheet margin: lane names, units, latest values
 const RIGHT = 24;
@@ -22,7 +22,7 @@ const nice = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 
 
 type Tip = { x: number; y: number; body: React.ReactNode } | null;
 
-export default function Timeline({ data, highlight, onHover }: Props) {
+export default function Timeline({ data, highlight, onHover, onOpenNote }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(900);
   const [tip, setTip] = useState<Tip>(null);
@@ -169,7 +169,7 @@ export default function Timeline({ data, highlight, onHover }: Props) {
                 ENCOUNTERS
               </text>
               {data.encounters.map((e) => (
-                <EncMark key={e.id} e={e} x={x(e.time)} y={y} show={show} hide={hide} />
+                <EncMark key={e.id} e={e} x={x(e.time)} y={y} show={show} hide={hide} onOpen={onOpenNote} />
               ))}
               <line className="rule" x1={GUTTER} x2={width - RIGHT} y1={ay} y2={ay} />
               {ticks.map((ms) => (
@@ -315,9 +315,11 @@ function Lane({
   );
 }
 
-function EncMark({ e, x, y, show, hide }: { e: Encounter; x: number; y: number; show: (ev: React.MouseEvent, b: React.ReactNode) => void; hide: () => void }) {
+function EncMark({ e, x, y, show, hide, onOpen }: { e: Encounter; x: number; y: number; show: (ev: React.MouseEvent, b: React.ReactNode) => void; hide: () => void; onOpen?: (noteId: string) => void }) {
   return (
     <g
+      style={{ cursor: e.note_id ? "pointer" : "default" }}
+      onClick={() => e.note_id && onOpen?.(e.note_id)}
       onMouseMove={(ev) =>
         show(
           ev,
@@ -327,12 +329,13 @@ function EncMark({ e, x, y, show, hide }: { e: Encounter; x: number; y: number; 
               <b>{e.type}</b> — {e.summary}
             </div>
             {e.excerpt && <div className="q">{e.excerpt.replace(/\s+/g, " ").slice(0, 140)}…</div>}
+            {e.note_id && <div className="t">click to open the note</div>}
           </>,
         )
       }
       onMouseLeave={hide}
     >
-      <rect x={x - 4} y={y + 2} width={8} height={ENC_H - 4} fill="transparent" />
+      <rect x={x - 6} y={y} width={12} height={ENC_H} fill="transparent" />
       <line className={`enc ${e.has_findings ? "findings" : ""}`} x1={x} x2={x} y1={y + 8} y2={y + ENC_H - 4} />
       {e.has_findings && <circle className="enc-note" cx={x} cy={y + 6} r={3} />}
     </g>

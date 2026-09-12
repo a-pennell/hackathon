@@ -97,6 +97,7 @@ export default function App() {
     setBusy("extract");
     setError(null);
     try {
+      if (!n.file) return;
       await api.extract(PID, n.file, mode);
       await refresh();
     } catch (e) {
@@ -122,6 +123,17 @@ export default function App() {
   };
 
   const hover = useCallback((ids: string[] | null) => setHighlight(new Set(ids ?? [])), []);
+
+  const openChartNote = async (noteId: string) => {
+    try {
+      setReading(await api.note(PID, noteId));
+    } catch (e) {
+      setError(String((e as Error).message ?? e));
+    }
+  };
+
+  // ids the inbox treats as "about the selected problem": the problem itself and its monitored series
+  const focusIds = useMemo(() => new Set([...(problem ? [problem] : []), ...(tl?.series.map((s) => `LOINC:${s.code}`) ?? [])]), [problem, tl]);
 
   const runReset = async () => {
     if (!window.confirm("Reset the demo? Unsigns everything and clears the review queue (saved model responses are kept).")) return;
@@ -214,13 +226,13 @@ export default function App() {
           </div>
         )}
         {tl && tl.series.length > 0 ? (
-          <Timeline data={tl} highlight={highlight} onHover={(id) => hover(id ? [id] : null)} />
+          <Timeline data={tl} highlight={highlight} onHover={(id) => hover(id ? [id] : null)} onOpenNote={openChartNote} />
         ) : (
           <div className="empty">{selected ? `No monitored lab series is linked to ${selected.name} in this window.` : "Pick a problem."}</div>
         )}
       </main>
 
-      <Inbox queues={queues} problemId={problem} chartInsights={summary.insights} labels={labels} highlight={highlight} onHover={hover} onReview={review} busy={busy} />
+      <Inbox queues={queues} problemId={problem} focusIds={focusIds} chartMedIds={new Set((tl?.medications ?? []).map((m) => m.id))} chartInsights={summary.insights} labels={labels} highlight={highlight} onHover={hover} onReview={review} busy={busy} />
 
       {reading && (
         <div className="modal-bg" onClick={() => setReading(null)}>
@@ -229,7 +241,7 @@ export default function App() {
               Note {reading.id.replace("note_", "")} · {reading.author}
             </h3>
             <div className="meta">
-              {reading.time.slice(0, 16).replace("T", " ")} · {reading.file}
+              {reading.time.slice(0, 16).replace("T", " ")} · {reading.file ?? "chart note (imported)"}
               {reading.has_queue ? " · already extracted (re-running replaces the queue)" : ""}
             </div>
             <pre>{reading.text.trim()}</pre>
@@ -238,12 +250,16 @@ export default function App() {
               <button className="btn ghost" onClick={() => setReading(null)}>
                 Close
               </button>
-              <button className="btn" disabled={!reading.has_replay} title={reading.has_replay ? "" : "no saved model response yet"} onClick={() => runExtract(reading, "replay")}>
-                Extract (replay)
-              </button>
-              <button className="btn primary" onClick={() => runExtract(reading, "live")}>
-                Extract with Claude
-              </button>
+              {reading.file && (
+                <>
+                  <button className="btn" disabled={!reading.has_replay} title={reading.has_replay ? "" : "no saved model response yet"} onClick={() => runExtract(reading, "replay")}>
+                    Extract (replay)
+                  </button>
+                  <button className="btn primary" onClick={() => runExtract(reading, "live")}>
+                    Extract with Claude
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

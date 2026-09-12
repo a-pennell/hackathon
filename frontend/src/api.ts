@@ -21,6 +21,7 @@ export const api = {
     req<Timeline>(`/api/patients/${pid}/problems/${prob}/timeline?window=${window}`),
   queue: (pid: string) => req<QueueBatch[]>(`/api/patients/${pid}/queue`),
   notes: () => req<NoteFile[]>(`/api/notes`),
+  note: (pid: string, note_id: string) => req<NoteFile>(`/api/patients/${pid}/notes/${note_id}`),
   review: (pid: string, stem: string, body: { accept?: string[]; reject?: string[]; accept_all?: boolean; accept_changes?: boolean }) =>
     req<{ done: string[] }>(`/api/patients/${pid}/queue/${stem}/review`, { method: "POST", body: JSON.stringify(body) }),
   extract: (pid: string, note_file: string, mode: "live" | "replay") =>

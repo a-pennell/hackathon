@@ -137,13 +137,13 @@ export type QueueBatch = {
     insights?: Insight[];
   };
   confirmed_medications?: { med_id: string; quote: string; confidence: number }[];
-  medication_changes?: { med_id: string; change: string; effective: string; status: string; provenance: Provenance }[];
+  medication_changes?: { med_id: string; change: string; effective: string; status: string; provenance: Provenance; dose?: string | null; hint?: string }[];
   review_hints?: Record<string, string>;
   rejected: { kind?: string; reason: string }[];
 };
 
 export type NoteFile = {
-  file: string;
+  file: string | null; // null for a chart note that has no file under data/notes
   id: string;
   patient_id: string;
   time: string;

@@ -420,10 +420,17 @@ class Validator:
                 if change == "confirm":
                     self.confirmed_medications.append({"med_id": existing, "quote": q, "confidence": _conf(it.get("confidence"))})
                 else:
+                    dose, freq = it.get("dose"), it.get("frequency")
+                    hint = None
+                    if change == "dose_change" and not dose:
+                        dose, hint = q, "no numeric dose in the note; its instruction is kept as the dose string - set a numeric dose on accept"
+                    if change == "frequency_change" and not freq:
+                        freq, hint = q, "no explicit frequency in the note; its instruction is kept as the frequency string"
                     self.medication_changes.append({
                         "med_id": existing, "change": change, "effective": _iso_date_or_none(it.get("end") or it.get("start")) or self.note["time"][:10],
-                        "dose": it.get("dose"), "route": it.get("route"), "frequency": it.get("frequency"),
+                        "dose": dose, "route": it.get("route"), "frequency": freq,
                         "status": "proposed", "provenance": self.provenance(q, it.get("confidence")),
+                        **({"hint": hint} if hint else {}),
                     })
                 for ref in it.get("treats_problem_refs") or []:
                     target = self.resolve_problem(ref)
@@ -550,9 +557,20 @@ def run_extraction(patient_id: str, note_file: str | Path, *, model: str = DEFAU
         qp.parent.mkdir(parents=True, exist_ok=True)
         qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
         if not replay:
-            qp.with_suffix(".raw.json").write_text(json.dumps(raw, indent=2, ensure_ascii=False))
+            record_response(qp, raw)
     batch["queue_path"] = str(qp)
     return batch
+
+
+def record_response(queue_path: Path, raw: dict) -> Path:
+    """Save a live model response twice: a timestamped copy that is never overwritten, and
+    `<stem>.raw.json`, the 'latest' pointer that replay uses. Roll back by copying an older
+    timestamped file over the pointer."""
+    stamped = queue_path.with_name(f"{queue_path.stem}.{datetime.now().strftime('%Y%m%dT%H%M%S')}.raw.json")
+    text = json.dumps(raw, indent=2, ensure_ascii=False)
+    stamped.write_text(text)
+    queue_path.with_suffix(".raw.json").write_text(text)
+    return stamped
 
 
 def summarize(batch: dict) -> str:

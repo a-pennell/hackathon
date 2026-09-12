@@ -302,7 +302,8 @@ def run_reasoning(patient_id: str, problem_id: str, *, window=DEFAULT_WINDOW, mo
         qp.parent.mkdir(parents=True, exist_ok=True)
         qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
         if not replay and not rules_only:
-            qp.with_suffix(".raw.json").write_text(json.dumps(raw, indent=2, ensure_ascii=False))
+            from ehr.extract import record_response
+            record_response(qp, raw)
     batch["queue_path"] = str(qp)
     return batch
 
