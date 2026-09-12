@@ -572,7 +572,11 @@ def main(argv: list[str]) -> int:
     raw = None
     if args.replay:
         raw = json.loads(Path(args.replay).read_text())
-    batch, raw = extract_note(patient, note, model=args.model, raw=raw)
+    try:
+        batch, raw = extract_note(patient, note, model=args.model, raw=raw)
+    except RuntimeError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
 
     qp = queue_path(pid, note["id"], data_dir.parent / "proposed")
     qp.parent.mkdir(parents=True, exist_ok=True)

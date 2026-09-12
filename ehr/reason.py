@@ -350,8 +350,12 @@ def main(argv: list[str]) -> int:
             ctx = build_context(patient, pid, window)
             system_blocks, messages = build_messages(ctx)
             print(system_blocks[0]["text"]); print(messages[0]["content"]); continue
-        batch = run_reasoning(args.patient_id, pid, window=window, model=args.model,
-                              rules_only=args.rules_only, replay=args.replay, data_dir=data_dir)
+        try:
+            batch = run_reasoning(args.patient_id, pid, window=window, model=args.model,
+                                  rules_only=args.rules_only, replay=args.replay, data_dir=data_dir)
+        except RuntimeError as e:
+            print(f"error: {e}", file=sys.stderr)
+            return 1
         print(summarize(batch))
         print(f"review queue: {batch['queue_path']}\n")
     return 0

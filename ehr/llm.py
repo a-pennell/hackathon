@@ -29,6 +29,13 @@ def call_structured(system_blocks, messages, schema: dict, *, model: str = DEFAU
         # Routes a policy decline to a fallback model inside the same call.
         response = client.beta.messages.create(
             betas=["server-side-fallback-2026-07-01"], fallbacks="default", **kwargs)
+    except TypeError as e:  # the SDK raises TypeError at request time when no credential source resolves
+        if "authentication" not in str(e).lower():
+            raise
+        raise RuntimeError("No Anthropic credentials found. In this shell run: export ANTHROPIC_API_KEY=<your key>") from e
+    except anthropic.AuthenticationError as e:
+        raise RuntimeError("Anthropic rejected the API key (401). Check ANTHROPIC_API_KEY is the real key from "
+                           "console.anthropic.com, not a placeholder, and that ANTHROPIC_BASE_URL is unset.") from e
     except anthropic.BadRequestError as e:
         if "fallback" not in str(e).lower() and "beta" not in str(e).lower():
             raise
