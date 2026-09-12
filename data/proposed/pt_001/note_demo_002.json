@@ -1,0 +1,787 @@
+{
+  "patient_id": "pt_001",
+  "note_id": "note_demo_002",
+  "model": "extractor-v1/claude-opus-5",
+  "extracted_at": "2026-09-12T08:40:46-07:00",
+  "proposed": {
+    "problems": [
+      {
+        "id": "prob_demo_002_01",
+        "patient_id": "pt_001",
+        "name": "Chronic kidney disease stage 4",
+        "code": null,
+        "status": "proposed",
+        "onset_date": "2026-08-19",
+        "resolved_date": null,
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "CKD progressing. Creatinine has climbed steadily since the spring and eGFR is now under 20.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.62
+        }
+      },
+      {
+        "id": "prob_demo_002_02",
+        "patient_id": "pt_001",
+        "name": "Bilateral knee osteoarthritis",
+        "code": null,
+        "status": "proposed",
+        "onset_date": null,
+        "resolved_date": null,
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Bilateral knee osteoarthritis.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.85
+        }
+      },
+      {
+        "id": "prob_demo_002_03",
+        "patient_id": "pt_001",
+        "name": "Hypotension",
+        "code": null,
+        "status": "proposed",
+        "onset_date": null,
+        "resolved_date": null,
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Hypotensive on three agents.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.72
+        }
+      }
+    ],
+    "observations": [
+      {
+        "id": "obs_demo_002_01",
+        "patient_id": "pt_001",
+        "code": {
+          "system": "LOINC",
+          "value": "8480-6"
+        },
+        "name": "Systolic blood pressure",
+        "value": 84.0,
+        "unit": "mm[Hg]",
+        "reference_range": {
+          "low": 90.0,
+          "high": 120.0
+        },
+        "effective_time": "2026-09-11T09:40:00-07:00",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "BP 84/52 sitting",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.96
+        }
+      },
+      {
+        "id": "obs_demo_002_02",
+        "patient_id": "pt_001",
+        "code": {
+          "system": "LOINC",
+          "value": "8462-4"
+        },
+        "name": "Diastolic blood pressure",
+        "value": 52.0,
+        "unit": "mm[Hg]",
+        "reference_range": {
+          "low": 60.0,
+          "high": 80.0
+        },
+        "effective_time": "2026-09-11T09:40:00-07:00",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "BP 84/52 sitting",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.96
+        }
+      },
+      {
+        "id": "obs_demo_002_03",
+        "patient_id": "pt_001",
+        "code": {
+          "system": "LOINC",
+          "value": "8867-4"
+        },
+        "name": "Heart rate",
+        "value": 72.0,
+        "unit": "/min",
+        "reference_range": {
+          "low": 60.0,
+          "high": 100.0
+        },
+        "effective_time": "2026-09-11T09:40:00-07:00",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "HR 72",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.94
+        }
+      },
+      {
+        "id": "obs_demo_002_04",
+        "patient_id": "pt_001",
+        "code": {
+          "system": "LOINC",
+          "value": "29463-7"
+        },
+        "name": "Body weight",
+        "value": 79.0,
+        "unit": "kg",
+        "reference_range": null,
+        "effective_time": "2026-09-11T09:40:00-07:00",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Wt 79.0 kg.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.93
+        }
+      }
+    ],
+    "medications": [
+      {
+        "id": "med_demo_002_01",
+        "patient_id": "pt_001",
+        "name": "Naproxen",
+        "code": null,
+        "segments": [
+          {
+            "start": "2026-04-01",
+            "end": "2026-09-11",
+            "dose": "500 mg",
+            "route": "PO",
+            "frequency": "twice a day"
+          }
+        ],
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "he has been taking naproxen 500 mg twice a day most days since around April, over the counter",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.9
+        }
+      }
+    ],
+    "links": [
+      {
+        "id": "lnk_demo_002_01",
+        "from": "note_demo_002",
+        "to": "prob_demo_002_01",
+        "type": "evidence_for",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "CKD progressing. Creatinine has climbed steadily since the spring and eGFR is now under 20.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.62
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_02",
+        "from": "note_demo_002",
+        "to": "prob_demo_002_02",
+        "type": "evidence_for",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Bilateral knee osteoarthritis.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.85
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_03",
+        "from": "note_demo_002",
+        "to": "prob_demo_002_03",
+        "type": "evidence_for",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Hypotensive on three agents.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.72
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_04",
+        "from": "obs_demo_002_01",
+        "to": "prob_0002",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "BP 84/52 sitting",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.96
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_05",
+        "from": "obs_demo_002_01",
+        "to": "prob_demo_002_03",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "BP 84/52 sitting",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.96
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_06",
+        "from": "obs_demo_002_02",
+        "to": "prob_0002",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "BP 84/52 sitting",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.96
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_07",
+        "from": "obs_demo_002_02",
+        "to": "prob_demo_002_03",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "BP 84/52 sitting",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.96
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_08",
+        "from": "obs_demo_002_03",
+        "to": "prob_0002",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "HR 72",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.94
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_09",
+        "from": "obs_demo_002_04",
+        "to": "prob_0036",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Wt 79.0 kg.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.93
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_10",
+        "from": "obs_03878",
+        "to": "prob_0057",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "creatinine 5.7",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.93
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_11",
+        "from": "obs_03878",
+        "to": "prob_demo_002_01",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "creatinine 5.7",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.93
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_12",
+        "from": "obs_03703",
+        "to": "prob_0057",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "up from 3.69 in May",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.55
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_13",
+        "from": "obs_03837",
+        "to": "prob_0057",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "4.4 in late July",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.5
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_14",
+        "from": "obs_03889",
+        "to": "prob_0057",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "eGFR 15.6.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.93
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_15",
+        "from": "obs_03889",
+        "to": "prob_demo_002_01",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "eGFR 15.6.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.93
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_16",
+        "from": "obs_03881",
+        "to": "prob_0057",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "K 4.2.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.9
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_17",
+        "from": "obs_03877",
+        "to": "prob_0057",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "BUN 17.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.9
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_18",
+        "from": "obs_03852",
+        "to": "prob_0004",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Glucose 91.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.9
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_19",
+        "from": "obs_03888",
+        "to": "prob_0058",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Urine albumin/creatinine 179 mg/g.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.9
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_20",
+        "from": "obs_03888",
+        "to": "prob_0023",
+        "type": "relevant_to",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Urine albumin/creatinine 179 mg/g.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.9
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_21",
+        "from": "note_demo_002",
+        "to": "prob_0057",
+        "type": "evidence_for",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Reports about three weeks of fatigue, poor appetite, and nausea most mornings, no vomiting.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.9
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_22",
+        "from": "note_demo_002",
+        "to": "prob_0036",
+        "type": "evidence_for",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Ankles a bit puffier at the end of the day",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.88
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_23",
+        "from": "note_demo_002",
+        "to": "prob_0005",
+        "type": "evidence_for",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "No chest pain or shortness of breath at rest.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.85
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_24",
+        "from": "note_demo_002",
+        "to": "prob_0004",
+        "type": "evidence_for",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Blood sugars at home 70-110, two readings in the 60s this month.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.9
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_25",
+        "from": "med_demo_002_01",
+        "to": "prob_demo_002_02",
+        "type": "treats",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "he has been taking naproxen 500 mg twice a day most days since around April, over the counter",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.9
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_26",
+        "from": "med_lisinopril",
+        "to": "prob_0058",
+        "type": "treats",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "lisinopril 10 mg",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.85
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_27",
+        "from": "med_metoprolol_succinate",
+        "to": "prob_0002",
+        "type": "treats",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "metoprolol succinate 100 mg",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.85
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_28",
+        "from": "med_metoprolol_succinate",
+        "to": "prob_0005",
+        "type": "treats",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "metoprolol succinate 100 mg",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.85
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_29",
+        "from": "med_clopidogrel",
+        "to": "prob_0005",
+        "type": "treats",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "clopidogrel",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.82
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_30",
+        "from": "med_simvastatin",
+        "to": "prob_0005",
+        "type": "treats",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "simvastatin",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.82
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_31",
+        "from": "med_simvastatin",
+        "to": "prob_0007",
+        "type": "treats",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "simvastatin",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.82
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_32",
+        "from": "med_demo_002_01",
+        "to": "prob_demo_002_01",
+        "type": "suspected_cause",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Daily NSAID use since April, previously unknown to us. Counseled to stop naproxen today.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.85
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_33",
+        "from": "med_demo_002_01",
+        "to": "LOINC:2160-0",
+        "type": "suspected_cause",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Was not aware this was a problem for his kidneys.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.7
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      },
+      {
+        "id": "lnk_demo_002_34",
+        "from": "med_hydrochlorothiazide",
+        "to": "prob_demo_002_03",
+        "type": "suspected_cause",
+        "status": "proposed",
+        "provenance": {
+          "source": "nlp_extraction",
+          "note_id": "note_demo_002",
+          "quote": "Hypertension. Hypotensive on three agents. Hold HCTZ starting today.",
+          "model": "extractor-v1/claude-opus-5",
+          "confidence": 0.78
+        },
+        "created_at": "2026-09-12T08:40:46-07:00"
+      }
+    ]
+  },
+  "confirmed_medications": [
+    {
+      "med_id": "med_metformin_hydrochloride",
+      "quote": "Still on metformin 500 mg twice daily",
+      "confidence": 0.9
+    },
+    {
+      "med_id": "med_lisinopril",
+      "quote": "lisinopril 10 mg",
+      "confidence": 0.85
+    },
+    {
+      "med_id": "med_amlodipine",
+      "quote": "amlodipine 2.5 mg",
+      "confidence": 0.85
+    },
+    {
+      "med_id": "med_metoprolol_succinate",
+      "quote": "metoprolol succinate 100 mg",
+      "confidence": 0.85
+    },
+    {
+      "med_id": "med_clopidogrel",
+      "quote": "clopidogrel",
+      "confidence": 0.82
+    },
+    {
+      "med_id": "med_simvastatin",
+      "quote": "simvastatin",
+      "confidence": 0.82
+    },
+    {
+      "med_id": "med_furosemide",
+      "quote": "Continue furosemide as needed; reassess after labs.",
+      "confidence": 0.9
+    }
+  ],
+  "medication_changes": [
+    {
+      "med_id": "med_insulin_isophane_human_insulin_regular_human_inj",
+      "change": "dose_change",
+      "effective": "2026-09-11",
+      "dose": "reduce evening dose by 4 units",
+      "route": "SC",
+      "frequency": null,
+      "status": "proposed",
+      "provenance": {
+        "source": "nlp_extraction",
+        "note_id": "note_demo_002",
+        "quote": "Reduce evening 70/30 insulin by 4 units.",
+        "model": "extractor-v1/claude-opus-5",
+        "confidence": 0.9
+      }
+    },
+    {
+      "med_id": "med_hydrochlorothiazide",
+      "change": "stop",
+      "effective": "2026-09-11",
+      "dose": "25 mg",
+      "route": "PO",
+      "frequency": "daily",
+      "status": "proposed",
+      "provenance": {
+        "source": "nlp_extraction",
+        "note_id": "note_demo_002",
+        "quote": "Hold HCTZ starting today.",
+        "model": "extractor-v1/claude-opus-5",
+        "confidence": 0.92
+      }
+    }
+  ],
+  "review_hints": {
+    "prob_demo_002_01": "supersedes prob_0057; on accept, consider resolving it",
+    "obs_03878": "already in chart; note restates it ('creatinine 5.7')",
+    "obs_03703": "already in chart; note restates it ('up from 3.69 in May')",
+    "obs_03837": "already in chart; note restates it ('4.4 in late July')",
+    "obs_03889": "already in chart; note restates it ('eGFR 15.6.')",
+    "obs_03881": "already in chart; note restates it ('K 4.2.')",
+    "obs_03877": "already in chart; note restates it ('BUN 17.')",
+    "obs_03852": "already in chart; note restates it ('Glucose 91.')",
+    "obs_03888": "already in chart; note restates it ('Urine albumin/creatinine 179 mg/g.')",
+    "lnk_demo_002_21": "Three weeks of fatigue, poor appetite, and morning nausea without vomiting",
+    "lnk_demo_002_22": "Increased ankle swelling at end of day",
+    "lnk_demo_002_23": "No chest pain or resting dyspnea",
+    "lnk_demo_002_24": "Home glucose 70-110 with two readings in the 60s this month (low)",
+    "med_demo_002_01": "course closed 2026-09-11 by the same note ('Counseled to stop naproxen today.')",
+    "lnk_demo_002_32": "Note links daily over-the-counter naproxen use since April to the progressive decline in kidney function; patient counseled to stop",
+    "lnk_demo_002_33": "NSAID use raised as contributor to rising creatinine",
+    "lnk_demo_002_34": "Hypotension attributed to being on three antihypertensive agents; HCTZ held"
+  },
+  "rejected": [],
+  "usage": {
+    "input_tokens": 926,
+    "output_tokens": 6395,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 8251
+  }
+}

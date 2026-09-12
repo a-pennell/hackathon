@@ -149,6 +149,27 @@ def test_validate_builds_schema_entities_and_rejects_bad_items(patient, note, ra
         assert l["type"] in {"relevant_to", "treats", "evidence_for", "suspected_cause"}
 
 
+def test_fuzzy_dedupe_and_stop_by_name(patient, note):
+    raw = {"problems": [], "findings": [], "suspected_causes": [],
+           "observations": [
+               # same value as the charted whole-blood creatinine, but coded serum and dated 3 days off
+               {"quote": "creatinine 5.7", "loinc": "2160-0", "value": 5.7, "unit": None, "date": "2026-08-22", "problem_refs": ["prob_ckd3"], "confidence": 0.9},
+               # a genuinely new value
+               {"quote": "eGFR 15.6", "loinc": "33914-3", "value": 15.6, "unit": None, "date": "2026-08-19", "problem_refs": [], "confidence": 0.9}],
+           "medications": [
+               {"ref": "new_1", "quote": "taking naproxen 500 mg twice a day most days since around April", "name": "Naproxen", "dose": "500 mg", "route": "PO",
+                "frequency": "bid", "start": "2026-04-01", "end": None, "existing_med_id": None, "change": "new", "treats_problem_refs": [], "confidence": 0.9},
+               {"ref": "new_2", "quote": "Hold HCTZ starting today", "name": "naproxen", "dose": None, "route": None, "frequency": None, "start": None,
+                "end": None, "existing_med_id": None, "change": "stop", "treats_problem_refs": [], "confidence": 0.8}]}
+    batch = validate(patient, note, raw, "claude-test")
+    p = batch["proposed"]
+    assert [o["name"] for o in p["observations"]] == ["eGFR"]                      # creatinine reused obs_00001
+    assert any(l["from"] == "obs_00001" and l["to"] == "prob_ckd3" for l in p["links"])
+    assert batch["rejected"] == []
+    assert p["medications"][0]["segments"][-1]["end"] == "2026-09-11"          # stop applied to the new course
+    assert "closed 2026-09-11" in batch["review_hints"][p["medications"][0]["id"]]
+
+
 def test_ingest_is_idempotent(patient, note):
     enc = {"id": "enc_0002", "patient_id": "pt_t", "time": "2026-09-12T09:00:00-07:00", "type": "office visit", "summary": "x"}
     n2 = dict(note, id="note_x", encounter_id="enc_0002")

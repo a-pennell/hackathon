@@ -36,6 +36,12 @@ PROPOSED_DIR = DATA_DIR.parent / "proposed"
 
 LINK_TYPES = {"relevant_to", "treats", "evidence_for", "suspected_cause", "monitors"}
 
+# Codes that name the same analyte (Synthea emits both). A note saying "creatinine 5.7" matches a
+# charted 5.7 under either code; without this the extractor would chart a duplicate point.
+CODE_GROUPS = {"2160-0": "creatinine", "38483-4": "creatinine", "2339-0": "glucose", "2345-7": "glucose"}
+DEDUPE_DAYS = 45      # a restated historical value ("3.69 in May") matches a charted value this close in time
+DEDUPE_TOLERANCE = 0.02  # ...and this close in value (2%)
+
 # ----------------------------------------------------------------------------- prompt
 
 SYSTEM_PROMPT = """You are the extraction step of a problem-oriented electronic health record.
@@ -227,10 +233,16 @@ class Validator:
         self.now = datetime.now().astimezone().isoformat(timespec="seconds")
         self.prob_ids = {p["id"] for p in patient.get("problems", [])}
         self.med_ids = {m["id"] for m in patient.get("medications", [])}
-        self.existing_obs = {  # (code, date, value) -> obs id, for dedupe
+        self.existing_obs = {  # (code, date, value) -> obs id, for exact dedupe
             (o["code"]["value"], o["effective_time"][:10], round(float(o["value"]), 3)): o["id"]
             for o in patient.get("observations", []) if isinstance(o.get("value"), (int, float))
         }
+        self.obs_by_group: dict[str, list[tuple[str, float, str]]] = {}  # group -> [(date, value, id)] for fuzzy dedupe
+        for o in patient.get("observations", []):
+            if isinstance(o.get("value"), (int, float)) and o.get("status") == "accepted":
+                g = CODE_GROUPS.get(o["code"]["value"], o["code"]["value"])
+                self.obs_by_group.setdefault(g, []).append((o["effective_time"][:10], float(o["value"]), o["id"]))
+        self.new_med_by_name: dict[str, dict] = {}
         self.existing_links = {(l["from"], l["to"], l["type"]) for l in patient.get("links", [])}
         self.out = {"problems": [], "observations": [], "medications": [], "links": []}
         self.confirmed_medications: list[dict] = []
@@ -257,6 +269,22 @@ class Validator:
         if q is None:
             self.reject(kind, item, f"quote not found verbatim in note: {item.get('quote')!r}")
         return q
+
+    def fuzzy_existing(self, code: str, day: str, value: float) -> str | None:
+        """Charted observation of the same analyte within DEDUPE_DAYS and DEDUPE_TOLERANCE, else None."""
+        from datetime import date as _date
+        try:
+            d0 = _date.fromisoformat(day)
+        except ValueError:
+            return None
+        best = None
+        for d, v, oid in self.obs_by_group.get(CODE_GROUPS.get(code, code), []):
+            if abs(v - value) > DEDUPE_TOLERANCE * max(abs(value), 1e-9):
+                continue
+            gap = abs((_date.fromisoformat(d) - d0).days)
+            if gap <= DEDUPE_DAYS and (best is None or gap < best[0]):
+                best = (gap, oid)
+        return best[1] if best else None
 
     def resolve_problem(self, ref: str) -> str | None:
         if ref in self.prob_ids:
@@ -321,6 +349,10 @@ class Validator:
                 self.reject("observation", it, "value is not numeric")
                 continue
             existing = self.existing_obs.get((code, t[:10], round(value, 3)))
+            if not existing and it.get("date"):
+                # Only a value the note attributes to an earlier date can be a restatement of a charted result;
+                # a measurement taken at this visit is new data even if the number matches a recent one.
+                existing = self.fuzzy_existing(code, t[:10], value)
             if existing:
                 oid = existing
                 self.review_hints[oid] = f"already in chart; note restates it ({q!r})"
@@ -374,6 +406,7 @@ class Validator:
                                   "dose": it.get("dose"), "route": it.get("route"), "frequency": it.get("frequency")}],
                     "status": "proposed", "provenance": self.provenance(q, it.get("confidence")),
                 })
+                self.new_med_by_name[it["name"].strip().lower()] = self.out["medications"][-1]
                 if not _iso_date_or_none(it.get("start")):
                     self.review_hints[mid] = "start date unknown; set it on accept"
                 for ref in it.get("treats_problem_refs") or []:
@@ -396,6 +429,18 @@ class Validator:
                     target = self.resolve_problem(ref)
                     if target:
                         self.add_link(existing, target, "treats", q, it.get("confidence"))
+            elif change in ("stop", "dose_change", "frequency_change") and it.get("name", "").strip().lower() in self.new_med_by_name:
+                # "Counseled to stop naproxen today" about a course this same note introduced: close that course.
+                course = self.new_med_by_name[it["name"].strip().lower()]
+                seg = course["segments"][-1]
+                eff = _iso_date_or_none(it.get("end") or it.get("start")) or self.note["time"][:10]
+                if change == "stop":
+                    seg["end"] = eff
+                    self.review_hints[course["id"]] = f"course closed {eff} by the same note ({q!r})"
+                else:
+                    seg["end"] = eff
+                    course["segments"].append({"start": eff, "end": None, "dose": it.get("dose") or seg["dose"],
+                                               "route": it.get("route") or seg["route"], "frequency": it.get("frequency") or seg["frequency"]})
             else:
                 self.reject("medication", it, f"change {change!r} needs an existing_med_id that exists in the chart")
 
