@@ -1,0 +1,35 @@
+{
+  "name": "Keep CHF + CKD + T2DM",
+  "gmf_version": 2,
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "conditional_transition": [
+        {
+          "transition": "Keep",
+          "condition": {
+            "condition_type": "And",
+            "conditions": [
+              { "condition_type": "Active Condition",
+                "codes": [ { "system": "SNOMED-CT", "code": "88805009", "display": "Chronic congestive heart failure (disorder)" } ] },
+              { "condition_type": "Active Condition",
+                "codes": [ { "system": "SNOMED-CT", "code": "44054006", "display": "Diabetes mellitus type 2 (disorder)" } ] },
+              { "condition_type": "Or",
+                "conditions": [
+                  { "condition_type": "Active Condition", "codes": [ { "system": "SNOMED-CT", "code": "431855005", "display": "Chronic kidney disease stage 1 (disorder)" } ] },
+                  { "condition_type": "Active Condition", "codes": [ { "system": "SNOMED-CT", "code": "431856006", "display": "Chronic kidney disease stage 2 (disorder)" } ] },
+                  { "condition_type": "Active Condition", "codes": [ { "system": "SNOMED-CT", "code": "433144002", "display": "Chronic kidney disease stage 3 (disorder)" } ] },
+                  { "condition_type": "Active Condition", "codes": [ { "system": "SNOMED-CT", "code": "431857002", "display": "Chronic kidney disease stage 4 (disorder)" } ] },
+                  { "condition_type": "Active Condition", "codes": [ { "system": "SNOMED-CT", "code": "127013003", "display": "Disorder of kidney due to diabetes mellitus (disorder)" } ] }
+                ] }
+            ]
+          }
+        },
+        { "transition": "Terminal" }
+      ]
+    },
+    "Terminal": { "type": "Terminal", "name": "Terminal" },
+    "Keep": { "type": "Terminal", "name": "Keep" }
+  }
+}

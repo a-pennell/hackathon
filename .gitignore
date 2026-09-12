@@ -1,0 +1,8 @@
+# Synthea runtime + bulk generated bundles (regenerate with scripts/gen_synthea.sh).
+# The chosen golden bundle is copied to data/golden/ and IS committed.
+tools/synthea/*.jar
+data/synthea/
+
+__pycache__/
+*.pyc
+.DS_Store
