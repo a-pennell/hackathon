@@ -19,7 +19,7 @@ function Row({ p, n, on, onSelect }: { p: Problem; n: number; on: boolean; onSel
       <span className="meta">
         {p.onset_date?.slice(0, 4)}
         {codes > 0 && <span className="dot" title={`${codes} monitored series`} />}
-        {(p.note_links ?? 0) > 0 && <span className="pend"> · {p.note_links} from notes</span>}
+        {(p.note_links ?? 0) > 0 && <span className="pend" title={`${p.note_links} findings signed from notes`}> · {p.note_links}✎</span>}
         {TAG[p.name] && <span> · {TAG[p.name]}</span>}
       </span>
     </button>

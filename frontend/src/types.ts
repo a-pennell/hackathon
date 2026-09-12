@@ -9,6 +9,32 @@ export type Provenance = {
 
 export type Patient = { id: string; name: string; dob: string; sex: string };
 
+export type Review = { by: string; at: string; decision: "accepted" | "rejected"; reason_code: string | null; reason: string | null };
+export const REASON_CODES: { code: string; label: string }[] = [
+  { code: "already_known", label: "Already known" },
+  { code: "not_relevant", label: "Not relevant here" },
+  { code: "disagree", label: "Disagree" },
+  { code: "needs_confirmation", label: "Needs confirmation" },
+  { code: "other", label: "Other" },
+];
+
+export type DocSection = { heading: string; text: string; cites: string[] };
+export type Document = {
+  id: string;
+  patient_id: string;
+  problem_id: string;
+  kind: string;
+  audience: string;
+  title: string;
+  sections: DocSection[];
+  questions: string[];
+  status: string;
+  provenance: Provenance & { evidence?: string[] };
+  created_at: string;
+  review?: Review;
+  queue?: string;
+};
+
 export type Problem = {
   id: string;
   name: string;
@@ -16,6 +42,7 @@ export type Problem = {
   onset_date: string | null;
   resolved_date: string | null;
   provenance: Provenance;
+  review?: Review;
   monitored_codes?: string[];
   note_links?: number;
 };
@@ -28,6 +55,7 @@ export type Medication = {
   segments: Segment[];
   status: string;
   provenance: Provenance;
+  review?: Review;
   relation?: "treats" | "suspected_cause" | "on_board";
   queue?: string;
 };
@@ -76,6 +104,7 @@ export type Link = {
   status: string;
   provenance: Provenance;
   created_at: string;
+  review?: Review;
   queue?: string;
 };
 
@@ -88,6 +117,7 @@ export type Observation = {
   effective_time: string;
   status: string;
   provenance: Provenance;
+  review?: Review;
   queue?: string;
 };
 
@@ -100,6 +130,7 @@ export type Insight = {
   status: string;
   provenance: Provenance;
   created_at: string;
+  review?: Review;
   queue?: string;
 };
 
@@ -135,9 +166,13 @@ export type QueueBatch = {
     medications?: Medication[];
     links?: Link[];
     insights?: Insight[];
+    documents?: Document[];
   };
+  kind?: string;
+  audience?: string;
+  composed_at?: string;
   confirmed_medications?: { med_id: string; quote: string; confidence: number }[];
-  medication_changes?: { med_id: string; change: string; effective: string; status: string; provenance: Provenance; dose?: string | null; hint?: string }[];
+  medication_changes?: { med_id: string; change: string; effective: string; status: string; provenance: Provenance; dose?: string | null; hint?: string; review?: Review }[];
   review_hints?: Record<string, string>;
   rejected: { kind?: string; reason: string }[];
 };
@@ -159,4 +194,5 @@ export type PatientSummary = {
   problems: Problem[];
   counts: Record<string, number>;
   insights: Insight[];
+  documents: Document[];
 };

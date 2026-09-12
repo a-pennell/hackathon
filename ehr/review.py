@@ -10,6 +10,14 @@ Accepting an item copies it into the patient file with status "accepted" (proven
 so the chart still shows it came from a note). Accepting a link whose endpoints are still
 proposed also accepts those endpoints - a link to something not on the chart is meaningless.
 Rejected items stay in the queue file, marked rejected, for the audit trail.
+
+Every decision is recorded on the item as a review record (FLAGGED schema addition, not in
+docs/patient-model-schema.md yet):
+    "review": {"by": "Dr. Chen", "at": "<iso>", "decision": "accepted"|"rejected",
+               "reason_code": "already_known"|"not_relevant"|"disagree"|"needs_confirmation"|"other"|null,
+               "reason": "<free text or null>"}
+A rejection with a reason is where the clinician's judgment becomes explicit - it is the most
+valuable thing this module captures.
 """
 
 from __future__ import annotations
@@ -17,12 +25,23 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from ehr.extract import PROPOSED_DIR, queue_path, save_patient
 from ehr.trend import DATA_DIR, load_patient
 
-KINDS = ("problems", "observations", "medications", "links", "insights")
+KINDS = ("problems", "observations", "medications", "links", "insights", "documents")
+REASON_CODES = ("already_known", "not_relevant", "disagree", "needs_confirmation", "other")
+DEFAULT_REVIEWER = "Dr. Chen"
+
+
+def review_record(decision: str, by: str = DEFAULT_REVIEWER, reason: str | None = None,
+                  reason_code: str | None = None) -> dict:
+    if reason_code is not None and reason_code not in REASON_CODES:
+        raise ValueError(f"reason_code must be one of {REASON_CODES}")
+    return {"by": by, "at": datetime.now().astimezone().isoformat(timespec="seconds"), "decision": decision,
+            "reason_code": reason_code, "reason": (reason or "").strip() or None}
 
 
 def load_queue(patient_id: str, note_id: str, proposed_dir: Path = PROPOSED_DIR) -> tuple[Path, dict]:
@@ -38,7 +57,8 @@ def _find(batch: dict, item_id: str) -> tuple[str, dict] | tuple[None, None]:
     return None, None
 
 
-def accept_item(patient: dict, batch: dict, item_id: str, _seen: set | None = None) -> list[str]:
+def accept_item(patient: dict, batch: dict, item_id: str, _seen: set | None = None,
+                review: dict | None = None) -> list[str]:
     """Move one proposed item (and, for links, its proposed endpoints) into the chart."""
     _seen = _seen if _seen is not None else set()
     if item_id in _seen:
@@ -51,13 +71,22 @@ def accept_item(patient: dict, batch: dict, item_id: str, _seen: set | None = No
         raise ValueError(f"{item_id} was rejected; un-reject it first")
     done = []
     if kind == "links":
+        chart_ids = {x["id"] for key in ("problems", "observations", "medications", "encounters", "notes", "links", "insights", "documents")
+                     for x in patient.get(key, [])}
         for end in (it["from"], it["to"]):
-            k, _ = _find(batch, end)
-            if k and _find(batch, end)[1]["status"] == "proposed":
-                done += accept_item(patient, batch, end, _seen)
+            if end.startswith("LOINC:"):
+                continue
+            k, endpoint = _find(batch, end)
+            if k and endpoint["status"] == "proposed":
+                done += accept_item(patient, batch, end, _seen, review)
+            elif k and endpoint["status"] == "rejected":
+                raise ValueError(f"{item_id} points at {end}, which was rejected; a link to a rejected item cannot be signed")
+            elif not k and end not in chart_ids:
+                raise ValueError(f"{item_id} points at {end}, which is not on the chart")
     if it["status"] == "accepted":
         return done
     it["status"] = "accepted"
+    it["review"] = review or review_record("accepted")
     chart_item = dict(it)
     chart_item["status"] = "active" if kind == "problems" else "accepted"
     target = patient.setdefault(kind, [])
@@ -67,19 +96,21 @@ def accept_item(patient: dict, batch: dict, item_id: str, _seen: set | None = No
     return done
 
 
-def reject_item(batch: dict, item_id: str) -> str:
+def reject_item(batch: dict, item_id: str, review: dict | None = None) -> str:
     kind, it = _find(batch, item_id)
     if it is None:
         raise KeyError(f"{item_id} is not in this queue")
     it["status"] = "rejected"
+    it["review"] = review or review_record("rejected")
     return f"{kind[:-1]} {item_id} rejected"
 
 
-def accept_medication_change(patient: dict, change: dict) -> str:
+def accept_medication_change(patient: dict, change: dict, review: dict | None = None) -> str:
     """Apply a proposed stop / dose or frequency change to an existing course (schema §4)."""
     med = next(m for m in patient["medications"] if m["id"] == change["med_id"])
     last = med["segments"][-1]
     eff = change["effective"]
+    change["review"] = review or review_record("accepted")
     if change["change"] == "stop":
         last["end"] = eff
         change["status"] = "accepted"
@@ -104,7 +135,11 @@ def list_queue(batch: dict) -> str:
                 "medications": lambda x: f"{x['name']} {x['segments'][0]['dose']} {x['segments'][0]['frequency']}",
                 "links": lambda x: f"{x['from']} -{x['type']}-> {x['to']}",
                 "insights": lambda x: f"{x['statement']}\n{'':14}action: {x['suggested_action']}\n{'':14}evidence: {x['evidence']}",
+                "documents": lambda x: f"{x['kind']} to {x['audience']}: {x['title']} ({len(x['sections'])} sections)",
             }[kind](it)
+            rv = it.get("review")
+            if rv and (rv.get("reason") or rv.get("reason_code")):
+                hint = f"{rv['decision']} by {rv['by']}: {rv.get('reason_code') or ''} {rv.get('reason') or ''}".strip() + (f" | {hint}" if hint else "")
             tail = (f"  quote={it['provenance']['quote']!r}" if "quote" in it["provenance"] else "")
             lines.append(f"  [{it['status']:<8}] {it['id']:<22} {desc}"
                          f"  conf={it['provenance'].get('confidence')}{tail}"
@@ -135,23 +170,25 @@ def list_queues(patient_id: str, proposed_dir: Path = PROPOSED_DIR) -> list[dict
 
 def apply_review(patient_id: str, stem: str, *, accept: list[str] = (), reject: list[str] = (),
                  accept_all: bool = False, accept_changes: bool = False,
+                 reason: str | None = None, reason_code: str | None = None, by: str = DEFAULT_REVIEWER,
                  data_dir: Path = DATA_DIR) -> list[str]:
-    """Accept / reject queue items and persist both the chart and the queue file."""
+    """Accept / reject queue items and persist both the chart and the queue file.
+    `reason` / `reason_code` apply to every decision in this call (one call per reasoned decision)."""
     data_dir = Path(data_dir)
     qp, batch = load_queue(patient_id, stem, data_dir.parent / "proposed")
     patient = load_patient(patient_id, data_dir)
     done = []
     for iid in reject:
-        done.append(reject_item(batch, iid))
+        done.append(reject_item(batch, iid, review_record("rejected", by, reason, reason_code)))
     ids = list(accept)
     if accept_all:
         ids = [it["id"] for k in KINDS for it in batch["proposed"].get(k, []) if it["status"] == "proposed"]
     for iid in ids:
-        done += accept_item(patient, batch, iid)
+        done += accept_item(patient, batch, iid, review=review_record("accepted", by, reason, reason_code))
     if accept_changes:
         for ch in batch.get("medication_changes", []):
             if ch["status"] == "proposed":
-                done.append(accept_medication_change(patient, ch))
+                done.append(accept_medication_change(patient, ch, review_record("accepted", by, reason, reason_code)))
     if done:
         save_patient(patient, data_dir)
         qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
@@ -167,6 +204,9 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--reject", nargs="*", default=[])
     ap.add_argument("--accept-all", action="store_true")
     ap.add_argument("--accept-changes", action="store_true", help="apply all proposed medication changes")
+    ap.add_argument("--reason", help="free-text reason recorded on every decision in this call")
+    ap.add_argument("--reason-code", choices=REASON_CODES)
+    ap.add_argument("--by", default=DEFAULT_REVIEWER)
     ap.add_argument("--data-dir", default=str(DATA_DIR))
     args = ap.parse_args(argv)
 
@@ -176,16 +216,16 @@ def main(argv: list[str]) -> int:
 
     done = []
     for iid in args.reject:
-        done.append(reject_item(batch, iid))
+        done.append(reject_item(batch, iid, review_record("rejected", args.by, args.reason, args.reason_code)))
     ids = args.accept
     if args.accept_all:
         ids = [it["id"] for k in KINDS for it in batch["proposed"].get(k, []) if it["status"] == "proposed"]
     for iid in ids:
-        done += accept_item(patient, batch, iid)
+        done += accept_item(patient, batch, iid, review=review_record("accepted", args.by, args.reason, args.reason_code))
     if args.accept_changes:
         for ch in batch.get("medication_changes", []):
             if ch["status"] == "proposed":
-                done.append(accept_medication_change(patient, ch))
+                done.append(accept_medication_change(patient, ch, review_record("accepted", args.by, args.reason, args.reason_code)))
 
     if done:
         save_patient(patient, data_dir)

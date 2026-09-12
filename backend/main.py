@@ -21,7 +21,8 @@ sys.path.insert(0, str(ROOT))
 
 from ehr.extract import PROPOSED_DIR, load_note_file, run_extraction  # noqa: E402
 from ehr.reason import monitored_codes, run_reasoning  # noqa: E402
-from ehr.review import apply_review, list_queues  # noqa: E402
+from ehr.compose import run_compose  # noqa: E402
+from ehr.review import REASON_CODES, apply_review, list_queues  # noqa: E402
 from ehr.trend import DATA_DIR, load_patient, trend_from_patient  # noqa: E402
 
 NOTES_DIR = ROOT / "data" / "notes"
@@ -73,6 +74,7 @@ def patient_summary(pid: str):
         "problems": [{**p, "monitored_codes": monitored[p["id"]], "note_links": nlp_links.get(p["id"], 0)} for p in d["problems"]],
         "counts": {k: len(d[k]) for k in ("problems", "observations", "medications", "encounters", "notes", "links", "insights")},
         "insights": d["insights"],
+        "documents": d.get("documents", []),
     }
 
 
@@ -162,13 +164,19 @@ class ReviewBody(BaseModel):
     reject: list[str] = []
     accept_all: bool = False
     accept_changes: bool = False
+    reason: str | None = None
+    reason_code: str | None = None
+    by: str = "Dr. Chen"
 
 
 @app.post("/api/patients/{pid}/queue/{stem}/review")
 def review(pid: str, stem: str, body: ReviewBody):
     try:
+        if body.reason_code is not None and body.reason_code not in REASON_CODES:
+            raise HTTPException(400, f"reason_code must be one of {REASON_CODES}")
         done = apply_review(pid, stem, accept=body.accept, reject=body.reject,
-                            accept_all=body.accept_all, accept_changes=body.accept_changes, data_dir=DATA_DIR)
+                            accept_all=body.accept_all, accept_changes=body.accept_changes,
+                            reason=body.reason, reason_code=body.reason_code, by=body.by, data_dir=DATA_DIR)
     except FileNotFoundError:
         raise HTTPException(404, f"no queue {stem}")
     except (KeyError, ValueError) as e:
@@ -247,6 +255,30 @@ def reason(pid: str, body: ReasonBody):
     except Exception as e:
         raise HTTPException(502, f"reasoning failed: {type(e).__name__}: {e}")
     return batch
+
+
+class ComposeBody(BaseModel):
+    problem_id: str
+    kind: str = "referral"
+    audience: str = "nephrology"
+    mode: str = "live"  # live | replay
+    window: str = "1y"
+
+
+@app.post("/api/patients/{pid}/compose")
+def compose_doc(pid: str, body: ComposeBody):
+    replay = None
+    if body.mode == "replay":
+        replay = PROPOSED_DIR / pid / f"{body.kind}_{body.problem_id}.raw.json"
+        if not replay.exists():
+            raise HTTPException(400, "no saved model response to replay for this document; run live once")
+    try:
+        return run_compose(pid, body.problem_id, kind=body.kind, audience=body.audience, window=body.window,
+                           replay=replay, data_dir=DATA_DIR)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+    except Exception as e:
+        raise HTTPException(502, f"composition failed: {type(e).__name__}: {e}")
 
 
 PRISTINE = DATA_DIR / ".pristine"   # snapshot of every chart at server start; gitignored

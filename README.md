@@ -17,7 +17,8 @@ human accepts it.
 | `ehr/trend.py` | `trend(patient_id, loinc_code, window)` -> TrendSummary (§9) |
 | `ehr/extract.py` | note -> proposed observations / problems / medications / links (§3, §4, §7) |
 | `ehr/reason.py` | TrendSummaries + chart context -> proposed Insights (§10) |
-| `ehr/review.py` | accept / reject queue items into the chart |
+| `ehr/review.py` | accept / reject queue items into the chart, recording who, when and why |
+| `ehr/compose.py` | chart state + signed insights + review decisions -> a generated referral letter with citations |
 | `ehr/llm.py` | the single Claude API call site (`claude-opus-5`, structured output) |
 | `tests/` | `python3 -m pytest tests -q` |
 
@@ -54,8 +55,13 @@ In the UI, from a fresh chart (CKD stage 3 selected):
 3. **Reason about this problem** → **Replay last Claude run**. Four insights, each citing real ids:
    restage CKD; naproxen as contributor (with lisinopril + furosemide); **stop metformin at eGFR
    15.6**; the two creatinine assays disagree, repeat the lab.
-4. Hover the evidence chips to light up the cited points and bands; **Sign** the insight.
-5. **Reset demo** (header) restores the chart to its server-start state and clears the queues.
+4. Hover the evidence chips to light up the cited points and bands; **Sign** the insight. Reject
+   something with a reason (the stage-4 restaging, say: "repeat serum creatinine first"). That
+   reason is the reasoning ledger, and it shows up in the referral.
+5. **Generate referral** → **Nephrology referral with Claude** (or replay). A letter rendered from
+   the chart, the signed insight and your decisions, every section carrying tap-through citations.
+   **Read** it, then **Sign referral**.
+6. **Reset demo** (header) restores the chart to its server-start state and clears the queues.
    (Start the server from a clean chart, since that is the state it snapshots.)
 
 Same flow from the shell:
@@ -65,6 +71,8 @@ python3 -m ehr.extract data/notes/note_demo_002.json --replay data/proposed/pt_0
 python3 -m ehr.review pt_001 note_demo_002 --accept-all --accept-changes
 python3 -m ehr.reason pt_001 --problem prob_0057 --replay data/proposed/pt_001/reason_prob_0057.raw.json
 python3 -m ehr.review pt_001 reason_prob_0057 --list
+python3 -m ehr.review pt_001 note_demo_002 --reject prob_demo_002_01 --reason-code needs_confirmation --reason "repeat serum creatinine first"
+python3 -m ehr.compose pt_001 --problem prob_0057 --kind referral --audience nephrology   # or --replay <raw.json>
 ```
 
 Drop `--replay` to call Claude live (each call is roughly 10-15k tokens). Every live run writes a
@@ -75,6 +83,18 @@ file over the pointer. Reset from the shell:
 
 The decision moment: creatinine (LOINC `38483-4`) rises from 1.6 to 5.7 over the year, eGFR falls
 to 15.6, the note reveals daily naproxen since April, and metformin 500 mg is still on board.
+
+## Schema additions proposed (not yet in docs/patient-model-schema.md)
+
+Two shapes the build needs that the schema doc does not define. Both are additive; flag for team sign-off.
+
+1. **Review record** on any proposed item once decided (`ehr/review.py`):
+   `"review": {"by", "at", "decision": "accepted"|"rejected", "reason_code", "reason"}`. Reason codes:
+   `already_known`, `not_relevant`, `disagree`, `needs_confirmation`, `other`. A rejection with a reason
+   is the clinician's judgment made explicit; the composer reads these as the reasoning ledger.
+2. **Document entity** (`ehr/compose.py`): `doc_` prefix, `{patient_id, problem_id, kind, audience, title,
+   sections: [{heading, text, cites}], questions, status, provenance: {source: "composition", model,
+   evidence, confidence}, created_at}`; signed documents live under a new top-level `documents` list.
 
 ## Things the team should know
 

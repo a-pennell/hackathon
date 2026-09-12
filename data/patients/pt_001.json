@@ -69330,6 +69330,36 @@
       "provenance": {
         "source": "fhir_import"
       }
+    },
+    {
+      "id": "med_demo_002_01",
+      "patient_id": "pt_001",
+      "name": "Naproxen",
+      "code": null,
+      "segments": [
+        {
+          "start": "2026-04-01",
+          "end": "2026-09-11",
+          "dose": "500 mg",
+          "route": "PO",
+          "frequency": "twice a day"
+        }
+      ],
+      "status": "accepted",
+      "provenance": {
+        "source": "nlp_extraction",
+        "note_id": "note_demo_002",
+        "quote": "he has been taking naproxen 500 mg twice a day most days since around April, over the counter",
+        "model": "extractor-v1/claude-opus-5",
+        "confidence": 0.9
+      },
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-12T09:22:02-07:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "consistent with the timeline"
+      }
     }
   ],
   "encounters": [
@@ -73626,6 +73656,94 @@
         "source": "fhir_import"
       },
       "created_at": "2026-09-12T08:54:58-07:00"
+    },
+    {
+      "id": "lnk_demo_002_33",
+      "from": "med_demo_002_01",
+      "to": "LOINC:2160-0",
+      "type": "suspected_cause",
+      "status": "accepted",
+      "provenance": {
+        "source": "nlp_extraction",
+        "note_id": "note_demo_002",
+        "quote": "Was not aware this was a problem for his kidneys.",
+        "model": "extractor-v1/claude-opus-5",
+        "confidence": 0.7
+      },
+      "created_at": "2026-09-12T09:22:02-07:00",
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-12T09:22:02-07:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "consistent with the timeline"
+      }
+    },
+    {
+      "id": "lnk_demo_002_32",
+      "from": "med_demo_002_01",
+      "to": "prob_demo_002_01",
+      "type": "suspected_cause",
+      "status": "accepted",
+      "provenance": {
+        "source": "nlp_extraction",
+        "note_id": "note_demo_002",
+        "quote": "Daily NSAID use since April, previously unknown to us. Counseled to stop naproxen today.",
+        "model": "extractor-v1/claude-opus-5",
+        "confidence": 0.85
+      },
+      "created_at": "2026-09-12T09:22:02-07:00",
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-12T09:22:02-07:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "consistent with the timeline"
+      }
+    },
+    {
+      "id": "lnk_demo_002_10",
+      "from": "obs_7f3ce7a6",
+      "to": "prob_0057",
+      "type": "relevant_to",
+      "status": "accepted",
+      "provenance": {
+        "source": "nlp_extraction",
+        "note_id": "note_demo_002",
+        "quote": "creatinine 5.7",
+        "model": "extractor-v1/claude-opus-5",
+        "confidence": 0.93
+      },
+      "created_at": "2026-09-12T09:22:02-07:00",
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-12T09:22:02-07:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "consistent with the timeline"
+      }
+    },
+    {
+      "id": "lnk_demo_002_21",
+      "from": "note_demo_002",
+      "to": "prob_0057",
+      "type": "evidence_for",
+      "status": "accepted",
+      "provenance": {
+        "source": "nlp_extraction",
+        "note_id": "note_demo_002",
+        "quote": "Reports about three weeks of fatigue, poor appetite, and nausea most mornings, no vomiting.",
+        "model": "extractor-v1/claude-opus-5",
+        "confidence": 0.9
+      },
+      "created_at": "2026-09-12T09:22:02-07:00",
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-12T09:22:02-07:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "consistent with the timeline"
+      }
     }
   ],
   "insights": []

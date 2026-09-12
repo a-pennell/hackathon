@@ -229,6 +229,11 @@ def test_review_accept_and_reject(patient, note, raw):
     with pytest.raises(ValueError):
         accept_item(chart, batch, prob["id"])
     assert not any(p["id"] == prob["id"] for p in chart["problems"])
+    # a link into the rejected problem cannot be signed either (no dangling links on the chart)
+    treats = next(l for l in batch["proposed"]["links"] if l["type"] == "treats" and l["to"] == prob["id"])
+    with pytest.raises(ValueError):
+        accept_item(chart, batch, treats["id"])
+    assert not any(l["id"] == treats["id"] for l in chart["links"])
 
     msg = accept_medication_change(chart, batch["medication_changes"][0])
     hctz = next(m for m in chart["medications"] if m["id"] == "med_hctz")

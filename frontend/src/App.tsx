@@ -3,7 +3,7 @@ import { api } from "./api";
 import Inbox from "./Inbox";
 import ProblemList from "./ProblemList";
 import Timeline from "./Timeline";
-import type { NoteFile, PatientSummary, QueueBatch, Timeline as TL } from "./types";
+import type { Document, NoteFile, PatientSummary, QueueBatch, Timeline as TL } from "./types";
 
 const PID = "pt_001";
 const WINDOWS = ["3m", "6m", "1y", "2y", "5y", "all"];
@@ -23,8 +23,9 @@ export default function App() {
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [menu, setMenu] = useState<"note" | "reason" | null>(null);
+  const [menu, setMenu] = useState<"note" | "reason" | "compose" | null>(null);
   const [reading, setReading] = useState<NoteFile | null>(null);
+  const [readingDoc, setReadingDoc] = useState<Document | null>(null);
 
   const refresh = useCallback(async () => {
     const [s, q, n] = await Promise.all([api.patient(PID), api.queue(PID), api.notes()]);
@@ -76,7 +77,7 @@ export default function App() {
   );
 
   const review = useCallback(
-    async (stem: string, body: { accept?: string[]; reject?: string[]; accept_all?: boolean; accept_changes?: boolean }) => {
+    async (stem: string, body: import("./api").ReviewBody) => {
       setBusy(stem);
       setError(null);
       try {
@@ -99,6 +100,21 @@ export default function App() {
     try {
       if (!n.file) return;
       await api.extract(PID, n.file, mode);
+      await refresh();
+    } catch (e) {
+      setError(String((e as Error).message ?? e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const runCompose = async (mode: "live" | "replay") => {
+    if (!problem) return;
+    setMenu(null);
+    setBusy("compose");
+    setError(null);
+    try {
+      await api.compose(PID, problem, "referral", "nephrology", mode, window_);
       await refresh();
     } catch (e) {
       setError(String((e as Error).message ?? e));
@@ -164,7 +180,7 @@ export default function App() {
           </small>
         </div>
         <span className="spacer" />
-        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Reasoning…" : busy === "reset" ? "Resetting…" : "Signing…"}</span>}
+        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Reasoning…" : busy === "compose" ? "Composing the referral…" : busy === "reset" ? "Resetting…" : "Signing…"}</span>}
         <button className="btn ghost small" disabled={!!busy} onClick={runReset} title="Restore the chart to its state at server start">
           Reset demo
         </button>
@@ -204,6 +220,21 @@ export default function App() {
             </div>
           )}
         </div>
+        <div className="rel" onClick={(e) => e.stopPropagation()}>
+          <button className="btn" disabled={!!busy || !problem} onClick={() => setMenu(menu === "compose" ? null : "compose")}>
+            Generate referral ▾
+          </button>
+          {menu === "compose" && (
+            <div className="menu">
+              <button onClick={() => runCompose("live")}>
+                <div className="x">Nephrology referral with Claude <small>· chart state + signed insights + your decisions</small></div>
+              </button>
+              <button onClick={() => runCompose("replay")}>
+                <div className="x">Replay last Claude run <small>· no API call</small></div>
+              </button>
+            </div>
+          )}
+        </div>
         <div className="seg">
           {WINDOWS.map((w) => (
             <button key={w} className={w === window_ ? "on" : ""} onClick={() => setWindow(w)}>
@@ -232,8 +263,54 @@ export default function App() {
         )}
       </main>
 
-      <Inbox queues={queues} problemId={problem} focusIds={focusIds} chartMedIds={new Set((tl?.medications ?? []).map((m) => m.id))} chartInsights={summary.insights} labels={labels} highlight={highlight} onHover={hover} onReview={review} busy={busy} />
+      <Inbox queues={queues} problemId={problem} focusIds={focusIds} chartMedIds={new Set((tl?.medications ?? []).map((m) => m.id))} chartInsights={summary.insights} chartDocuments={summary.documents ?? []} labels={labels} highlight={highlight} onHover={hover} onReview={review} onReadDocument={setReadingDoc} busy={busy} />
 
+      {readingDoc && (
+        <div className="modal-bg" onClick={() => setReadingDoc(null)}>
+          <div className="modal wide" onClick={(e) => e.stopPropagation()}>
+            <h3>{readingDoc.title}</h3>
+            <div className="meta">
+              {readingDoc.kind} to {readingDoc.audience} · {readingDoc.status === "accepted" ? "signed" : "proposed, unsigned"} · {readingDoc.provenance.model} · {readingDoc.created_at.slice(0, 16).replace("T", " ")}
+            </div>
+            <div className="letter">
+              <p>Re: {pt.name}, DOB {pt.dob} · {summary.problems.find((p) => p.id === readingDoc.problem_id)?.name}</p>
+              {readingDoc.sections.map((s, i) => (
+                <div key={i}>
+                  <h4>{s.heading}</h4>
+                  <p>{s.text}</p>
+                  <div className="chips" onMouseLeave={() => hover(null)}>
+                    {s.cites.map((id) => (
+                      <span key={id} className={`chip ${highlight.has(id) ? "hi" : ""}`} title={labels[id] ?? id} onMouseEnter={() => hover([id])}>
+                        {id}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {readingDoc.questions.length > 0 && (
+                <>
+                  <h4>Questions for the recipient</h4>
+                  <ol>
+                    {readingDoc.questions.map((q, i) => (
+                      <li key={i}>{q}</li>
+                    ))}
+                  </ol>
+                </>
+              )}
+              <div className="from">Generated from the chart by {readingDoc.provenance.model}. {readingDoc.review ? `${readingDoc.review.decision === "accepted" ? "Signed" : "Rejected"} by ${readingDoc.review.by}.` : "Unsigned."}</div>
+            </div>
+            <div className="row">
+              <span className="spacer" />
+              <button className="btn ghost" onClick={() => setReadingDoc(null)}>Close</button>
+              {readingDoc.status === "proposed" && readingDoc.queue && (
+                <button className="btn primary" onClick={() => { const q = readingDoc.queue!; setReadingDoc(null); review(q, { accept: [readingDoc.id] }); }}>
+                  Sign referral
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {reading && (
         <div className="modal-bg" onClick={() => setReading(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
