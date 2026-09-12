@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import json
 import re
 import sys
@@ -46,6 +47,7 @@ FLAGGED_DECISIONS = [
     "reference_range comes from a hardcoded table (Synthea emits none); null for other codes.",
     "Synthea emits each CKD stage as its own Condition; one Problem per Condition is kept (earlier stages resolved). Merging into a single CKD problem is a team call.",
     "Creatinine stays under both Synthea codes (2160-0 serum, 38483-4 whole blood; different generators, different baselines); both are 'monitors' series for CKD. --merge-creatinine-codes re-codes 38483-4 to 2160-0.",
+    "eGFR (33914-3) values that share a DiagnosticReport panel with serum creatinine 2160-0 are excluded (counted in the report): Synthea derives them from the flat serum series, so under one code they interleave with the CKD-tracking eGFR and plot as noise. --keep-panel-egfr disables this.",
     "'treats' links come only from MedicationRequest.reasonReference (explicit in FHIR), nothing inferred.",
 ]
 
@@ -77,11 +79,13 @@ def ensure_tz(ts: str | None, label: str, report: dict) -> str | None:
 
 
 class Importer:
-    def __init__(self, bundle: dict, patient_id: str, keep_findings: bool, merge_creatinine_codes: bool):
+    def __init__(self, bundle: dict, patient_id: str, keep_findings: bool, merge_creatinine_codes: bool,
+                 keep_panel_egfr: bool = False):
         self.bundle = bundle
         self.pid = patient_id
         self.keep_findings = keep_findings
         self.merge_creatinine_codes = merge_creatinine_codes
+        self.keep_panel_egfr = keep_panel_egfr
         self.refmap = fullurl_map(bundle)
         self.report: dict = {
             "patient_id": patient_id,
@@ -97,6 +101,7 @@ class Importer:
             "duplicate_notes": 0,
             "lab_panel_reports": 0,
             "creatinine_recoded": 0,
+            "excluded_observations": Counter(),
             "warnings": [],
             "flagged_decisions": FLAGGED_DECISIONS,
         }
@@ -207,25 +212,48 @@ class Importer:
                 self.problem_categories[pid] = cat
 
     # ---------------------------------------------------------- observations
+    def panel_codes(self) -> dict[str, set[str]]:
+        """Observation fullUrl -> the set of LOINC codes in the DiagnosticReport panel it belongs to."""
+        members: dict[str, set[str]] = {}
+        for r in resources(self.bundle, "DiagnosticReport"):
+            refs = [self.refkey(x) for x in (r.get("result") or [])]
+            codes = {code_of((self.refmap.get(ref) or {}).get("code")) for ref in refs}
+            for ref in refs:
+                if ref:
+                    members.setdefault(ref, set()).update(codes)
+        return members
+
     def import_observations(self):
         rows = []
+        panels = self.panel_codes()
         for o in resources(self.bundle, "Observation"):
             t = o.get("effectiveDateTime") or o.get("issued")
             comps = o.get("component") or []
+            if (not self.keep_panel_egfr and code_of(o.get("code")) == "33914-3"
+                    and "2160-0" in panels.get(f"urn:uuid:{o.get('id')}", set())):
+                self.report["excluded_observations"]["33914-3 eGFR derived from a serum-creatinine panel (dual-generator duplicate)"] += 1
+                continue
+            # Ids come from a hash of the FHIR resource id, not a running counter, so they survive
+            # re-imports (an exclusion rule that drops 93 observations must not renumber the other 3800).
+            # Synthea uuids share their leading segments, hence the hash rather than a prefix.
+            stem = "obs_" + hashlib.sha1(str(o.get("id", "")).encode()).hexdigest()[:8]
             if "valueQuantity" in o:
-                rows.append((t, o.get("code"), o["valueQuantity"]))
+                rows.append((t, o.get("code"), o["valueQuantity"], stem))
             elif comps and any("valueQuantity" in cp for cp in comps):
-                for cp in comps:
+                for k, cp in enumerate(comps, 1):
                     if "valueQuantity" in cp:
-                        rows.append((t, cp.get("code"), cp["valueQuantity"]))
+                        rows.append((t, cp.get("code"), cp["valueQuantity"], f"{stem}_{k}"))
             elif comps:
                 self.report["unmapped_observations"][f"{code_of(o.get('code'))} {display_of(o.get('code'))} [non-numeric components]"] += 1
             else:
                 kind = next((k for k in o if k.startswith("value")), "no value")
                 self.report["unmapped_observations"][f"{code_of(o.get('code'))} {display_of(o.get('code'))} [{kind}]"] += 1
         rows.sort(key=lambda r: (parse_dt(r[0]) is None, parse_dt(r[0]) or datetime.min.replace(tzinfo=timezone.utc)))
-        for i, (t, code_cc, vq) in enumerate(rows, 1):
-            oid = f"obs_{i:05d}"
+        seen_ids: set[str] = set()
+        for t, code_cc, vq, oid in rows:
+            while oid in seen_ids:  # uuid prefix collision: vanishingly unlikely, handled anyway
+                oid += "x"
+            seen_ids.add(oid)
             code = code_of(code_cc)
             if code == "38483-4" and self.merge_creatinine_codes:
                 code = CREATININE_CANONICAL
@@ -481,6 +509,7 @@ class Importer:
         }
         self.report["medications"]["end_inference"] = dict(self.report["medications"]["end_inference"])
         self.report["unmapped_observations"] = dict(self.report["unmapped_observations"])
+        self.report["excluded_observations"] = dict(self.report["excluded_observations"])
 
     def run(self):
         self.import_patient()
@@ -527,6 +556,10 @@ def print_summary(report: dict):
       f"{report['lab_panel_reports']} lab-panel DiagnosticReports covered by member observations")
     p(f"\nFiltered Conditions (social history, {len(report['filtered_conditions'])}): "
       + ", ".join(sorted(set(report["filtered_conditions"]))))
+    if report.get("excluded_observations"):
+        p("\nObservations excluded on purpose (see flagged decisions):")
+        for k, v in report["excluded_observations"].items():
+            p(f"  {k}: {v}")
     p("\nObservations NOT imported (non-numeric value):")
     for k, v in report["unmapped_observations"].items() or {"(none)": ""}.items():
         p(f"  {k}: {v}")
@@ -551,6 +584,7 @@ def main() -> int:
     ap.add_argument("--out", default="data/patients")
     ap.add_argument("--keep-findings", action="store_true", help="import '(finding)'/'(situation)' Conditions too")
     ap.add_argument("--merge-creatinine-codes", action="store_true", help="re-code whole-blood creatinine 38483-4 to 2160-0")
+    ap.add_argument("--keep-panel-egfr", action="store_true", help="keep eGFR values from serum-creatinine panels (default: excluded)")
     args = ap.parse_args()
 
     bundle = load_bundle(args.bundle)
@@ -560,7 +594,7 @@ def main() -> int:
         print("--id must start with pt_", file=sys.stderr)
         return 2
 
-    out, report = Importer(bundle, pid, args.keep_findings, args.merge_creatinine_codes).run()
+    out, report = Importer(bundle, pid, args.keep_findings, args.merge_creatinine_codes, args.keep_panel_egfr).run()
     report["source_bundle"] = str(args.bundle)
 
     out_dir = Path(args.out)

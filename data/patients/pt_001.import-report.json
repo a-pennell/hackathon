@@ -1,10 +1,10 @@
 {
   "patient_id": "pt_001",
-  "imported_at": "2026-09-11T18:14:42-07:00",
+  "imported_at": "2026-09-12T08:54:58-07:00",
   "counts": {
     "patient": 1,
     "problems": 65,
-    "observations": 3897,
+    "observations": 3804,
     "medications": 17,
     "encounters": 261,
     "notes": 261,
@@ -30,21 +30,21 @@
       "LOINC:2345-7 (Glucose, n=93) -> prob_0004 [t2dm]",
       "LOINC:2160-0 (Creatinine, n=93) -> prob_0009 [ckd]",
       "LOINC:38483-4 (Creatinine (whole blood), n=80) -> prob_0009 [ckd]",
-      "LOINC:33914-3 (eGFR, n=168) -> prob_0009 [ckd]",
+      "LOINC:33914-3 (eGFR, n=75) -> prob_0009 [ckd]",
       "LOINC:6299-2 (BUN, n=80) -> prob_0009 [ckd]",
       "LOINC:2160-0 (Creatinine, n=93) -> prob_0010 [ckd]",
       "LOINC:38483-4 (Creatinine (whole blood), n=80) -> prob_0010 [ckd]",
-      "LOINC:33914-3 (eGFR, n=168) -> prob_0010 [ckd]",
+      "LOINC:33914-3 (eGFR, n=75) -> prob_0010 [ckd]",
       "LOINC:6299-2 (BUN, n=80) -> prob_0010 [ckd]",
       "LOINC:2160-0 (Creatinine, n=93) -> prob_0022 [ckd]",
       "LOINC:38483-4 (Creatinine (whole blood), n=80) -> prob_0022 [ckd]",
-      "LOINC:33914-3 (eGFR, n=168) -> prob_0022 [ckd]",
+      "LOINC:33914-3 (eGFR, n=75) -> prob_0022 [ckd]",
       "LOINC:6299-2 (BUN, n=80) -> prob_0022 [ckd]",
       "LOINC:33762-6 (NT-proBNP, n=6) -> prob_0036 [chf]",
       "LOINC:29463-7 (Body weight, n=81) -> prob_0036 [chf]",
       "LOINC:2160-0 (Creatinine, n=93) -> prob_0057 [ckd]",
       "LOINC:38483-4 (Creatinine (whole blood), n=80) -> prob_0057 [ckd]",
-      "LOINC:33914-3 (eGFR, n=168) -> prob_0057 [ckd]",
+      "LOINC:33914-3 (eGFR, n=75) -> prob_0057 [ckd]",
       "LOINC:6299-2 (BUN, n=80) -> prob_0057 [ckd]"
     ],
     "missing_series": []
@@ -220,6 +220,9 @@
   "duplicate_notes": 261,
   "lab_panel_reports": 564,
   "creatinine_recoded": 0,
+  "excluded_observations": {
+    "33914-3 eGFR derived from a serum-creatinine panel (dual-generator duplicate)": 93
+  },
   "warnings": [],
   "flagged_decisions": [
     "File envelope is {patient, problems, observations, medications, encounters, notes, links, insights}; the schema defines entities, not the wrapper.",
@@ -232,6 +235,7 @@
     "reference_range comes from a hardcoded table (Synthea emits none); null for other codes.",
     "Synthea emits each CKD stage as its own Condition; one Problem per Condition is kept (earlier stages resolved). Merging into a single CKD problem is a team call.",
     "Creatinine stays under both Synthea codes (2160-0 serum, 38483-4 whole blood; different generators, different baselines); both are 'monitors' series for CKD. --merge-creatinine-codes re-codes 38483-4 to 2160-0.",
+    "eGFR (33914-3) values that share a DiagnosticReport panel with serum creatinine 2160-0 are excluded (counted in the report): Synthea derives them from the flat serum series, so under one code they interleave with the CKD-tracking eGFR and plot as noise. --keep-panel-egfr disables this.",
     "'treats' links come only from MedicationRequest.reasonReference (explicit in FHIR), nothing inferred."
   ],
   "treats_links": 9,
@@ -358,7 +362,7 @@
     "LOINC:32207-3 Platelet distribution width [Entitic volume] in Blood by Automated count": 2,
     "LOINC:32623-1 Platelet [Entitic mean volume] in Blood by Automated count": 2,
     "LOINC:33762-6 NT-proBNP": 6,
-    "LOINC:33914-3 eGFR": 168,
+    "LOINC:33914-3 eGFR": 75,
     "LOINC:38483-4 Creatinine (whole blood)": 80,
     "LOINC:39156-5 Body mass index (BMI) [Ratio]": 75,
     "LOINC:44261-6 Patient Health Questionnaire 9 item (PHQ-9) total score [Reported]": 4,

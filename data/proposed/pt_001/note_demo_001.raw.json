@@ -1,0 +1,432 @@
+{
+  "parsed": {
+    "observations": [
+      {
+        "quote": "BP 80/48",
+        "loinc": "8480-6",
+        "value": 80,
+        "unit": "mm[Hg]",
+        "date": null,
+        "problem_refs": [
+          "prob_0002",
+          "prob_0036"
+        ],
+        "confidence": 0.96
+      },
+      {
+        "quote": "BP 80/48",
+        "loinc": "8462-4",
+        "value": 48,
+        "unit": "mm[Hg]",
+        "date": null,
+        "problem_refs": [
+          "prob_0002",
+          "prob_0036"
+        ],
+        "confidence": 0.96
+      },
+      {
+        "quote": "HR 68",
+        "loinc": "8867-4",
+        "value": 68,
+        "unit": "/min",
+        "date": null,
+        "problem_refs": [
+          "prob_0036"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "quote": "wt 79.0 kg",
+        "loinc": "29463-7",
+        "value": 79,
+        "unit": "kg",
+        "date": null,
+        "problem_refs": [
+          "prob_0036"
+        ],
+        "confidence": 0.94
+      },
+      {
+        "quote": "creatinine 3.69",
+        "loinc": "2160-0",
+        "value": 3.69,
+        "unit": "mg/dL",
+        "date": null,
+        "problem_refs": [
+          "prob_0057",
+          "prob_0010"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "quote": "down from 5.57 in April",
+        "loinc": "2160-0",
+        "value": 5.57,
+        "unit": "mg/dL",
+        "date": "2026-04-01",
+        "problem_refs": [
+          "prob_0057"
+        ],
+        "confidence": 0.8
+      },
+      {
+        "quote": "eGFR 24",
+        "loinc": "33914-3",
+        "value": 24,
+        "unit": "mL/min/{1.73_m2}",
+        "date": null,
+        "problem_refs": [
+          "prob_0057"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "quote": "K 4.73",
+        "loinc": "6298-4",
+        "value": 4.73,
+        "unit": "mmol/L",
+        "date": null,
+        "problem_refs": [
+          "prob_0057"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "BUN 17.9",
+        "loinc": "6299-2",
+        "value": 17.9,
+        "unit": "mg/dL",
+        "date": null,
+        "problem_refs": [
+          "prob_0057"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "Glucose 84",
+        "loinc": "2339-0",
+        "value": 84,
+        "unit": "mg/dL",
+        "date": null,
+        "problem_refs": [
+          "prob_0004"
+        ],
+        "confidence": 0.92
+      },
+      {
+        "quote": "Urine albumin/creatinine 123 mg/g",
+        "loinc": "14959-1",
+        "value": 123,
+        "unit": "mg/g",
+        "date": null,
+        "problem_refs": [
+          "prob_0058",
+          "prob_0023"
+        ],
+        "confidence": 0.93
+      }
+    ],
+    "findings": [
+      {
+        "quote": "Feels \"about the same.\" Energy a little low.",
+        "summary": "Stable symptoms with mildly low energy",
+        "problem_refs": [
+          "prob_0057",
+          "prob_0036"
+        ],
+        "confidence": 0.75
+      },
+      {
+        "quote": "Home BP cuff readings running in the 80s over 50s, no dizziness or falls.",
+        "summary": "Home BP readings in the 80s/50s without dizziness or falls",
+        "problem_refs": [
+          "prob_0002"
+        ],
+        "confidence": 0.88
+      },
+      {
+        "quote": "No chest pain, no orthopnea, sleeping on one pillow.",
+        "summary": "No chest pain or orthopnea; sleeps on one pillow",
+        "problem_refs": [
+          "prob_0036",
+          "prob_0005"
+        ],
+        "confidence": 0.87
+      },
+      {
+        "quote": "Blood sugars mostly 90-140 fasting on the 70/30 insulin, one low of 62 last week after skipping lunch.",
+        "summary": "Fasting glucoses 90-140 with one hypoglycemic episode of 62 after skipped lunch",
+        "problem_refs": [
+          "prob_0004"
+        ],
+        "confidence": 0.88
+      },
+      {
+        "quote": "Both knees have been aching for a couple of months, worse after his shift.",
+        "summary": "Bilateral knee pain for ~2 months, worse after work shift",
+        "problem_refs": [
+          "new_1"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "quote": "No swelling, no locking.",
+        "summary": "No knee swelling or locking",
+        "problem_refs": [
+          "new_1"
+        ],
+        "confidence": 0.8
+      },
+      {
+        "quote": "Lungs clear. No JVD. Trace bilateral ankle edema.",
+        "summary": "Exam: clear lungs, no JVD, trace bilateral ankle edema",
+        "problem_refs": [
+          "prob_0036"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "quote": "Knees: mild crepitus bilaterally, no effusion, full ROM.",
+        "summary": "Knee exam: mild bilateral crepitus, no effusion, full range of motion",
+        "problem_refs": [
+          "new_1"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "quote": "Chronic CHF, NYHA II, euvolemic today.",
+        "summary": "Chronic CHF, NYHA class II, euvolemic on exam",
+        "problem_refs": [
+          "prob_0036"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "quote": "Creatinine improved this month but eGFR still in the 20s.",
+        "summary": "Creatinine improved but eGFR remains in the 20s",
+        "problem_refs": [
+          "prob_0057"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "quote": "asked him to hold HCTZ if systolic under 85",
+        "summary": "Instructed to hold HCTZ if systolic BP < 85",
+        "problem_refs": [
+          "prob_0002"
+        ],
+        "confidence": 0.82
+      }
+    ],
+    "problems": [
+      {
+        "ref": "new_1",
+        "quote": "Bilateral knee pain, likely osteoarthritis.",
+        "name": "Bilateral knee pain, likely osteoarthritis",
+        "status": "active",
+        "onset_date": null,
+        "supersedes_problem_id": null,
+        "confidence": 0.85
+      }
+    ],
+    "medications": [
+      {
+        "ref": "m1",
+        "quote": "He takes Aleve from the pharmacy when it's bad, maybe a few times a week.",
+        "name": "Naproxen sodium (Aleve, OTC)",
+        "dose": null,
+        "route": "PO",
+        "frequency": "a few times a week as needed",
+        "start": null,
+        "end": null,
+        "existing_med_id": null,
+        "change": "new",
+        "treats_problem_refs": [
+          "new_1"
+        ],
+        "confidence": 0.8
+      },
+      {
+        "ref": "m2",
+        "quote": "Still taking metformin 500 mg twice daily with meals",
+        "name": "Metformin hydrochloride",
+        "dose": "500 mg",
+        "route": "PO",
+        "frequency": "twice daily with meals",
+        "start": null,
+        "end": null,
+        "existing_med_id": "med_metformin_hydrochloride",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0004"
+        ],
+        "confidence": 0.88
+      },
+      {
+        "ref": "m3",
+        "quote": "lisinopril, HCTZ, amlodipine, metoprolol, clopidogrel, simvastatin",
+        "name": "Lisinopril",
+        "dose": null,
+        "route": null,
+        "frequency": null,
+        "start": null,
+        "end": null,
+        "existing_med_id": "med_lisinopril",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0002",
+          "prob_0036"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "ref": "m4",
+        "quote": "lisinopril, HCTZ, amlodipine, metoprolol, clopidogrel, simvastatin",
+        "name": "Hydrochlorothiazide",
+        "dose": null,
+        "route": null,
+        "frequency": null,
+        "start": null,
+        "end": null,
+        "existing_med_id": "med_hydrochlorothiazide",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0002"
+        ],
+        "confidence": 0.82
+      },
+      {
+        "ref": "m5",
+        "quote": "lisinopril, HCTZ, amlodipine, metoprolol, clopidogrel, simvastatin",
+        "name": "Amlodipine",
+        "dose": null,
+        "route": null,
+        "frequency": null,
+        "start": null,
+        "end": null,
+        "existing_med_id": "med_amlodipine",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0002"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "ref": "m6",
+        "quote": "lisinopril, HCTZ, amlodipine, metoprolol, clopidogrel, simvastatin",
+        "name": "Metoprolol succinate",
+        "dose": null,
+        "route": null,
+        "frequency": null,
+        "start": null,
+        "end": null,
+        "existing_med_id": "med_metoprolol_succinate",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0036",
+          "prob_0005"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "ref": "m7",
+        "quote": "lisinopril, HCTZ, amlodipine, metoprolol, clopidogrel, simvastatin",
+        "name": "Clopidogrel",
+        "dose": null,
+        "route": null,
+        "frequency": null,
+        "start": null,
+        "end": null,
+        "existing_med_id": "med_clopidogrel",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0005"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "ref": "m8",
+        "quote": "lisinopril, HCTZ, amlodipine, metoprolol, clopidogrel, simvastatin",
+        "name": "Simvastatin",
+        "dose": null,
+        "route": null,
+        "frequency": null,
+        "start": null,
+        "end": null,
+        "existing_med_id": "med_simvastatin",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0005",
+          "prob_0007"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "ref": "m9",
+        "quote": "Uses furosemide 40 mg only when his ankles swell, maybe once a week.",
+        "name": "Furosemide",
+        "dose": "40 mg",
+        "route": "PO",
+        "frequency": "as needed (about once a week)",
+        "start": null,
+        "end": null,
+        "existing_med_id": "med_furosemide",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0036"
+        ],
+        "confidence": 0.88
+      },
+      {
+        "ref": "m10",
+        "quote": "Type 2 diabetes on insulin 70/30 and metformin.",
+        "name": "Insulin isophane, human / insulin, regular, human (70/30)",
+        "dose": null,
+        "route": "SC",
+        "frequency": null,
+        "start": null,
+        "end": null,
+        "existing_med_id": "med_insulin_isophane_human_insulin_regular_human_inj",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0004"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "ref": "m11",
+        "quote": "Discussed acetaminophen as first line.",
+        "name": "Acetaminophen",
+        "dose": null,
+        "route": null,
+        "frequency": null,
+        "start": null,
+        "end": null,
+        "existing_med_id": null,
+        "change": "new",
+        "treats_problem_refs": [
+          "new_1"
+        ],
+        "confidence": 0.45
+      }
+    ],
+    "suspected_causes": [
+      {
+        "quote": "Hypertension. Home and office readings low; asked him to hold HCTZ if systolic under 85 and to let us know.",
+        "cause_ref": "med_hydrochlorothiazide",
+        "effect_ref": "LOINC:8480-6",
+        "rationale": "Clinician links HCTZ to the low systolic readings by instructing patient to hold it if systolic <85",
+        "confidence": 0.55
+      }
+    ]
+  },
+  "model": "claude-opus-5",
+  "usage": {
+    "input_tokens": 837,
+    "output_tokens": 4868,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 8251
+  },
+  "request_id": "req_011CeyoiwpQ1JYq6uGj2k9rM"
+}

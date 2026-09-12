@@ -240,11 +240,10 @@ PRISTINE = DATA_DIR / ".pristine"   # snapshot of every chart at server start; g
 
 
 def _snapshot_charts():
+    """Taken fresh on every server start, so 'Reset demo' always returns to the chart you started with."""
     PRISTINE.mkdir(exist_ok=True)
     for p in DATA_DIR.glob("pt_*.json"):
-        target = PRISTINE / p.name
-        if not target.exists():
-            target.write_bytes(p.read_bytes())
+        (PRISTINE / p.name).write_bytes(p.read_bytes())
 
 
 _snapshot_charts()
