@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ehr",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "uvicorn", "backend.main:app", "--port", "8000", "--reload", "--reload-dir", "backend", "--reload-dir", "ehr"],
+      "port": 8000
+    }
+  ]
+}

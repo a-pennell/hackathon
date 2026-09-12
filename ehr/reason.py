@@ -289,6 +289,24 @@ def problems_with_monitors(patient: dict) -> list[str]:
     return seen
 
 
+def run_reasoning(patient_id: str, problem_id: str, *, window=DEFAULT_WINDOW, model: str = DEFAULT_MODEL,
+                  rules_only: bool = False, replay: str | Path | None = None, data_dir: Path = DATA_DIR,
+                  save: bool = True) -> dict:
+    """Reason about one problem and write its queue file (used by the CLI and the API)."""
+    data_dir = Path(data_dir)
+    patient = json.loads((data_dir / f"{patient_id}.json").read_text())
+    raw = json.loads(Path(replay).read_text()) if replay else None
+    batch, raw, _ = reason_problem(patient, problem_id, window=window, model=model, raw=raw, rules_only=rules_only)
+    qp = data_dir.parent / "proposed" / patient_id / f"reason_{problem_id}.json"
+    if save:
+        qp.parent.mkdir(parents=True, exist_ok=True)
+        qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
+        if not replay and not rules_only:
+            qp.with_suffix(".raw.json").write_text(json.dumps(raw, indent=2, ensure_ascii=False))
+    batch["queue_path"] = str(qp)
+    return batch
+
+
 def summarize(batch: dict) -> str:
     lines = [f"=== reasoning for {batch['problem_id']} ({batch['model']}, window {batch.get('window')}) ==="]
     for i in batch["proposed"]["insights"]:
@@ -332,16 +350,10 @@ def main(argv: list[str]) -> int:
             ctx = build_context(patient, pid, window)
             system_blocks, messages = build_messages(ctx)
             print(system_blocks[0]["text"]); print(messages[0]["content"]); continue
-        raw = json.loads(Path(args.replay).read_text()) if args.replay else None
-        batch, raw, _ = reason_problem(patient, pid, window=window, model=args.model, raw=raw, rules_only=args.rules_only)
-        qp = PROPOSED_DIR if data_dir == DATA_DIR else data_dir.parent / "proposed"
-        qp = qp / args.patient_id / f"reason_{pid}.json"
-        qp.parent.mkdir(parents=True, exist_ok=True)
-        qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
-        if not args.replay and not args.rules_only:
-            qp.with_suffix(".raw.json").write_text(json.dumps(raw, indent=2, ensure_ascii=False))
+        batch = run_reasoning(args.patient_id, pid, window=window, model=args.model,
+                              rules_only=args.rules_only, replay=args.replay, data_dir=data_dir)
         print(summarize(batch))
-        print(f"review queue: {qp}\n")
+        print(f"review queue: {batch['queue_path']}\n")
     return 0
 
 

@@ -117,6 +117,47 @@ def list_queue(batch: dict) -> str:
     return "\n".join(lines)
 
 
+def list_queues(patient_id: str, proposed_dir: Path = PROPOSED_DIR) -> list[dict]:
+    """Every queue batch for a patient (note extractions and reasoning runs), newest first."""
+    d = proposed_dir / patient_id
+    if not d.is_dir():
+        return []
+    out = []
+    for p in sorted(d.glob("*.json")):
+        if p.name.endswith(".raw.json"):
+            continue
+        b = json.loads(p.read_text())
+        b["stem"] = p.stem
+        out.append(b)
+    out.sort(key=lambda b: b.get("extracted_at") or b.get("reasoned_at") or "", reverse=True)
+    return out
+
+
+def apply_review(patient_id: str, stem: str, *, accept: list[str] = (), reject: list[str] = (),
+                 accept_all: bool = False, accept_changes: bool = False,
+                 data_dir: Path = DATA_DIR) -> list[str]:
+    """Accept / reject queue items and persist both the chart and the queue file."""
+    data_dir = Path(data_dir)
+    qp, batch = load_queue(patient_id, stem, data_dir.parent / "proposed")
+    patient = load_patient(patient_id, data_dir)
+    done = []
+    for iid in reject:
+        done.append(reject_item(batch, iid))
+    ids = list(accept)
+    if accept_all:
+        ids = [it["id"] for k in KINDS for it in batch["proposed"].get(k, []) if it["status"] == "proposed"]
+    for iid in ids:
+        done += accept_item(patient, batch, iid)
+    if accept_changes:
+        for ch in batch.get("medication_changes", []):
+            if ch["status"] == "proposed":
+                done.append(accept_medication_change(patient, ch))
+    if done:
+        save_patient(patient, data_dir)
+        qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
+    return done
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("patient_id")

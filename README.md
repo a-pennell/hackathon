@@ -23,6 +23,23 @@ human accepts it.
 
 Stdlib-only except `anthropic` (needed only for live extraction / reasoning). Python 3.11+.
 
+## Run the app
+
+```bash
+python3 -m uvicorn backend.main:app --reload --port 8000     # API + serves frontend/dist at /
+```
+
+Open http://localhost:8000. The built frontend is committed in `frontend/dist`; after editing
+`frontend/src`, rebuild with `cd frontend && npm install && npm run build` (Node 22). For live
+frontend reloads use `npm run dev` (port 5173, proxies `/api` to 8000).
+
+The screen is a chart desk: the problem list (left, newest monitored problem first), the
+problem-scoped timeline (centre: monitored lab series with reference bands, medication courses
+as bands on the same axis, encounters as ticks), and the review queue (right). Everything
+AI-proposed is drawn in *pencil* (dashed, amber) until a clinician signs it; signed items become
+ink. "A note arrives" opens a demo note and extracts it (live, or replaying a saved response);
+"Reason about this problem" runs the reasoning layer (live, replay, or rules-only).
+
 ## Demo runbook
 
 Live steps need `ANTHROPIC_API_KEY` exported in your shell. Every step that calls the API also

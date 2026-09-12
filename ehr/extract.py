@@ -488,6 +488,28 @@ def extract_note(patient: dict, note: dict, *, model: str = DEFAULT_MODEL, raw: 
     return batch, raw
 
 
+def run_extraction(patient_id: str, note_file: str | Path, *, model: str = DEFAULT_MODEL,
+                   replay: str | Path | None = None, data_dir: Path = DATA_DIR, save: bool = True) -> dict:
+    """Ingest + extract + queue in one call (used by the CLI and the API). Returns the batch."""
+    data_dir = Path(data_dir)
+    note, encounter = load_note_file(note_file)
+    patient = load_patient(patient_id, data_dir)
+    changes = ingest(patient, note, encounter)
+    if changes and save:
+        save_patient(patient, data_dir)
+    raw = json.loads(Path(replay).read_text()) if replay else None
+    batch, raw = extract_note(patient, note, model=model, raw=raw)
+    batch["ingest"] = changes
+    qp = queue_path(patient_id, note["id"], data_dir.parent / "proposed")
+    if save:
+        qp.parent.mkdir(parents=True, exist_ok=True)
+        qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
+        if not replay:
+            qp.with_suffix(".raw.json").write_text(json.dumps(raw, indent=2, ensure_ascii=False))
+    batch["queue_path"] = str(qp)
+    return batch
+
+
 def summarize(batch: dict) -> str:
     p = batch["proposed"]
     lines = [f"=== extraction for {batch['note_id']} ({batch['model']}) ===",
