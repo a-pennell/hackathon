@@ -42,33 +42,36 @@ ink. "A note arrives" opens a demo note and extracts it (live, or replaying a sa
 
 ## Demo runbook
 
-Live steps need `ANTHROPIC_API_KEY` exported in your shell. Every step that calls the API also
-has an offline path (`--replay <saved raw response>`, or `--rules-only` for reasoning).
+The two Claude calls have been run live once (`claude-opus-5`) and their responses are saved as
+`data/proposed/pt_001/*.raw.json`, so the demo replays them offline and byte-for-byte. Live mode
+needs `ANTHROPIC_API_KEY` exported in the shell that starts the server.
+
+In the UI, from a fresh chart (CKD stage 3 selected):
+
+1. **A note arrives** → pick note 2 → **Extract (replay)**. 42 pencil items land in the queue:
+   the naproxen course (dashed, "cause?"), a stage-4 problem, hypotension, the HCTZ hold.
+2. **sign all** on the note queue. Pencil turns to ink; naproxen appears under the creatinine curve.
+3. **Reason about this problem** → **Replay last Claude run**. Four insights, each citing real ids:
+   restage CKD; naproxen as contributor (with lisinopril + furosemide); **stop metformin at eGFR
+   15.6**; the two creatinine assays disagree, repeat the lab.
+4. Hover the evidence chips to light up the cited points and bands; **Sign** the insight.
+5. **Reset demo** (header) restores the chart to its server-start state and clears the queues.
+   (Start the server from a clean chart, since that is the state it snapshots.)
+
+Same flow from the shell:
 
 ```bash
-# 0. baseline: the chart as imported, plus the trend the reasoning layer will see
-python3 -m ehr.trend pt_001 38483-4 1y
-
-# 1. the note arrives -> extraction -> review queue
-python3 -m ehr.extract data/notes/note_demo_002.json
-python3 -m ehr.review pt_001 note_demo_002 --list
-
-# 2. the clinician accepts (all, or by id) -> items enter the chart as accepted, provenance kept
+python3 -m ehr.extract data/notes/note_demo_002.json --replay data/proposed/pt_001/note_demo_002.raw.json
 python3 -m ehr.review pt_001 note_demo_002 --accept-all --accept-changes
-
-# 3. reasoning on the CKD problem -> proposed Insight citing real ids
-python3 -m ehr.reason pt_001 --problem prob_0057            # or --rules-only without a key
+python3 -m ehr.reason pt_001 --problem prob_0057 --replay data/proposed/pt_001/reason_prob_0057.raw.json
 python3 -m ehr.review pt_001 reason_prob_0057 --list
-python3 -m ehr.review pt_001 reason_prob_0057 --accept-all
 ```
+
+Drop `--replay` to call Claude live (each call is roughly 10-15k tokens). Reset from the shell:
+`git checkout data/patients/pt_001.json && rm data/proposed/pt_001/note_demo_002.json data/proposed/pt_001/reason_prob_0057.json`.
 
 The decision moment: creatinine (LOINC `38483-4`) rises from 1.6 to 5.7 over the year, eGFR falls
 to 15.6, the note reveals daily naproxen since April, and metformin 500 mg is still on board.
-
-## Reset the demo
-
-`git checkout data/patients/pt_001.json && rm -rf data/proposed/pt_001/note_demo_002*` restores the
-chart to the committed state (both demo notes ingested, nothing accepted).
 
 ## Things the team should know
 

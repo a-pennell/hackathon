@@ -1,0 +1,93 @@
+{
+  "parsed": {
+    "insights": [
+      {
+        "statement": "eGFR has fallen from 78.0 on 2025-09-10 to 15.6 on 2026-08-19, an 80% decline (about -0.62 mL/min/week), while whole-blood creatinine rose from 1.62 to 5.7 mg/dL over the same window (+252%). The note documents the interval rise as 3.69 in May to 4.4 in late July to 5.7 now, alongside roughly three weeks of fatigue, poor appetite and morning nausea. These values are well beyond the stage 3 label currently on the chart and the symptom pattern is consistent with uremia.",
+        "evidence": [
+          "prob_0057",
+          "obs_03157",
+          "obs_03889",
+          "obs_03175",
+          "obs_03878",
+          "lnk_demo_002_12",
+          "lnk_demo_002_13",
+          "lnk_demo_002_10",
+          "lnk_demo_002_14",
+          "lnk_demo_002_21",
+          "note_demo_002"
+        ],
+        "suggested_action": "Consider restaging the CKD problem to reflect an eGFR of 15.6 and arranging urgent nephrology review for symptom assessment and renal replacement planning.",
+        "trend_codes": [
+          "33914-3",
+          "38483-4"
+        ],
+        "confidence": 0.88
+      },
+      {
+        "statement": "Naproxen 500 mg twice daily was started on 2026-04-01, within the interval in which creatinine climbed from 3.69 in May to 4.4 in late July to 5.7 on 2026-08-19 and eGFR fell to 15.6. The note records the NSAID as a suspected contributor and that the patient was unaware it was a problem for his kidneys. He is concurrently on lisinopril and as-needed furosemide, a combination that compounds NSAID-related hemodynamic injury.",
+        "evidence": [
+          "med_demo_002_01",
+          "lnk_demo_002_33",
+          "lnk_demo_002_12",
+          "lnk_demo_002_13",
+          "obs_03878",
+          "obs_03889",
+          "med_lisinopril",
+          "med_furosemide",
+          "note_demo_002"
+        ],
+        "suggested_action": "Consider confirming that naproxen has been stopped, counseling against all over-the-counter NSAIDs, and reviewing whether lisinopril and furosemide should be held or adjusted while renal function is reassessed.",
+        "trend_codes": [
+          "38483-4",
+          "33914-3",
+          "2160-0"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "statement": "Metformin 500 mg remains on the active list with an eGFR of 15.6 on 2026-08-19, down from 78.0 a year earlier. Metformin is not recommended at this level of renal function because of lactic acidosis risk. The patient is also on insulin isophane/regular with a recent instruction to reduce the evening dose by 4 units, so glycemic control will need to be managed around any change.",
+        "evidence": [
+          "med_metformin_hydrochloride",
+          "obs_03889",
+          "obs_03157",
+          "med_insulin_isophane_human_insulin_regular_human_inj",
+          "lnk_demo_002_14"
+        ],
+        "suggested_action": "Consider discontinuing metformin and adjusting insulin to cover glycemic control at the current eGFR.",
+        "trend_codes": [
+          "33914-3"
+        ],
+        "confidence": 0.82
+      },
+      {
+        "statement": "On 2026-08-19 the two creatinine series disagree substantially: the serum creatinine result is 1.9408 mg/dL (essentially unchanged from 1.8853 a year earlier, +2.9%) while the whole-blood creatinine is 5.7 mg/dL. BUN is also discordantly flat at 17.25 mg/dL, up only 5% from 16.39, which would be unusual with an eGFR of 15.6. One of these assays may not reflect the patient's true current filtration.",
+        "evidence": [
+          "obs_03151",
+          "obs_03854",
+          "obs_03175",
+          "obs_03878",
+          "obs_03174",
+          "obs_03877",
+          "lnk_demo_002_17",
+          "obs_03889"
+        ],
+        "suggested_action": "Consider repeating a serum creatinine with BUN on a single specimen to confirm which value reflects current renal function before further treatment decisions.",
+        "trend_codes": [
+          "2160-0",
+          "38483-4",
+          "6299-2",
+          "33914-3"
+        ],
+        "confidence": 0.6
+      }
+    ]
+  },
+  "model": "claude-opus-5",
+  "usage": {
+    "input_tokens": 5603,
+    "output_tokens": 1925,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 908
+  },
+  "request_id": "req_011CeyoJC6gdVqcZFKaM3UPE"
+}

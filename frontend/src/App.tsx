@@ -123,6 +123,21 @@ export default function App() {
 
   const hover = useCallback((ids: string[] | null) => setHighlight(new Set(ids ?? [])), []);
 
+  const runReset = async () => {
+    if (!window.confirm("Reset the demo? Unsigns everything and clears the review queue (saved model responses are kept).")) return;
+    setBusy("reset");
+    setError(null);
+    try {
+      await api.reset(PID);
+      setSummary(null);
+      await refresh();
+    } catch (e) {
+      setError(String((e as Error).message ?? e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
   if (!summary) return <div className="sheet empty">{error ?? "Opening chart…"}</div>;
   const pt = summary.patient;
   const selected = summary.problems.find((p) => p.id === problem);
@@ -137,7 +152,10 @@ export default function App() {
           </small>
         </div>
         <span className="spacer" />
-        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Reasoning…" : "Signing…"}</span>}
+        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Reasoning…" : busy === "reset" ? "Resetting…" : "Signing…"}</span>}
+        <button className="btn ghost small" disabled={!!busy} onClick={runReset} title="Restore the chart to its state at server start">
+          Reset demo
+        </button>
         <div className="rel" onClick={(e) => e.stopPropagation()}>
           <button className="btn" disabled={!!busy} onClick={() => setMenu(menu === "note" ? null : "note")}>
             A note arrives ▾

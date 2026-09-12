@@ -25,6 +25,7 @@ export const api = {
     req<{ done: string[] }>(`/api/patients/${pid}/queue/${stem}/review`, { method: "POST", body: JSON.stringify(body) }),
   extract: (pid: string, note_file: string, mode: "live" | "replay") =>
     req<QueueBatch>(`/api/patients/${pid}/extract`, { method: "POST", body: JSON.stringify({ note_file, mode }) }),
+  reset: (pid: string) => req<{ restored: string; queues_cleared: string[] }>(`/api/patients/${pid}/reset`, { method: "POST" }),
   reason: (pid: string, problem_id: string, mode: "live" | "rules" | "replay", window: string) =>
     req<QueueBatch>(`/api/patients/${pid}/reason`, { method: "POST", body: JSON.stringify({ problem_id, mode, window }) }),
 };

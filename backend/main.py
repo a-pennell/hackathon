@@ -236,6 +236,36 @@ def reason(pid: str, body: ReasonBody):
     return batch
 
 
+PRISTINE = DATA_DIR / ".pristine"   # snapshot of every chart at server start; gitignored
+
+
+def _snapshot_charts():
+    PRISTINE.mkdir(exist_ok=True)
+    for p in DATA_DIR.glob("pt_*.json"):
+        target = PRISTINE / p.name
+        if not target.exists():
+            target.write_bytes(p.read_bytes())
+
+
+_snapshot_charts()
+
+
+@app.post("/api/patients/{pid}/reset")
+def reset(pid: str):
+    """Demo reset: restore the chart to its state at server start and clear validated queues.
+    Saved model responses (*.raw.json) are kept so replay still works."""
+    src = PRISTINE / f"{pid}.json"
+    if not src.exists():
+        raise HTTPException(404, f"no pristine snapshot for {pid}")
+    (DATA_DIR / f"{pid}.json").write_bytes(src.read_bytes())
+    removed = []
+    for q in (PROPOSED_DIR / pid).glob("*.json"):
+        if not q.name.endswith(".raw.json"):
+            q.unlink()
+            removed.append(q.name)
+    return {"restored": pid, "queues_cleared": removed}
+
+
 DIST = ROOT / "frontend" / "dist"
 if DIST.is_dir():
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
