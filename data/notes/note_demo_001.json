@@ -1,0 +1,17 @@
+{
+  "encounter": {
+    "id": "enc_0253",
+    "patient_id": "pt_001",
+    "time": "2026-05-20T22:36:58-07:00",
+    "type": "encounter for check up",
+    "summary": "Encounter for check up"
+  },
+  "note": {
+    "id": "note_demo_001",
+    "patient_id": "pt_001",
+    "encounter_id": "enc_0253",
+    "time": "2026-05-20T23:16:58-07:00",
+    "author": "Dr. Chen",
+    "text": "Willie Klocko, 59M. Routine follow-up for diabetes, CKD and heart failure.\n\nS: Feels \"about the same.\" Energy a little low. Home BP cuff readings running in the 80s over 50s, no dizziness or falls. No chest pain, no orthopnea, sleeping on one pillow. Weight stable at home. Blood sugars mostly 90-140 fasting on the 70/30 insulin, one low of 62 last week after skipping lunch.\nBoth knees have been aching for a couple of months, worse after his shift. He takes Aleve from the pharmacy when it's bad, maybe a few times a week. No swelling, no locking. Denies any other new OTC or herbal products.\nStill taking metformin 500 mg twice daily with meals, lisinopril, HCTZ, amlodipine, metoprolol, clopidogrel, simvastatin. Uses furosemide 40 mg only when his ankles swell, maybe once a week.\n\nO: BP 80/48, HR 68, wt 79.0 kg (unchanged). Lungs clear. No JVD. Trace bilateral ankle edema. Knees: mild crepitus bilaterally, no effusion, full ROM.\nLabs today: creatinine 3.69, down from 5.57 in April. eGFR 24. K 4.73. BUN 17.9. Glucose 84. Urine albumin/creatinine 123 mg/g. A1c reviewed.\n\nA/P:\n1. CKD, diabetic kidney disease. Creatinine improved this month but eGFR still in the 20s. Continue to follow monthly. Advised to avoid dehydration.\n2. Type 2 diabetes on insulin 70/30 and metformin. Control acceptable. Reviewed hypoglycemia precautions.\n3. Chronic CHF, NYHA II, euvolemic today. Continue metoprolol, lisinopril; furosemide prn. Home monitoring continues.\n4. Hypertension. Home and office readings low; asked him to hold HCTZ if systolic under 85 and to let us know. No changes today.\n5. Bilateral knee pain, likely osteoarthritis. Discussed acetaminophen as first line. Will address further at next visit.\n\nRTC 4 weeks with BMP, sooner if symptoms."
+  }
+}

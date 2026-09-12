@@ -1,0 +1,17 @@
+{
+  "encounter": {
+    "id": "enc_0262",
+    "patient_id": "pt_001",
+    "time": "2026-09-11T09:00:00-07:00",
+    "type": "office visit",
+    "summary": "Follow-up, CKD and diabetes; fatigue and nausea"
+  },
+  "note": {
+    "id": "note_demo_002",
+    "patient_id": "pt_001",
+    "encounter_id": "enc_0262",
+    "time": "2026-09-11T09:40:00-07:00",
+    "author": "Dr. Chen",
+    "text": "Willie Klocko, 59M, here for follow-up of CKD and diabetes. Wife came with him.\n\nS: Reports about three weeks of fatigue, poor appetite, and nausea most mornings, no vomiting. Some metallic taste. Ankles a bit puffier at the end of the day, uses furosemide about every other day now. No chest pain or shortness of breath at rest. Urinating a normal amount.\nKnees still bothering him. On further questioning he has been taking naproxen 500 mg twice a day most days since around April, over the counter, because \"the Tylenol didn't do anything.\" Was not aware this was a problem for his kidneys.\nStill on metformin 500 mg twice daily, insulin 70/30, lisinopril 10 mg, HCTZ 25 mg, amlodipine 2.5 mg, metoprolol succinate 100 mg, clopidogrel, simvastatin. No missed doses.\nBlood sugars at home 70-110, two readings in the 60s this month.\n\nO: BP 84/52 sitting, HR 72. Wt 79.0 kg. Alert, looks tired. Lungs clear. No JVD. 1+ bilateral pitting edema to the ankles. Abdomen soft.\nMost recent labs (8/19): creatinine 5.7, up from 3.69 in May and 4.4 in late July. eGFR 15.6. K 4.2. BUN 17. Glucose 91. Urine albumin/creatinine 179 mg/g.\n\nA/P:\n1. CKD progressing. Creatinine has climbed steadily since the spring and eGFR is now under 20. Symptoms today (fatigue, nausea, dysgeusia) may be uremic. Repeat BMP, CBC, phosphorus today. Urgent nephrology referral placed.\n2. Daily NSAID use since April, previously unknown to us. Counseled to stop naproxen today. Will review the rest of the medication list against current kidney function once labs are back.\n3. Type 2 diabetes. Running low at home. Reduce evening 70/30 insulin by 4 units. Metformin discussed, decision pending labs and nephrology input.\n4. Chronic CHF with worsening edema. Continue furosemide as needed; reassess after labs.\n5. Hypertension. Hypotensive on three agents. Hold HCTZ starting today.\n6. Bilateral knee osteoarthritis. Topical diclofenac not appropriate either; discussed physical therapy referral.\n\nLabs today, phone follow-up in 48 hours, RTC 1 week."
+  }
+}
