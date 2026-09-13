@@ -1,0 +1,92 @@
+{
+  "parsed": {
+    "insights": [
+      {
+        "statement": "Renal function has deteriorated sharply over the past year: eGFR fell from 55.45 on 2025-09-10 to 15.6 on 2026-08-19 (-71.9%, roughly -0.53 mL/min/week), with whole-blood creatinine rising from 1.62 to 5.7 over the same window (up from 3.69 in May and 4.4 in late July). The patient reports about three weeks of fatigue, poor appetite and morning nausea, which is consistent with uremic symptoms at this level of function. The chart still carries this problem as CKD stage 3, which no longer matches an eGFR of 15.6.",
+        "evidence": [
+          "prob_0057",
+          "obs_eab4656a",
+          "obs_243df5cd",
+          "obs_2a3f64c5",
+          "obs_7f3ce7a6",
+          "lnk_demo_002_12",
+          "lnk_demo_002_13",
+          "lnk_demo_002_14",
+          "lnk_demo_002_10",
+          "note_demo_002",
+          "lnk_demo_002_21"
+        ],
+        "suggested_action": "Consider restaging the CKD problem and arranging urgent nephrology input given eGFR 15.6 with symptoms suggestive of uremia.",
+        "trend_codes": [
+          "33914-3",
+          "38483-4"
+        ],
+        "confidence": 0.86
+      },
+      {
+        "statement": "Naproxen 500 mg twice daily was started 2026-04-01, and the steepest part of the creatinine rise follows it (3.69 in May, 4.4 in late July, 5.7 on 2026-08-19) with eGFR reaching 15.6. The note documents the patient was unaware the NSAID was a problem for his kidneys, and it is recorded as a suspected contributor. Concurrent lisinopril 10 mg daily and as-needed furosemide 40 mg compound the hemodynamic risk of an NSAID in advanced CKD.",
+        "evidence": [
+          "med_demo_002_01",
+          "lnk_demo_002_33",
+          "obs_7f3ce7a6",
+          "obs_243df5cd",
+          "lnk_demo_002_12",
+          "lnk_demo_002_13",
+          "med_lisinopril",
+          "med_furosemide",
+          "note_demo_002"
+        ],
+        "suggested_action": "Consider confirming naproxen has been fully stopped, counseling against all OTC NSAIDs, and reassessing the need for lisinopril and furosemide with a repeat renal panel.",
+        "trend_codes": [
+          "38483-4",
+          "33914-3"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "statement": "Metformin 500 mg remains on the active list with an eGFR of 15.6 on 2026-08-19, well below the threshold at which metformin is contraindicated because of lactic acidosis risk. The patient is also on insulin isophane/regular, so glycemic cover would remain if metformin were held. Nausea and poor appetite over the past three weeks further raise the concern about continuing it.",
+        "evidence": [
+          "med_metformin_hydrochloride",
+          "obs_243df5cd",
+          "med_insulin_isophane_human_insulin_regular_human_inj",
+          "note_demo_002",
+          "lnk_demo_002_21",
+          "lnk_demo_002_14"
+        ],
+        "suggested_action": "Consider stopping metformin and managing glycemia with insulin alone while renal function is this low.",
+        "trend_codes": [
+          "33914-3"
+        ],
+        "confidence": 0.84
+      },
+      {
+        "statement": "The two creatinine series disagree substantially at the same timepoint: serum creatinine is 1.9408 on 2026-08-19, essentially unchanged from 1.8853 a year earlier (+2.9%), while whole-blood creatinine is 5.7 on the same date. BUN is also flat at 17.25 versus 16.39 at baseline, which would be unusual alongside a true creatinine of 5.7. This raises the possibility of an assay, specimen or transcription discrepancy that should be resolved before acting on the absolute values.",
+        "evidence": [
+          "obs_19ab2d4e",
+          "obs_61063e77",
+          "obs_2a3f64c5",
+          "obs_7f3ce7a6",
+          "obs_3093fcf6",
+          "obs_f51c5961",
+          "lnk_demo_002_17",
+          "lnk_demo_002_10"
+        ],
+        "suggested_action": "Consider repeating a serum creatinine and BUN from a single laboratory to confirm the true current level before further dose adjustments.",
+        "trend_codes": [
+          "2160-0",
+          "38483-4",
+          "6299-2"
+        ],
+        "confidence": 0.55
+      }
+    ]
+  },
+  "model": "claude-opus-5",
+  "usage": {
+    "input_tokens": 5720,
+    "output_tokens": 1873,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 908
+  },
+  "request_id": "req_011Cf1zvHQiXQGb2YUmDdsDW"
+}
