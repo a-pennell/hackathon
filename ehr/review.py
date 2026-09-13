@@ -240,11 +240,15 @@ def apply_review(patient_id: str, stem: str, *, accept: list[str] = (), reject: 
     done = []
     for iid in reject:
         done.append(reject_item(batch, iid, review_record("rejected", by, reason, reason_code)))
-    ids = list(accept)
-    if accept_all:
-        ids = [it["id"] for k in KINDS for it in batch["proposed"].get(k, []) if it["status"] == "proposed"]
-    for iid in ids:
+    for iid in accept:
         done += accept_item(patient, batch, iid, review=review_record("accepted", by, reason, reason_code))
+    if accept_all:
+        # Sign everything that can be signed; a link into a rejected or missing endpoint is skipped, not fatal.
+        for iid in [it["id"] for k in KINDS for it in batch["proposed"].get(k, []) if it["status"] == "proposed"]:
+            try:
+                done += accept_item(patient, batch, iid, review=review_record("accepted", by, reason, reason_code))
+            except ValueError as e:
+                done.append(f"skipped {iid}: {e}")
     if accept_changes:
         for ch in batch.get("medication_changes", []):
             if ch["status"] == "proposed":
@@ -277,11 +281,18 @@ def main(argv: list[str]) -> int:
     done = []
     for iid in args.reject:
         done.append(reject_item(batch, iid, review_record("rejected", args.by, args.reason, args.reason_code)))
-    ids = args.accept
+    try:
+        for iid in args.accept:
+            done += accept_item(patient, batch, iid, review=review_record("accepted", args.by, args.reason, args.reason_code))
+    except (KeyError, ValueError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
     if args.accept_all:
-        ids = [it["id"] for k in KINDS for it in batch["proposed"].get(k, []) if it["status"] == "proposed"]
-    for iid in ids:
-        done += accept_item(patient, batch, iid, review=review_record("accepted", args.by, args.reason, args.reason_code))
+        for iid in [it["id"] for k in KINDS for it in batch["proposed"].get(k, []) if it["status"] == "proposed"]:
+            try:
+                done += accept_item(patient, batch, iid, review=review_record("accepted", args.by, args.reason, args.reason_code))
+            except ValueError as e:
+                done.append(f"skipped {iid}: {e}")
     if args.accept_changes:
         for ch in batch.get("medication_changes", []):
             if ch["status"] == "proposed":

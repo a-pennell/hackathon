@@ -192,6 +192,23 @@ def test_record_response_keeps_timestamped_copy(tmp_path):
     assert a != b or json.loads(a.read_text())["parsed"]["v"] in (1, 2)                 # same-second collision tolerated
 
 
+def test_accept_all_skips_links_into_rejected_items(patient, note, raw, tmp_path):
+    from ehr.review import apply_review
+    (tmp_path / "patients").mkdir(); (tmp_path / "proposed" / "pt_t").mkdir(parents=True)
+    ingest(patient, note, None)  # the note is on the chart, as it would be after ingest
+    (tmp_path / "patients" / "pt_t.json").write_text(json.dumps(patient))
+    batch = validate(patient, note, raw, "claude-test")
+    (tmp_path / "proposed" / "pt_t" / "note_demo_002.json").write_text(json.dumps(batch))
+    knee = batch["proposed"]["problems"][1]["id"]
+    apply_review("pt_t", "note_demo_002", reject=[knee], reason_code="not_relevant", data_dir=tmp_path / "patients")
+    done = apply_review("pt_t", "note_demo_002", accept_all=True, accept_changes=True, data_dir=tmp_path / "patients")
+    skipped = [d for d in done if d.startswith("skipped")]
+    assert skipped and all(knee in d for d in skipped)          # the treats link into the rejected problem
+    chart = json.loads((tmp_path / "patients" / "pt_t.json").read_text())
+    assert not any(l["to"] == knee for l in chart["links"])
+    assert any(m["name"] == "Naproxen" for m in chart["medications"])  # everything else signed
+
+
 def test_ingest_is_idempotent(patient, note):
     enc = {"id": "enc_0002", "patient_id": "pt_t", "time": "2026-09-12T09:00:00-07:00", "type": "office visit", "summary": "x"}
     n2 = dict(note, id="note_x", encounter_id="enc_0002")
