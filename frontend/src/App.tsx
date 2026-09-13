@@ -25,18 +25,28 @@ export default function App() {
   const [trail, setTrail] = useState<TrailEntry[]>([]);
   const [coding, setCoding] = useState<CodingT | null>(null);
   const [queues, setQueues] = useState<QueueBatch[]>([]);
+  const [queueLabels, setQueueLabels] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<NoteFile[]>([]);
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [menu, setMenu] = useState<"note" | "reason" | "compose" | null>(null);
+  const [menu, setMenu] = useState<"note" | null>(null);
+  const [mode, setMode] = useState<"live" | "replay">(() => {
+    try {
+      return (localStorage.getItem("claudeMode") as "live" | "replay") || "replay";
+    } catch {
+      return "replay";
+    }
+  });
+  const [toast, setToast] = useState<{ stem: string; ids: string[]; text: string } | null>(null);
   const [reading, setReading] = useState<NoteFile | null>(null);
   const [readingDoc, setReadingDoc] = useState<Document | null>(null);
 
   const refresh = useCallback(async () => {
     const [s, q, n] = await Promise.all([api.patient(PID), api.queue(PID), api.notes()]);
     setSummary(s);
-    setQueues(q);
+    setQueues(q.batches);
+    setQueueLabels(q.labels);
     setNotes(n.filter((x) => x.patient_id === PID));
     setProblem((p) => p ?? s.problems.find((x) => x.name.startsWith("Chronic kidney disease stage 3"))?.id ?? s.problems.find((x) => (x.monitored_codes?.length ?? 0) > 0)?.id ?? null);
   }, []);
@@ -72,7 +82,7 @@ export default function App() {
 
   // id -> human label, for chips and link rows
   const labels = useMemo(() => {
-    const m: Record<string, string> = {};
+    const m: Record<string, string> = { ...queueLabels };
     if (summary) for (const p of summary.problems) m[p.id] = p.name;
     if (tl) {
       for (const med of [...tl.medications, ...tl.proposed.medications]) m[med.id] = med.name;
@@ -92,7 +102,7 @@ export default function App() {
       if (b.note_id) m[b.note_id] = `note ${b.note_id.replace("note_", "")}`;
     }
     return m;
-  }, [summary, tl, queues]);
+  }, [summary, tl, queues, queueLabels]);
 
   const proposedProblemNames = useMemo(
     () => [...new Set(queues.flatMap((b) => (b.proposed.problems ?? []).filter((p) => p.status === "proposed").map((p) => p.name)))],
@@ -104,8 +114,11 @@ export default function App() {
       setBusy(stem);
       setError(null);
       try {
-        await api.review(PID, stem, body);
+        const r = await api.review(PID, stem, body);
         await refresh();
+        const n = r.decided.length;
+        const verb = body.reject?.length ? "Rejected" : "Signed";
+        if (n > 0) setToast({ stem, ids: r.decided, text: `${verb} ${n === 1 ? "1 item" : n + " items"}` });
       } catch (e) {
         setError(String((e as Error).message ?? e));
       } finally {
@@ -114,6 +127,36 @@ export default function App() {
     },
     [refresh],
   );
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 10000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const undo = async () => {
+    if (!toast) return;
+    const { stem, ids } = toast;
+    setToast(null);
+    setBusy(stem);
+    try {
+      await api.undo(PID, stem, ids);
+      await refresh();
+    } catch (e) {
+      setError(String((e as Error).message ?? e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const setModePersist = (m: "live" | "replay") => {
+    setMode(m);
+    try {
+      localStorage.setItem("claudeMode", m);
+    } catch {
+      /* private mode: fine */
+    }
+  };
 
   const runExtract = async (n: NoteFile, mode: "live" | "replay") => {
     setMenu(null);
@@ -218,13 +261,17 @@ export default function App() {
           </small>
         </div>
         <span className="spacer" />
-        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Reasoning…" : busy === "compose" ? "Composing the referral…" : busy === "orders" ? "Drafting orders…" : busy === "brief" ? "Writing the brief…" : busy === "reset" ? "Resetting…" : "Signing…"}</span>}
-        <button className="btn ghost small" disabled={!!busy} onClick={runReset} title="Restore the chart to its state at server start">
-          Reset demo
-        </button>
+        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Looking at what changed…" : busy === "compose" ? "Drafting the referral…" : busy === "orders" ? "Drafting orders…" : busy === "brief" ? "Writing the brief…" : busy === "reset" ? "Resetting…" : "Saving…"}</span>}
+        <span className="mode" title="Live asks Claude now; saved uses the recorded response, no network">
+          Claude
+          <span className="seg">
+            <button className={mode === "live" ? "on" : ""} onClick={() => setModePersist("live")}>live</button>
+            <button className={mode === "replay" ? "on" : ""} onClick={() => setModePersist("replay")}>saved</button>
+          </span>
+        </span>
         <div className="rel" onClick={(e) => e.stopPropagation()}>
           <button className="btn" disabled={!!busy} onClick={() => setMenu(menu === "note" ? null : "note")}>
-            A note arrives ▾
+            Read a note ▾
           </button>
           {menu === "note" && (
             <div className="menu">
@@ -232,7 +279,7 @@ export default function App() {
                 <button key={n.id} onClick={() => { setMenu(null); setReading(n); }}>
                   <div className="t">
                     {n.id} · {n.time.slice(0, 10)} · {n.author}
-                    {n.has_queue ? " · extracted" : ""}
+                    {n.has_queue ? " · read" : ""}
                   </div>
                   <div className="x">{n.excerpt.replace(/\s+/g, " ").slice(0, 90)}…</div>
                 </button>
@@ -240,45 +287,18 @@ export default function App() {
             </div>
           )}
         </div>
-        <div className="rel" onClick={(e) => e.stopPropagation()}>
-          <button className="btn primary" disabled={!!busy || !problem} onClick={() => setMenu(menu === "reason" ? null : "reason")}>
-            Reason about this problem ▾
-          </button>
-          {menu === "reason" && (
-            <div className="menu">
-              <button onClick={() => runReason("live")}>
-                <div className="x">Ask Claude <small>· trend summaries + med events → insight</small></div>
-              </button>
-              <button onClick={() => runReason("replay")}>
-                <div className="x">Replay last Claude run <small>· no API call</small></div>
-              </button>
-              <button onClick={() => runReason("rules")}>
-                <div className="x">Rules only <small>· deterministic, offline</small></div>
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="rel" onClick={(e) => e.stopPropagation()}>
-          <button className="btn" disabled={!!busy || !problem} onClick={() => setMenu(menu === "compose" ? null : "compose")}>
-            Compose ▾
-          </button>
-          {menu === "compose" && (
-            <div className="menu">
-              <button onClick={() => runOrders("live")}>
-                <div className="x">Orders from signed insights <small>· Claude turns signed actions into orders to sign</small></div>
-              </button>
-              <button onClick={() => runOrders("replay")}>
-                <div className="x">Orders · replay last run <small>· no API call</small></div>
-              </button>
-              <button onClick={() => runCompose("live")}>
-                <div className="x">Nephrology referral with Claude <small>· chart state + signed insights + your decisions</small></div>
-              </button>
-              <button onClick={() => runCompose("replay")}>
-                <div className="x">Referral · replay last run <small>· no API call</small></div>
-              </button>
-            </div>
-          )}
-        </div>
+        <button className="btn primary" disabled={!!busy || !problem} onClick={() => runReason(mode)} title="Trend summaries and medication events go to Claude; insights come back for your signature">
+          What's changed?
+        </button>
+        <button className="btn" disabled={!!busy || !problem} onClick={() => runOrders(mode)} title="Turn the actions in signed insights into orders to sign">
+          Draft orders
+        </button>
+        <button className="btn" disabled={!!busy || !problem} onClick={() => runCompose(mode)} title="A nephrology referral rendered from the chart, signed insights and your decisions">
+          Draft referral
+        </button>
+        <button className="btn ghost small" disabled={!!busy} onClick={runReset} title="Restore the chart to its state at server start">
+          Reset demo
+        </button>
         <div className="seg">
           {WINDOWS.map((w) => (
             <button key={w} className={w === window_ ? "on" : ""} onClick={() => setWindow(w)}>
@@ -300,7 +320,7 @@ export default function App() {
             </span>
           </div>
         )}
-        {selected && <Brief brief={brief} highlight={highlight} onHover={hover} onAskClaude={askBrief} busy={!!busy} />}
+        {selected && <Brief brief={brief} highlight={highlight} onHover={hover} onAskClaude={() => askBrief(mode)} busy={!!busy} mode={mode} />}
         {tl && tl.series.length > 0 ? (
           <Timeline data={tl} highlight={highlight} onHover={(id) => hover(id ? [id] : null)} onOpenNote={openChartNote} />
         ) : (
@@ -312,6 +332,13 @@ export default function App() {
 
       <Inbox queues={queues} problemId={problem} focusIds={focusIds} chartMedIds={new Set((tl?.medications ?? []).map((m) => m.id))} chartInsights={summary.insights} chartDocuments={summary.documents ?? []} labels={labels} highlight={highlight} onHover={hover} onReview={review} onReadDocument={setReadingDoc} busy={busy} />
 
+      {toast && (
+        <div className="toast" role="status">
+          <span>{toast.text}</span>
+          <button onClick={undo}>Undo</button>
+          <span className="bar" />
+        </div>
+      )}
       {readingDoc && (
         <div className="modal-bg" onClick={() => setReadingDoc(null)}>
           <div className="modal wide" onClick={(e) => e.stopPropagation()}>
@@ -366,7 +393,7 @@ export default function App() {
             </h3>
             <div className="meta">
               {reading.time.slice(0, 16).replace("T", " ")} · {reading.file ?? "chart note (imported)"}
-              {reading.has_queue ? " · already extracted (re-running replaces the queue)" : ""}
+              {reading.has_queue ? " · already read (reading again replaces what is waiting)" : ""}
             </div>
             <pre>{reading.text.trim()}</pre>
             <div className="row">
@@ -376,11 +403,8 @@ export default function App() {
               </button>
               {reading.file && (
                 <>
-                  <button className="btn" disabled={!reading.has_replay} title={reading.has_replay ? "" : "no saved model response yet"} onClick={() => runExtract(reading, "replay")}>
-                    Extract (replay)
-                  </button>
-                  <button className="btn primary" onClick={() => runExtract(reading, "live")}>
-                    Extract with Claude
+                  <button className="btn primary" disabled={mode === "replay" && !reading.has_replay} title={mode === "replay" && !reading.has_replay ? "no saved reading yet; switch Claude to live" : ""} onClick={() => runExtract(reading, mode)}>
+                    {mode === "live" ? "Read with Claude" : "Read (saved)"}
                   </button>
                 </>
               )}

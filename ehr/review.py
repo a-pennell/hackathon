@@ -237,6 +237,39 @@ def list_queues(patient_id: str, proposed_dir: Path = PROPOSED_DIR) -> list[dict
     return out
 
 
+def undo_review(patient_id: str, stem: str, ids: list[str], data_dir: Path = DATA_DIR) -> list[str]:
+    """Reverse a signature or rejection: the item returns to proposed and its chart copy is removed.
+    Links that were auto-signed with an endpoint are not reversed unless named. A medication-change
+    order's course edit is not reversed (the order itself is)."""
+    data_dir = Path(data_dir)
+    qp, batch = load_queue(patient_id, stem, data_dir.parent / "proposed")
+    patient = load_patient(patient_id, data_dir)
+    done = []
+    for iid in ids:
+        kind, it = _find(batch, iid)
+        if it is None or it["status"] == "proposed":
+            continue
+        was = it["status"]
+        it["status"] = "proposed"
+        it.pop("review", None)
+        if was == "accepted":
+            lst = patient.get(kind, [])
+            patient[kind] = [x for x in lst if x["id"] != iid]
+            # a link on the chart that now points at an un-signed item is dangling: pull it back too
+            if kind != "links":
+                for l in list(patient.get("links", [])):
+                    if l["from"] == iid or l["to"] == iid:
+                        patient["links"].remove(l)
+                        k2, l2 = _find(batch, l["id"])
+                        if l2:
+                            l2["status"] = "proposed"; l2.pop("review", None); done.append(f"link {l['id']} unsigned")
+        done.append(f"{kind[:-1]} {iid} {'unsigned' if was == 'accepted' else 'un-rejected'}")
+    if done:
+        save_patient(patient, data_dir)
+        qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
+    return done
+
+
 def apply_review(patient_id: str, stem: str, *, accept: list[str] = (), reject: list[str] = (),
                  accept_all: bool = False, accept_changes: bool = False,
                  reason: str | None = None, reason_code: str | None = None, by: str = DEFAULT_REVIEWER,

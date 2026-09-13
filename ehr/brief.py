@@ -70,49 +70,46 @@ def deterministic_brief(patient: dict, problem_id: str, window=DEFAULT_WINDOW, *
     problem = ctx["problem"]
     lines: list[dict] = []
 
-    # 1. each monitored series, the one that moved most first: latest vs baseline inside the window
-    for t in sorted(ctx["trends"], key=lambda t: -abs(t["delta_pct"] or 0)):
+    # 1. what changed most: one sentence for the lead series, the rest in a clause
+    trends = sorted(ctx["trends"], key=lambda t: -abs(t["delta_pct"] or 0))
+    if trends:
+        t = trends[0]
         ev = t.get("evidence_ids", {})
         ids = [i for i in (ev.get("latest"), ev.get("baseline")) if i]
         lat, base = t["latest"], t["baseline"]
         rr = t.get("ref_range_crossing")
         if t["n_points"] == 1:
-            text = f"{t['name']} {_nice(lat['value'])} on {_dmy(lat['time'])}, the only result in the window."
+            text = f"{t['name']} {_nice(lat['value'])} on {_dmy(lat['time'])}, the only result in the window"
         else:
             verb = {"rising": "up", "falling": "down"}.get(t["direction"], "steady")
             pct = f" {abs(t['delta_pct']):.0f}%" if t["delta_pct"] is not None and t["direction"] != "stable" else ""
-            text = (f"{t['name']} {_nice(lat['value'])} on {_dmy(lat['time'])}, {verb}{pct} from {_nice(base['value'])} on {_dmy(base['time'])}"
-                    f" across {t['n_points']} results.")
+            text = f"{t['name']} {_nice(lat['value'])} on {_dmy(lat['time'])}, {verb}{pct} since {_dmy(base['time'])}"
         if rr:
-            text += f" Outside the reference range ({rr['crossed']}) since {_dmy(rr['at'])}."
+            text += f", outside range since {_dmy(rr['at'])}"
             if ev.get("ref_range_crossing"):
                 ids.append(ev["ref_range_crossing"])
-        lines.append({"kind": "trend", "text": text, "ids": list(dict.fromkeys(ids)), "code": t["code"]})
+        others = [o for o in trends[1:] if o["direction"] in ("rising", "falling")]
+        if others:
+            text += "; " + ", ".join(f"{o['name']} {o['direction']} {abs(o['delta_pct'] or 0):.0f}%" for o in others[:2])
+            for o in others[:2]:
+                ids += [i for i in (o.get("evidence_ids") or {}).values() if i]
+        lines.append({"kind": "trend", "text": text + ".", "ids": list(dict.fromkeys(ids)), "code": t["code"]})
 
-    # 2. medication events inside the window (any monitored series carries the same list)
+    # 2. medication events inside the window, one sentence
     events = ctx["trends"][0]["events_in_window"] if ctx["trends"] else []
-    seen = set()
+    seen, parts, mids = set(), [], []
     for e in events:
         key = (e["med_id"], e["kind"], e["time"])
         if key in seen:
             continue
         seen.add(key)
-        verb = {"med_start": "started", "med_stop": "stopped", "med_dose_change": "changed dose"}[e["kind"]]
+        verb = {"med_start": "started", "med_stop": "stopped", "med_dose_change": "dose changed"}[e["kind"]]
         med = next((m for m in patient["medications"] if m["id"] == e["med_id"]), None)
-        src = " (signed from a note)" if med and med["provenance"]["source"] == "nlp_extraction" else ""
-        lines.append({"kind": "med", "text": f"{e['name']} {verb} {_dmy(e['time'])}{src}.", "ids": [e["med_id"]]})
-    if ctx["trends"] and not events:
-        on_board = [m for m in ctx["medications"] if m["ongoing"]]
-        if on_board:
-            lines.append({"kind": "med", "text": f"No medication changes in the window; {len(on_board)} medications on board.",
-                          "ids": [m["id"] for m in on_board][:8]})
-
-    # 3. encounters in the window
-    encs = [e for e in patient["encounters"] if win["start"] <= e["time"][:10] <= win["end"]]
-    if encs:
-        last = max(encs, key=lambda e: e["time"])
-        lines.append({"kind": "visit", "text": f"{len(encs)} encounter{'s' if len(encs) != 1 else ''} in the window, last {_dmy(last['time'])} ({last['type']}).",
-                      "ids": [last["id"]]})
+        src = " (from a note)" if med and med["provenance"]["source"] == "nlp_extraction" else ""
+        parts.append(f"{e['name']} {verb} {_dmy(e['time'])}{src}")
+        mids.append(e["med_id"])
+    if parts:
+        lines.append({"kind": "med", "text": "; ".join(parts[:3]) + ("; and more" if len(parts) > 3 else "") + ".", "ids": list(dict.fromkeys(mids))})
 
     # 4. what is waiting, and what was decided
     pending, pending_ids = 0, []
@@ -126,18 +123,14 @@ def deterministic_brief(patient: dict, problem_id: str, window=DEFAULT_WINDOW, *
                     pending += 1
                     pending_ids.append(it["id"])
     if pending:
-        lines.append({"kind": "queue", "text": f"{pending} proposal{'s' if pending != 1 else ''} about this problem waiting for your decision.",
+        lines.append({"kind": "queue", "text": f"{pending} proposal{'s' if pending != 1 else ''} waiting for your decision.",
                       "ids": pending_ids[:12]})
     ledger = ledger_for_problem(patient, problem_id, proposed_dir)
     rejected = [l for l in ledger if l["decision"] == "rejected" and l.get("reason")]
     if rejected:
         r = rejected[-1]
-        lines.append({"kind": "ledger", "text": f"Last time you rejected {r['what'].split(':', 1)[-1].strip()} ({r['at'][:10]}): “{r['reason']}”.",
+        lines.append({"kind": "ledger", "text": f"You rejected {r['what'].split(':', 1)[-1].strip()} on {_dmy(r['at'])}: “{r['reason']}”.",
                       "ids": [r["id"]]})
-    signed = [i for i in patient.get("insights", []) if i["problem_id"] == problem_id]
-    if signed:
-        i = signed[-1]
-        lines.append({"kind": "insight", "text": f"Signed insight {i['created_at'][:10]}: {i['suggested_action']}", "ids": [i["id"]]})
 
     if not ctx["trends"]:
         lines.insert(0, {"kind": "trend", "text": f"No monitored series for {problem['name']} has results in this window.", "ids": [problem_id]})

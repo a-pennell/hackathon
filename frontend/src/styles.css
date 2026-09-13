@@ -214,7 +214,8 @@ svg.tl .relation.cause { fill: var(--flag); }
 .menu .x { font-size: 12px; color: var(--ink); margin-top: 2px; }
 .menu .x small { color: var(--graphite); }
 .rel { position: relative; }
-.busy { color: var(--graphite); font-size: 12px; font-style: italic; }
+.head { position: relative; flex-wrap: nowrap; }
+.busy { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 2px; padding: 1px 10px; background: var(--paper-2); border: 1px solid var(--rule); border-top: none; border-radius: 0 0 var(--r-md) var(--r-md); color: var(--graphite); font-size: 11px; font-style: italic; white-space: nowrap; z-index: 3; }
 
 /* inbox: low-confidence items recede; routine confirmations fold */
 .card.dim { opacity: 0.55; }
@@ -295,3 +296,28 @@ svg.tl .relation.cause { fill: var(--flag); }
 .coding .note { margin-top: calc(var(--u) * 2); font-size: 11px; color: var(--graphite); font-style: italic; }
 svg.tl .order { fill: var(--paper); stroke: var(--select); stroke-width: 1.5; }
 svg.tl .order.med { fill: var(--select); }
+
+/* findings carry their links as a footer */
+.card .links { margin-top: calc(var(--u) * 1.5); display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11.5px; color: var(--ink-2); }
+.card .links .l { white-space: nowrap; }
+.card .links .l b { font-weight: 600; color: var(--select); }
+.card .links .l.cause b { color: var(--flag); }
+.card .links .l .t { color: var(--graphite); }
+
+/* decided items leave the queue into a strip */
+.strip { margin: calc(var(--u) * 2) calc(var(--u) * 4) 0; font-size: 11px; color: var(--graphite); }
+.strip button { color: var(--graphite); }
+.strip button:hover { color: var(--ink); }
+.strip .n { font-family: var(--mono); }
+
+/* undo toast */
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 20; display: flex; align-items: center; gap: calc(var(--u) * 3);
+  padding: calc(var(--u) * 2) calc(var(--u) * 4); background: var(--ink); color: var(--paper); border-radius: var(--r-md); font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.22); }
+.toast button { color: #fff; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.toast .bar { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--select); animation: drain 10s linear forwards; }
+@keyframes drain { from { width: 100%; } to { width: 0; } }
+@media (prefers-reduced-motion: reduce) { .toast .bar { animation: none; width: 0; } }
+
+/* which Claude: live or the saved draft */
+.mode { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--graphite); }
+.mode .seg button { padding: 2px 8px; }

@@ -38,15 +38,15 @@ def test_deterministic_brief_lines(reason_patient, tmp_path):
     b = deterministic_brief(reason_patient, "prob_ckd", "90d", proposed_dir=pd, today=TODAY)
     assert b["source"] == "computed" and b["window"] == {"start": "2026-06-02", "end": "2026-08-31"}
     kinds = [l["kind"] for l in b["lines"]]
-    assert kinds[0] == "trend" and "med" in kinds and "queue" in kinds and "ledger" in kinds
+    assert kinds == ["trend", "med", "queue", "ledger"]          # four short lines, nothing the lanes already show
     trend = b["lines"][0]
-    assert trend["text"].startswith("Creatinine 1.8 on 30 Aug, up 20% from 1.5 on 2 Jul across 2 results.")
-    assert "Outside the reference range (high)" in trend["text"]
+    assert trend["text"] == "Creatinine 1.8 on 30 Aug, up 20% since 2 Jul, outside range since 2 Jul."
     assert set(trend["ids"]) == {"obs_0003", "obs_0002"}          # latest, baseline (crossing point is the baseline itself)
     med = next(l for l in b["lines"] if l["kind"] == "med")
-    assert med["text"] == "Ibuprofen 600 mg started 20 Jun (signed from a note)." and med["ids"] == ["med_ibuprofen"]
+    assert med["text"] == "Ibuprofen 600 mg started 20 Jun (from a note)." and med["ids"] == ["med_ibuprofen"]
     q = next(l for l in b["lines"] if l["kind"] == "queue")
-    assert b["pending"] == 1 and "1 proposal about this problem" in q["text"] and q["ids"] == ["lnk_n_01"]
+    assert b["pending"] == 1 and q["text"] == "1 proposal waiting for your decision." and q["ids"] == ["lnk_n_01"]
+    assert sum(len(l["text"]) for l in b["lines"]) < 400
     led = next(l for l in b["lines"] if l["kind"] == "ledger")
     assert "repeat serum creatinine first" in led["text"] and led["ids"] == ["prob_n_01"]
     # every id the brief cites exists on the chart or in the queue

@@ -7,7 +7,7 @@ type Props = {
   queues: QueueBatch[];
   problemId: string | null;
   focusIds: Set<string>;       // the selected problem + its monitored series ("LOINC:<code>")
-  chartMedIds: Set<string>;    // medications already on the chart (for folding routine confirmations)
+  chartMedIds: Set<string>;    // medications already on the chart (routine confirmations fold)
   chartInsights: Insight[];
   chartDocuments: Document[];
   labels: Record<string, string>;
@@ -18,13 +18,31 @@ type Props = {
   busy: string | null;
 };
 
-type Kind = "problem" | "result" | "medication" | "link" | "insight" | "document" | "order";
+type Kind = "problem" | "result" | "medication" | "link" | "insight" | "document" | "order" | "finding";
 type AnyItem = Problem | Observation | Medication | Link | Insight | Document | Order;
-type Item = { kind: Kind; it: AnyItem };
+type Status = "proposed" | "accepted" | "rejected";
+
+/** One reviewable thing: a subject (proposed item, or a chart item / note the links hang off) plus its links. */
+type Group = {
+  key: string;
+  kind: Kind;
+  subject: AnyItem | null;      // null when the subject already lives on the chart (a result, the note)
+  subjectId: string;
+  title: React.ReactNode;
+  quote?: string;
+  links: Link[];
+  status: Status;
+  confidence: number | null;
+  hoverIds: string[];
+  review?: Review;
+  routine: boolean;
+  alsoSigns?: string[];         // proposed items that signing this card's links will sign as endpoints
+};
 
 const LOW_CONFIDENCE = 0.6;
 const fmtTime = (s?: string) => (s ? s.slice(0, 16).replace("T", " ") : "");
 const codeLabel = (code: string | null) => REASON_CODES.find((c) => c.code === code)?.label ?? code ?? "";
+const LINK_WORD: Record<string, string> = { relevant_to: "relevant to", evidence_for: "evidence for", treats: "treats", suspected_cause: "suspected cause of", monitors: "monitors" };
 
 export default function Inbox({ queues, problemId, focusIds, chartMedIds, chartInsights, chartDocuments, labels, highlight, onHover, onReview, onReadDocument, busy }: Props) {
   const name = (id: string) => labels[id] ?? id;
@@ -39,10 +57,10 @@ export default function Inbox({ queues, problemId, focusIds, chartMedIds, chartI
   return (
     <aside className="inbox">
       <div className="section-head">
-        <h2>Review queue</h2>
-        {pending > 0 && <span className="count">{pending} unsigned</span>}
+        <h2>To sign</h2>
+        {pending > 0 && <span className="count">{pending} waiting</span>}
       </div>
-      {queues.length === 0 && <div className="quiet">Nothing proposed yet. When a note arrives, its findings land here as pencil until you sign them.</div>}
+      {queues.length === 0 && <div className="quiet">Nothing waiting. When a note is read, its findings land here in pencil until you sign them.</div>}
       {queues.map((b) => (
         <Batch key={b.stem} b={b} focusIds={focusIds} chartMedIds={chartMedIds} name={name} highlight={highlight} onHover={onHover} onReview={onReview} onReadDocument={onReadDocument} busy={busy} />
       ))}
@@ -104,63 +122,108 @@ function ReviewLine({ r }: { r?: Review }) {
   );
 }
 
+/** Build review groups: every proposed item becomes a group carrying the links that leave it;
+ *  links from things already on the chart (a note finding, a charted result) become their own groups. */
+function buildGroups(b: QueueBatch, name: (id: string) => string, chartMedIds: Set<string>): Group[] {
+  const links = (b.proposed.links ?? []) as Link[];
+  const groups: Group[] = [];
+  const claimed = new Set<string>();
+  const statusOf = (subject: AnyItem | null, ls: Link[]): Status => {
+    const all = [...(subject ? [subject.status] : []), ...ls.map((l) => l.status)] as Status[];
+    if (all.some((s) => s === "proposed")) return "proposed";
+    if (subject && subject.status === "rejected") return "rejected";
+    return all.every((s) => s === "accepted") ? "accepted" : all.includes("rejected") ? "rejected" : "proposed";
+  };
+  const add = (kind: Kind, subject: AnyItem | null, subjectId: string, title: React.ReactNode, ls: Link[], extra: Partial<Group> = {}) => {
+    ls.forEach((l) => claimed.add(l.id));
+    const prov = subject?.provenance ?? ls[0]?.provenance;
+    const alsoSigns = [...new Set(ls.flatMap((l) => [l.from, l.to]).filter((id) => id !== subjectId && proposedIds.has(id)))];
+    groups.push({
+      key: subjectId, kind, subject, subjectId, title, links: ls, status: statusOf(subject, ls), alsoSigns,
+      confidence: prov?.confidence ?? null, quote: (subject?.provenance as { quote?: string } | undefined)?.quote ?? ls[0]?.provenance.quote,
+      hoverIds: [subjectId, ...ls.flatMap((l) => [l.from, l.to])],
+      review: (subject as { review?: Review } | null)?.review ?? ls.find((l) => l.review)?.review,
+      routine: false, ...extra,
+    });
+  };
+
+  // A link into a proposed problem can only be signed once that problem exists, so it belongs to the
+  // problem's card; a link out of a proposed item to something already on the chart belongs to the item.
+  const proposedIds = new Set([...(b.proposed.problems ?? []), ...(b.proposed.medications ?? []), ...(b.proposed.observations ?? [])].map((x) => x.id));
+  const own = (id: string) => links.filter((l) => !claimed.has(l.id) && (l.from === id || l.to === id));
+  for (const p of b.proposed.problems ?? []) add("problem", p, p.id, <>New problem <b>{p.name}</b></>, own(p.id));
+  for (const m of b.proposed.medications ?? []) {
+    const s = m.segments[0];
+    add("medication", m, m.id, <><b>{m.name}</b> {s.dose} {s.route} {s.frequency} · {s.start ?? "?"} → {s.end ?? "ongoing"}</>, own(m.id));
+  }
+  for (const o of b.proposed.observations ?? []) add("result", o, o.id, <><b>{o.name}</b> <span className="num">{o.value}</span> {o.unit} · {o.effective_time.slice(0, 10)}</>, own(o.id));
+  for (const i of b.proposed.insights ?? []) add("insight", i, i.id, i.statement, [], { hoverIds: i.evidence });
+  for (const d of b.proposed.documents ?? []) add("document", d, d.id, d.title, [], { hoverIds: d.provenance.evidence ?? [] });
+  for (const o of b.proposed.orders ?? []) {
+    const target = o.kind === "medication_change" ? ` · ${o.change === "stop" ? "stop" : "change dose of"} ${name(o.med_id!)}${o.dose ? " → " + o.dose : ""}` : o.kind === "referral" ? ` · to ${o.audience}` : o.code ? ` · ${o.code.system} ${o.code.value}` : "";
+    add("order", o, o.id, <><b>{o.name}</b>{target}<div className="hint" style={{ marginTop: 2 }}>{o.detail}</div></>, [], { hoverIds: o.provenance.evidence ?? [] });
+  }
+  // remaining links: findings from the note (one group per quote) and results already on the chart (one group per result)
+  const rest = links.filter((l) => !claimed.has(l.id));
+  const byFrom = new Map<string, Link[]>();
+  for (const l of rest) {
+    const k = l.from.startsWith("note_") ? `${l.from}|${l.provenance.quote}` : l.from;
+    byFrom.set(k, [...(byFrom.get(k) ?? []), l]);
+  }
+  for (const [k, ls] of byFrom) {
+    const from = ls[0].from;
+    if (from.startsWith("note_")) {
+      add("finding", null, k, <>{b.review_hints?.[ls[0].id] ?? "Finding"}</>, ls, { hoverIds: ls.flatMap((l) => [l.to]) });
+    } else if (from.startsWith("med_") && chartMedIds.has(from) && ls.every((l) => l.type === "treats")) {
+      add("medication", null, from, <><b>{name(from)}</b> · already on the chart</>, ls, { routine: true });
+    } else {
+      add(from.startsWith("obs_") ? "result" : from.startsWith("med_") ? "medication" : "link", null, from, <b>{name(from)}</b>, ls);
+    }
+  }
+  return groups;
+}
+
 function Batch({
   b, focusIds, chartMedIds, name, highlight, onHover, onReview, onReadDocument, busy,
 }: { b: QueueBatch; focusIds: Set<string>; chartMedIds: Set<string>; name: (id: string) => string; highlight: Set<string>; onHover: Props["onHover"]; onReview: Props["onReview"]; onReadDocument: Props["onReadDocument"]; busy: string | null }) {
   const [showRoutine, setShowRoutine] = useState(false);
-  const links = (b.proposed.links ?? []) as Link[];
-  const items: Item[] = [
-    ...(b.proposed.orders ?? []).map((x) => ({ kind: "order" as Kind, it: x as AnyItem })),
-    ...(b.proposed.documents ?? []).map((x) => ({ kind: "document" as Kind, it: x as AnyItem })),
-    ...(b.proposed.insights ?? []).map((x) => ({ kind: "insight" as Kind, it: x as AnyItem })),
-    ...(b.proposed.problems ?? []).map((x) => ({ kind: "problem" as Kind, it: x as AnyItem })),
-    ...(b.proposed.medications ?? []).map((x) => ({ kind: "medication" as Kind, it: x as AnyItem })),
-    ...(b.proposed.observations ?? []).map((x) => ({ kind: "result" as Kind, it: x as AnyItem })),
-    ...links.map((x) => ({ kind: "link" as Kind, it: x as AnyItem })),
-  ];
+  const [showDecided, setShowDecided] = useState(false);
+  const groups = buildGroups(b, name, chartMedIds);
+  const touches = (g: Group) =>
+    focusIds.has(g.subjectId) || g.hoverIds.some((id) => focusIds.has(id)) ||
+    (g.subject && "problem_id" in g.subject && focusIds.has((g.subject as Insight).problem_id)) || false;
 
-  const touches = (x: Item): boolean => {
-    const id = x.it.id;
-    if (x.kind === "insight" || x.kind === "document" || x.kind === "order") return focusIds.has((x.it as Insight | Document | Order).problem_id);
-    if (x.kind === "link") {
-      const l = x.it as Link;
-      return focusIds.has(l.to) || focusIds.has(l.from);
-    }
-    if (x.kind === "problem") return focusIds.has(id);
-    return links.some((l) => (l.from === id || l.to === id) && (focusIds.has(l.to) || focusIds.has(l.from)));
-  };
-  const isRoutine = (x: Item) => x.kind === "link" && (x.it as Link).type === "treats" && chartMedIds.has((x.it as Link).from);
+  const open = groups.filter((g) => g.status === "proposed" && !g.routine);
+  const routine = groups.filter((g) => g.status === "proposed" && g.routine);
+  const decided = groups.filter((g) => g.status !== "proposed");
+  const changes = b.medication_changes ?? [];
+  const openChanges = changes.filter((c) => c.status === "proposed");
+  const focused = open.filter(touches);
+  const rest = open.filter((g) => !touches(g));
+  const total = open.length + routine.length + openChanges.length;
+  const title = b.note_id ? `Note ${b.note_id.replace("note_", "")}` : b.kind ? `${b.kind[0].toUpperCase() + b.kind.slice(1)} · ${name(b.problem_id!)}` : b.ordered_at ? `Orders · ${name(b.problem_id!)}` : `What changed · ${name(b.problem_id!)}`;
 
-  const routine = items.filter(isRoutine);
-  const main = items.filter((x) => !isRoutine(x));
-  const focused = main.filter(touches);
-  const rest = main.filter((x) => !touches(x));
-  const open = items.filter((x) => x.it.status === "proposed").length + (b.medication_changes ?? []).filter((c) => c.status === "proposed").length;
-
-  const card = (x: Item) => (
-    <Card key={x.it.id} kind={x.kind} it={x.it} b={b} name={name} highlight={highlight} onHover={onHover} onReview={onReview} onReadDocument={onReadDocument} busy={busy} />
-  );
-  const title = b.note_id ? `Note ${b.note_id.replace("note_", "")}` : b.kind ? `${b.kind[0].toUpperCase() + b.kind.slice(1)} · ${name(b.problem_id!)}` : b.ordered_at ? `Orders · ${name(b.problem_id!)}` : `Reasoning · ${name(b.problem_id!)}`;
+  const card = (g: Group) => <GroupCard key={g.key} g={g} b={b} name={name} highlight={highlight} onHover={onHover} onReview={onReview} onReadDocument={onReadDocument} busy={busy} />;
 
   return (
     <section>
       <div className="batch-title">
         <b>{title}</b> · {b.model.split("/").pop()} · {fmtTime(b.extracted_at ?? b.reasoned_at ?? b.composed_at ?? b.ordered_at)}
-        {open > 1 && (
+        {total > 1 && (
           <>
-            {" "}
-            ·{" "}
+            {" "}·{" "}
             <button className="btn small ghost" disabled={busy === b.stem} onClick={() => onReview(b.stem, { accept_all: true, accept_changes: true })}>
-              sign all {open}
+              sign all {total}
             </button>
           </>
         )}
       </div>
+      {total === 0 && <div className="quiet">Everything from this batch is decided.</div>}
       {focused.length > 0 && rest.length > 0 && <div className="focus-head">About this problem</div>}
       {focused.map(card)}
-      {(b.medication_changes ?? []).map((c, i) => (
-        <div key={i} className={`card ${c.status === "proposed" ? "pencil" : ""}`}>
-          <span className={`kind ${c.status === "accepted" ? "ok" : ""}`}>{c.status === "accepted" ? "signed" : "med change"}</span>
+      {openChanges.map((c, i) => (
+        <div key={i} className="card pencil">
+          <span className="kind">med change</span>
           <span className="conf">{c.provenance.confidence}</span>
           <div className="what">
             <b>{name(c.med_id)}</b>: {c.change.replace("_", " ")} effective {c.effective}
@@ -168,15 +231,10 @@ function Batch({
           </div>
           <div className="quote">{c.provenance.quote}</div>
           {c.hint && <div className="hint">{c.hint}</div>}
-          <ReviewLine r={c.review} />
-          {c.status === "proposed" && (
-            <div className="row">
-              <span className="spacer" />
-              <button className="btn small primary" disabled={busy === b.stem} onClick={() => onReview(b.stem, { accept_changes: true })}>
-                Sign
-              </button>
-            </div>
-          )}
+          <div className="row">
+            <span className="spacer" />
+            <button className="btn small primary" disabled={busy === b.stem} onClick={() => onReview(b.stem, { accept_changes: true })}>Sign</button>
+          </div>
         </div>
       ))}
       {focused.length > 0 && rest.length > 0 && <div className="focus-head" style={{ color: "var(--graphite)" }}>Other problems</div>}
@@ -187,6 +245,15 @@ function Batch({
         </button>
       )}
       {showRoutine && routine.map(card)}
+      {(decided.length > 0 || changes.length > openChanges.length) && (
+        <div className="strip">
+          <button onClick={() => setShowDecided((v) => !v)}>
+            {showDecided ? "▾" : "▸"} <span className="n">{decided.filter((g) => g.status === "accepted").length + (changes.length - openChanges.length)}</span> signed
+            {decided.some((g) => g.status === "rejected") && <> · <span className="n">{decided.filter((g) => g.status === "rejected").length}</span> rejected</>}
+          </button>
+        </div>
+      )}
+      {showDecided && decided.map(card)}
       {b.rejected.length > 0 && (
         <div className="quiet">
           {b.rejected.length} item{b.rejected.length > 1 ? "s" : ""} could not be verified and {b.rejected.length > 1 ? "were" : "was"} dropped:{" "}
@@ -201,8 +268,8 @@ function Chips({ ids, name, highlight, onHover }: { ids: string[]; name: (id: st
   return (
     <div className="chips" onMouseLeave={() => onHover(null)}>
       {ids.map((id) => (
-        <span key={id} className={`chip ${highlight.has(id) ? "hi" : ""}`} title={name(id)} onMouseEnter={() => onHover([id])}>
-          {id}
+        <span key={id} className={`chip ${highlight.has(id) ? "hi" : ""}`} title={id} onMouseEnter={() => onHover([id])}>
+          {name(id)}
         </span>
       ))}
     </div>
@@ -240,96 +307,76 @@ function ReasonRow({ onConfirm, onCancel, busy }: { onConfirm: (code: string | n
   );
 }
 
-function Card({
-  kind, it, b, name, highlight, onHover, onReview, onReadDocument, busy,
-}: {
-  kind: Kind; it: AnyItem; b: QueueBatch; name: (id: string) => string; highlight: Set<string>;
-  onHover: (ids: string[] | null) => void; onReview: Props["onReview"]; onReadDocument: Props["onReadDocument"]; busy: string | null;
-}) {
+function GroupCard({
+  g, b, name, highlight, onHover, onReview, onReadDocument, busy,
+}: { g: Group; b: QueueBatch; name: (id: string) => string; highlight: Set<string>; onHover: (ids: string[] | null) => void; onReview: Props["onReview"]; onReadDocument: Props["onReadDocument"]; busy: string | null }) {
   const [rejecting, setRejecting] = useState(false);
-  const st = it.status;
-  const hint = b.review_hints?.[it.id];
-  const prov = it.provenance;
-  let what: React.ReactNode = null;
-  let hoverIds: string[] = [it.id];
-  if (kind === "problem") {
-    const p = it as Problem;
-    what = <>New problem <b>{p.name}</b></>;
-  } else if (kind === "result") {
-    const o = it as Observation;
-    what = <><b>{o.name}</b> <span className="num">{o.value}</span> {o.unit} · {o.effective_time.slice(0, 10)}</>;
-  } else if (kind === "medication") {
-    const m = it as Medication;
-    const s = m.segments[0];
-    what = <><b>{m.name}</b> {s.dose} {s.route} {s.frequency} · {s.start ?? "?"} → {s.end ?? "ongoing"}</>;
-  } else if (kind === "link") {
-    const l = it as Link;
-    hoverIds = [l.from, l.to];
-    what = (
-      <span className="link">
-        {name(l.from)}
-        <span className="arrow">—{l.type.replace("_", " ")}→</span>
-        {name(l.to)}
-      </span>
-    );
-  } else if (kind === "insight") {
-    hoverIds = (it as Insight).evidence;
-  } else if (kind === "document") {
-    hoverIds = (it as Document).provenance.evidence ?? [];
-  } else if (kind === "order") {
-    const o = it as Order;
-    hoverIds = o.provenance.evidence ?? [];
-    const target = o.kind === "medication_change" ? ` · ${o.change === "stop" ? "stop" : "change dose of"} ${name(o.med_id!)}${o.dose ? " → " + o.dose : ""}`
-      : o.kind === "referral" ? ` · to ${o.audience}` : o.code ? ` · ${o.code.system} ${o.code.value}` : "";
-    what = (
-      <>
-        <b>{o.name}</b>{target}
-        <div className="hint" style={{ marginTop: 2 }}>{o.detail}{o.provenance.from_insight ? ` · from ${o.provenance.from_insight}` : ""}</div>
-      </>
-    );
-  }
+  const st = g.status;
   const signed = st === "accepted";
-  const dim = st === "proposed" && (prov.confidence ?? 1) < LOW_CONFIDENCE;
-  const badge = signed ? "signed" : st === "rejected" ? "rejected" : kind === "document" ? `${(it as Document).kind} · ${(it as Document).audience}` : kind === "order" ? `order · ${(it as Order).kind.replace("_", " ")}` : kind;
-  const quiet = kind === "insight" || kind === "document";
+  const dim = st === "proposed" && (g.confidence ?? 1) < LOW_CONFIDENCE;
+  const hint = g.subject ? b.review_hints?.[g.subject.id] : undefined;
+  const quiet = g.kind === "insight" || g.kind === "document";
+  const decideIds = [...(g.subject && g.subject.status === "proposed" ? [g.subject.id] : []), ...g.links.filter((l) => l.status === "proposed").map((l) => l.id)];
+  const badge = signed ? "signed" : st === "rejected" ? "rejected"
+    : g.kind === "document" ? `${(g.subject as Document).kind} · ${(g.subject as Document).audience}`
+    : g.kind === "order" ? `order · ${(g.subject as Order).kind.replace("_", " ")}` : g.kind;
+
   return (
     <div
-      className={`card ${st === "proposed" ? "pencil" : ""} ${dim ? "dim" : ""} ${hoverIds.some((h) => highlight.has(h)) ? "hi" : ""}`}
-      onMouseEnter={() => !quiet && onHover(hoverIds)}
+      className={`card ${st === "proposed" ? "pencil" : ""} ${dim ? "dim" : ""} ${g.hoverIds.some((h) => highlight.has(h)) ? "hi" : ""}`}
+      onMouseEnter={() => !quiet && onHover(g.hoverIds)}
       onMouseLeave={() => !quiet && onHover(null)}
     >
       <span className={`kind ${signed ? "ok" : st === "rejected" ? "rej" : ""}`}>{badge}</span>
-      {prov.confidence != null && <span className="conf">{prov.confidence}</span>}
-      {kind === "insight" ? (
+      {g.confidence != null && <span className="conf">{g.confidence}</span>}
+      {g.kind === "insight" ? (
         <>
-          <div className="statement">{(it as Insight).statement}</div>
-          <div className="action"><b>Consider:</b> {(it as Insight).suggested_action}</div>
-          <Chips ids={(it as Insight).evidence} name={name} highlight={highlight} onHover={onHover} />
+          <div className="statement">{(g.subject as Insight).statement}</div>
+          <div className="action"><b>Consider:</b> {(g.subject as Insight).suggested_action}</div>
+          <Chips ids={(g.subject as Insight).evidence} name={name} highlight={highlight} onHover={onHover} />
         </>
-      ) : kind === "document" ? (
+      ) : g.kind === "document" ? (
         <>
-          <div className="statement">{(it as Document).title}</div>
+          <div className="statement">{(g.subject as Document).title}</div>
           <div className="doc-excerpt">
-            <b>{(it as Document).sections[0]?.heading}</b>
-            {(it as Document).sections[0]?.text.slice(0, 220)}{((it as Document).sections[0]?.text.length ?? 0) > 220 ? "…" : ""}
+            <b>{(g.subject as Document).sections[0]?.heading}</b>
+            {(g.subject as Document).sections[0]?.text.slice(0, 220)}{((g.subject as Document).sections[0]?.text.length ?? 0) > 220 ? "…" : ""}
           </div>
           <div className="row">
-            <span className="hint">{(it as Document).sections.length} sections · {(it as Document).provenance.evidence?.length ?? 0} citations · {(it as Document).questions.length} questions</span>
+            <span className="hint">{(g.subject as Document).sections.length} sections · {(g.subject as Document).provenance.evidence?.length ?? 0} citations · {(g.subject as Document).questions.length} questions</span>
             <span className="spacer" />
-            <button className="btn small" onClick={() => onReadDocument(it as Document)}>Read</button>
+            <button className="btn small" onClick={() => onReadDocument(g.subject as Document)}>Read</button>
           </div>
         </>
       ) : (
-        <div className="what">{what}</div>
+        <div className="what">{g.title}</div>
       )}
-      {prov.quote && !quiet && <div className="quote">{prov.quote}</div>}
+      {g.quote && !quiet && <div className="quote">{g.quote}</div>}
+      {g.links.length > 0 && (
+        <div className="links">
+          {g.links.map((l) => {
+            const outgoing = l.from === g.subjectId || l.from.startsWith("note_");
+            const other = outgoing ? l.to : l.from;
+            const word = outgoing ? (LINK_WORD[l.type] ?? l.type) : ({ relevant_to: "result", evidence_for: "evidence", treats: "treated by", suspected_cause: "suspected cause" }[l.type] ?? l.type) + ":";
+            return (
+              <span key={l.id} className={`l ${l.type === "suspected_cause" ? "cause" : ""}`} title={l.id}>
+                <span className="t">{word} </span><b>{name(other)}</b>
+                {g.alsoSigns?.includes(other) && l.status === "proposed" && <span className="t"> · signs it too</span>}
+                {l.status !== "proposed" && <span className="t"> · {l.status === "accepted" ? "signed" : "rejected"}</span>}
+              </span>
+            );
+          })}
+        </div>
+      )}
       {hint && <div className="hint">{hint}</div>}
-      <ReviewLine r={(it as { review?: Review }).review} />
+      <ReviewLine r={g.review} />
       {st === "proposed" && !rejecting && (
         <div className="row">
           <span className="spacer" />
           <button className="btn small ghost" disabled={busy === b.stem} onClick={() => setRejecting(true)}>Reject…</button>
-          <button className="btn small primary" disabled={busy === b.stem} onClick={() => onReview(b.stem, { accept: [it.id] })}>Sign</button>
+          <button className="btn small primary" disabled={busy === b.stem} onClick={() => onReview(b.stem, { accept: decideIds })}>
+            Sign{g.links.length > 1 ? ` (${decideIds.length})` : ""}
+          </button>
         </div>
       )}
       {st === "proposed" && rejecting && (
@@ -338,7 +385,7 @@ function Card({
           onCancel={() => setRejecting(false)}
           onConfirm={(code, text) => {
             setRejecting(false);
-            onReview(b.stem, { reject: [it.id], reason_code: code ?? undefined, reason: text || undefined });
+            onReview(b.stem, { reject: decideIds, reason_code: code ?? undefined, reason: text || undefined });
           }}
         />
       )}

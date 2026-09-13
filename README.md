@@ -50,27 +50,25 @@ The two Claude calls have been run live once (`claude-opus-5`) and their respons
 `data/proposed/pt_001/*.raw.json`, so the demo replays them offline and byte-for-byte. Live mode
 needs `ANTHROPIC_API_KEY` exported in the shell that starts the server.
 
-In the UI, from a fresh chart (CKD stage 3 selected). The sheet opens with a **pre-visit brief**
-(what moved, what changed on the medication list, what is waiting, what was decided last time)
-and closes with the **decision trail** (every proposal that touched the problem, with who decided
-what and why). Both update as you sign and reject.
+In the UI, from a fresh chart (CKD stage 3 selected). The header has a **Claude: live / saved**
+switch: *saved* replays the recorded responses (no network), *live* calls the API. The sheet opens
+with a **pre-visit brief** (what moved, what changed on the medication list, what is waiting, what
+you decided last time) and closes with the **decision trail** and **visit coding**, all of which
+update as you sign and reject.
 
-1. **A note arrives** → pick note 2 → **Extract (replay)**. 42 pencil items land in the queue:
-   the naproxen course (dashed, "cause?"), a stage-4 problem, hypotension, the HCTZ hold.
-2. **sign all** on the note queue. Pencil turns to ink; naproxen appears under the creatinine curve.
-3. **Reason about this problem** → **Replay last Claude run**. Four insights, each citing real ids:
-   restage CKD; naproxen as contributor (with lisinopril + furosemide); **stop metformin at eGFR
-   15.6**; the two creatinine assays disagree, repeat the lab.
-4. Hover the evidence chips to light up the cited points and bands; **Sign** the insight. Reject
-   something with a reason (the stage-4 restaging, say: "repeat serum creatinine first"). That
-   reason is the reasoning ledger, and it shows up in the referral.
-5. **Compose** → **Orders from signed insights** (Claude, or replay once recorded): the signed
-   actions become orders to sign; a signed medication change edits the course on the sheet.
-   Then **Compose** → **Nephrology referral** (or replay): a letter rendered from the chart, the
-   signed insight and your decisions, every section carrying tap-through citations. **Read** it,
-   then **Sign referral**. The **Visit coding** panel at the bottom of the sheet updates with each
-   signature: the E/M level and its justification, and the diagnosis codes.
-6. **Reset demo** (header) restores the chart to its server-start state and clears the queues.
+1. **Read a note** → pick note 2 → **Read (saved)**. Findings land in **To sign** in pencil,
+   about a dozen cards, each carrying the links it proposes; the naproxen course appears dashed
+   on the sheet with a "cause?" tag.
+2. Reject "Chronic kidney disease stage 4" with a reason; **sign all** the rest. Every decision
+   shows a 10-second **Undo**. Signed items move into a collapsed "signed" strip.
+3. **What's changed?** Four insights, each citing real ids: restage CKD; naproxen as contributor;
+   **stop metformin at eGFR 15.6**; the two creatinine assays disagree. Hover the chips; sign.
+4. **Draft orders** (needs one live run to record): the signed actions become orders; a signed
+   medication change edits the course on the sheet.
+5. **Draft referral**: a letter rendered from the chart, the signed insights and your decisions,
+   every section carrying tap-through citations. **Read** it, then **Sign referral**. The
+   **Visit coding** panel updates with each signature.
+6. **Reset demo** restores the chart to its server-start state and clears the queues.
    (Start the server from a clean chart, since that is the state it snapshots.)
 
 Same flow from the shell:

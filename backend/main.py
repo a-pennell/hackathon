@@ -25,7 +25,7 @@ from ehr.billing import code_visit  # noqa: E402
 from ehr.brief import deterministic_brief, run_live_brief  # noqa: E402
 from ehr.orders import run_orders  # noqa: E402
 from ehr.compose import run_compose  # noqa: E402
-from ehr.review import REASON_CODES, apply_review, ledger_for_problem, list_queues  # noqa: E402
+from ehr.review import REASON_CODES, apply_review, ledger_for_problem, list_queues, undo_review  # noqa: E402
 from ehr.trend import DATA_DIR, load_patient, trend_from_patient  # noqa: E402
 
 NOTES_DIR = ROOT / "data" / "notes"
@@ -216,7 +216,31 @@ def trend_api(pid: str, code: str, window: str = "1y"):
 
 @app.get("/api/patients/{pid}/queue")
 def queue(pid: str):
-    return list_queues(pid, PROPOSED_DIR)
+    """Queue batches plus a `labels` map so the UI can name every id a link touches."""
+    d = _patient(pid)
+    batches = list_queues(pid, PROPOSED_DIR)
+    wanted = set()
+    for b in batches:
+        for l in b["proposed"].get("links", []):
+            wanted.update((l["from"], l["to"]))
+        for i in b["proposed"].get("insights", []):
+            wanted.update(i.get("evidence", []))
+        for x in b["proposed"].get("documents", []) + b["proposed"].get("orders", []):
+            wanted.update(x["provenance"].get("evidence", []))
+    labels = {}
+    for p in d["problems"]:
+        if p["id"] in wanted: labels[p["id"]] = p["name"]
+    for m in d["medications"]:
+        if m["id"] in wanted: labels[m["id"]] = m["name"]
+    for o in d["observations"]:
+        if o["id"] in wanted: labels[o["id"]] = f"{o['name']} {o['value']} {o['unit'] or ''} · {o['effective_time'][:10]}"
+    for n in d["notes"]:
+        if n["id"] in wanted: labels[n["id"]] = f"note {n['id'].replace('note_', '')} · {n['time'][:10]}"
+    for e in d["encounters"]:
+        if e["id"] in wanted: labels[e["id"]] = f"visit {e['time'][:10]} · {e['type']}"
+    for i in d.get("insights", []):
+        if i["id"] in wanted: labels[i["id"]] = f"insight: {i['statement'][:60]}"
+    return {"batches": batches, "labels": labels}
 
 
 class ReviewBody(BaseModel):
@@ -241,7 +265,20 @@ def review(pid: str, stem: str, body: ReviewBody):
         raise HTTPException(404, f"no queue {stem}")
     except (KeyError, ValueError) as e:
         raise HTTPException(400, str(e))
-    return {"done": done}
+    decided = [d.split(" ")[1] for d in done if d.split(" ")[0] in ("problem", "observation", "medication", "link", "insight", "document", "order")]
+    return {"done": done, "decided": decided}
+
+
+class UndoBody(BaseModel):
+    ids: list[str]
+
+
+@app.post("/api/patients/{pid}/queue/{stem}/undo")
+def undo(pid: str, stem: str, body: UndoBody):
+    try:
+        return {"done": undo_review(pid, stem, body.ids, data_dir=DATA_DIR)}
+    except FileNotFoundError:
+        raise HTTPException(404, f"no queue {stem}")
 
 
 @app.get("/api/patients/{pid}/notes/{note_id}")

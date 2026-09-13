@@ -4,8 +4,9 @@ type Props = {
   brief: BriefT | null;
   highlight: Set<string>;
   onHover: (ids: string[] | null) => void;
-  onAskClaude: (mode: "live" | "replay") => void;
+  onAskClaude: () => void;
   busy: boolean;
+  mode: "live" | "replay";
 };
 
 const dmy = (iso: string) => {
@@ -13,26 +14,21 @@ const dmy = (iso: string) => {
   return `${d.getDate()} ${d.toLocaleString("en", { month: "short" })}`;
 };
 
-export default function Brief({ brief, highlight, onHover, onAskClaude, busy }: Props) {
+export default function Brief({ brief, highlight, onHover, onAskClaude, busy, mode }: Props) {
   if (!brief) return null;
   const model = brief.source !== "computed";
   return (
     <section className="brief" aria-label="Pre-visit brief">
       <div className="brief-head">
-        <h2>Before you open the chart</h2>
+        <h2>Before you start</h2>
         <span className="win">
           {dmy(brief.window.start)} → {dmy(brief.window.end)}
         </span>
         <span className="spacer" />
         <span className="src">{model ? `written by ${brief.source.split("/").pop()}` : "computed from the chart"}</span>
         {!model && (
-          <button className="btn small ghost" disabled={busy} onClick={() => onAskClaude("live")} title="Three or four sentences from Claude over the same evidence">
-            Ask Claude
-          </button>
-        )}
-        {!model && (
-          <button className="btn small ghost" disabled={busy} onClick={() => onAskClaude("replay")} title="Replay the last Claude brief">
-            replay
+          <button className="btn small ghost" disabled={busy} onClick={onAskClaude} title={mode === "live" ? "Three or four sentences from Claude over the same evidence" : "The saved Claude brief"}>
+            {mode === "live" ? "Ask Claude" : "Claude's version"}
           </button>
         )}
       </div>

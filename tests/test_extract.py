@@ -209,6 +209,27 @@ def test_accept_all_skips_links_into_rejected_items(patient, note, raw, tmp_path
     assert any(m["name"] == "Naproxen" for m in chart["medications"])  # everything else signed
 
 
+def test_undo_review_returns_item_and_its_links_to_proposed(patient, note, raw, tmp_path):
+    from ehr.review import apply_review, undo_review
+    (tmp_path / "patients").mkdir(); (tmp_path / "proposed" / "pt_t").mkdir(parents=True)
+    ingest(patient, note, None)
+    (tmp_path / "patients" / "pt_t.json").write_text(json.dumps(patient))
+    batch = validate(patient, note, raw, "claude-test")
+    (tmp_path / "proposed" / "pt_t" / "note_demo_002.json").write_text(json.dumps(batch))
+    nap = batch["proposed"]["medications"][0]["id"]
+    treats = next(l for l in batch["proposed"]["links"] if l["from"] == nap and l["type"] == "treats")
+    apply_review("pt_t", "note_demo_002", accept=[treats["id"]], data_dir=tmp_path / "patients")   # signs naproxen + knee problem too
+    chart = json.loads((tmp_path / "patients" / "pt_t.json").read_text())
+    assert any(m["id"] == nap for m in chart["medications"]) and any(l["id"] == treats["id"] for l in chart["links"])
+    done = undo_review("pt_t", "note_demo_002", [nap], data_dir=tmp_path / "patients")
+    assert any(d.startswith(f"medication {nap} unsigned") for d in done) and any(treats["id"] in d for d in done)
+    chart = json.loads((tmp_path / "patients" / "pt_t.json").read_text())
+    assert not any(m["id"] == nap for m in chart["medications"]) and not any(l["id"] == treats["id"] for l in chart["links"])
+    q = json.loads((tmp_path / "proposed" / "pt_t" / "note_demo_002.json").read_text())
+    assert next(m for m in q["proposed"]["medications"] if m["id"] == nap)["status"] == "proposed"
+    assert next(l for l in q["proposed"]["links"] if l["id"] == treats["id"])["status"] == "proposed"
+
+
 def test_ingest_is_idempotent(patient, note):
     enc = {"id": "enc_0002", "patient_id": "pt_t", "time": "2026-09-12T09:00:00-07:00", "type": "office visit", "summary": "x"}
     n2 = dict(note, id="note_x", encounter_id="enc_0002")

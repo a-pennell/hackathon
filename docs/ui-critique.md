@@ -120,3 +120,23 @@ the three that the principles document already predicted (P7, P8) and scored at 
 Against the heuristic framework's 0–10: **6/10** today. The hero view and the provenance model
 are at 9; the queue and the header drag the whole down. Fixes 1–5 would put it at 8; they cost an
 afternoon.
+
+## 7. After fixes 1–5 (same day, measured the same way)
+
+| Measure | Before (state A) | After |
+|---|---|---|
+| Inbox cards for note 2 | 38 | 22, each carrying its links as a footer |
+| Inbox buttons | 76 | 46 |
+| Inbox height | 6,210 px (7.4 screens) | 3,970 px (4.7 screens); signed items leave into a strip |
+| Brief | 7 sentences, 607 chars | 2 sentences, 162 chars |
+| Timeline top | ~330 px | 222 px |
+| Header actions | 3 menus hiding 9 actions | 4 direct buttons + a live/saved switch |
+| Undo after sign | none | 10-second undo on every decision, reversing chart copies and auto-signed links |
+| Raw ids on cards | frequent | none (queue carries a labels map) |
+
+Two design rules fell out of doing it: a link into a proposed problem belongs to the problem's
+card, not the item's, because it cannot be signed before the problem exists; and any card whose
+links would sign another proposed item says so ("signs it too") rather than doing it silently.
+
+Remaining from the list: keyboard review, the encounter comb, and moving decisions out of the
+queue files. Score after fixes: **8/10**.
