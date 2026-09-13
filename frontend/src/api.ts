@@ -1,4 +1,4 @@
-import type { Brief, NoteFile, PatientSummary, QueueBatch, Timeline, TrailEntry } from "./types";
+import type { Brief, Coding, NoteFile, PatientSummary, QueueBatch, Timeline, TrailEntry } from "./types";
 
 export type ReviewBody = { accept?: string[]; reject?: string[]; accept_all?: boolean; accept_changes?: boolean; reason?: string; reason_code?: string; by?: string };
 
@@ -34,6 +34,9 @@ export const api = {
   briefLive: (pid: string, prob: string, mode: "live" | "replay", window = "90d") =>
     req<Brief>(`/api/patients/${pid}/problems/${prob}/brief`, { method: "POST", body: JSON.stringify({ mode, window }) }),
   trail: (pid: string, prob: string) => req<TrailEntry[]>(`/api/patients/${pid}/problems/${prob}/trail`),
+  orders: (pid: string, problem_id: string, mode: "live" | "replay", window: string) =>
+    req<QueueBatch>(`/api/patients/${pid}/orders`, { method: "POST", body: JSON.stringify({ problem_id, mode, window }) }),
+  coding: (pid: string) => req<Coding>(`/api/patients/${pid}/coding`),
   reset: (pid: string) => req<{ restored: string; queues_cleared: string[] }>(`/api/patients/${pid}/reset`, { method: "POST" }),
   reason: (pid: string, problem_id: string, mode: "live" | "rules" | "replay", window: string) =>
     req<QueueBatch>(`/api/patients/${pid}/reason`, { method: "POST", body: JSON.stringify({ problem_id, mode, window }) }),

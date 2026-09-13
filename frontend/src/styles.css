@@ -274,3 +274,24 @@ svg.tl .relation.cause { fill: var(--flag); }
 .trail .what .k { font-family: var(--mono); font-size: 10px; color: var(--graphite); margin-right: 6px; }
 .trail .why { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-2); margin-top: 2px; }
 .trail .who { font-size: 11px; color: var(--graphite); margin-left: 6px; }
+
+/* visit coding */
+.coding { margin: 0 calc(var(--u) * 6) calc(var(--u) * 10); }
+.coding h2 { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--graphite); margin: 0 0 calc(var(--u) * 2); padding-bottom: var(--u); border-bottom: 1px solid var(--rule); display: flex; align-items: baseline; gap: calc(var(--u) * 3); }
+.coding h2 .cpt { font-family: var(--mono); font-size: 14px; color: var(--ink); letter-spacing: 0; text-transform: none; }
+.coding h2 .lvl { color: var(--select); }
+.coding .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--u) * 3); }
+.coding .el { padding: calc(var(--u) * 2.5) calc(var(--u) * 3); background: var(--paper-2); border: 1px solid var(--rule); }
+.coding .el .name { font-family: var(--sans); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--graphite); }
+.coding .el .level { font-family: var(--serif); font-size: 16px; color: var(--ink); margin: 2px 0 6px; }
+.coding .el .level.high { color: var(--flag); }
+.coding .el ul { margin: 0; padding-left: 16px; font-size: 12px; color: var(--ink-2); }
+.coding .el li { margin: 2px 0; }
+.coding .dx { margin-top: calc(var(--u) * 3); display: grid; grid-template-columns: 90px 1fr; gap: 4px 12px; font-size: 12.5px; align-items: baseline; }
+.coding .dx .code { font-family: var(--mono); color: var(--ink); }
+.coding .dx .code.none { color: var(--pencil); }
+.coding .dx .desc { color: var(--ink-2); }
+.coding .dx .desc small { color: var(--graphite); }
+.coding .note { margin-top: calc(var(--u) * 2); font-size: 11px; color: var(--graphite); font-style: italic; }
+svg.tl .order { fill: var(--paper); stroke: var(--select); stroke-width: 1.5; }
+svg.tl .order.med { fill: var(--select); }

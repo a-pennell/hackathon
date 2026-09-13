@@ -20,6 +20,8 @@ human accepts it.
 | `ehr/review.py` | accept / reject queue items into the chart, recording who, when and why |
 | `ehr/compose.py` | chart state + signed insights + review decisions -> a generated referral letter with citations |
 | `ehr/brief.py` | pre-visit brief per problem: computed on open (no model), or Claude-written over the same evidence |
+| `ehr/orders.py` | signed insights -> proposed orders (labs, medication changes, referrals); signing a medication change edits the course |
+| `ehr/billing.py` | visit coding computed from what was signed today: diagnosis codes (demo ICD-10 map) and the E/M level by medical decision making, every element justified by ids |
 | `ehr/llm.py` | the single Claude API call site (`claude-opus-5`, structured output) |
 | `tests/` | `python3 -m pytest tests -q` |
 
@@ -62,9 +64,12 @@ what and why). Both update as you sign and reject.
 4. Hover the evidence chips to light up the cited points and bands; **Sign** the insight. Reject
    something with a reason (the stage-4 restaging, say: "repeat serum creatinine first"). That
    reason is the reasoning ledger, and it shows up in the referral.
-5. **Generate referral** → **Nephrology referral with Claude** (or replay). A letter rendered from
-   the chart, the signed insight and your decisions, every section carrying tap-through citations.
-   **Read** it, then **Sign referral**.
+5. **Compose** → **Orders from signed insights** (Claude, or replay once recorded): the signed
+   actions become orders to sign; a signed medication change edits the course on the sheet.
+   Then **Compose** → **Nephrology referral** (or replay): a letter rendered from the chart, the
+   signed insight and your decisions, every section carrying tap-through citations. **Read** it,
+   then **Sign referral**. The **Visit coding** panel at the bottom of the sheet updates with each
+   signature: the E/M level and its justification, and the diagnosis codes.
 6. **Reset demo** (header) restores the chart to its server-start state and clears the queues.
    (Start the server from a clean chart, since that is the state it snapshots.)
 
@@ -99,6 +104,13 @@ Two shapes the build needs that the schema doc does not define. Both are additiv
 2. **Document entity** (`ehr/compose.py`): `doc_` prefix, `{patient_id, problem_id, kind, audience, title,
    sections: [{heading, text, cites}], questions, status, provenance: {source: "composition", model,
    evidence, confidence}, created_at}`; signed documents live under a new top-level `documents` list.
+3. **Order entity** (`ehr/orders.py`): `ord_` prefix, `{patient_id, problem_id, kind: lab | medication_change |
+   referral | imaging, name, detail, code, med_id, change, dose, audience, status, provenance: {source:
+   "ordering", model, from_insight, evidence, confidence}, created_at, ordered_at}`; signed orders live under
+   a new top-level `orders` list. Orders derive only from signed insights.
+4. **Visit coding** (`ehr/billing.py`) is computed on demand and never stored, like a TrendSummary: the
+   E/M level follows the 2021 MDM rule (level met by two of three elements) over what was signed that
+   day, and the ICD-10 codes come from a small demo table. Nothing is ever generated to justify a code.
 
 ## Things the team should know
 

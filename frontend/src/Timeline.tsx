@@ -171,6 +171,17 @@ export default function Timeline({ data, highlight, onHover, onOpenNote }: Props
               {data.encounters.map((e) => (
                 <EncMark key={e.id} e={e} x={x(e.time)} y={y} show={show} hide={hide} onOpen={onOpenNote} />
               ))}
+              {(data.orders ?? []).map((o) => {
+                const t = (o.ordered_at ?? o.created_at).slice(0, 10);
+                const cx = x(t), cy = y + ENC_H / 2 + 2;
+                return (
+                  <g key={o.id} onMouseEnter={() => onHover?.(o.id)} onMouseLeave={hide}
+                    onMouseMove={(ev) => show(ev, <><div className="t">ORDER · {o.id} · {t}</div><div><b>{o.name}</b> {o.detail}</div></>)}>
+                    <polygon className={`order ${o.kind === "medication_change" ? "med" : ""} ${highlight.has(o.id) ? "hi" : ""}`}
+                      points={`${cx},${cy - 6} ${cx + 6},${cy} ${cx},${cy + 6} ${cx - 6},${cy}`} />
+                  </g>
+                );
+              })}
               <line className="rule" x1={GUTTER} x2={width - RIGHT} y1={ay} y2={ay} />
               {ticks.map((ms) => (
                 <g key={ms}>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ReviewBody } from "./api";
-import type { Document, Insight, Link, Medication, Observation, Problem, QueueBatch, Review } from "./types";
+import type { Document, Insight, Link, Medication, Observation, Order, Problem, QueueBatch, Review } from "./types";
 import { REASON_CODES } from "./types";
 
 type Props = {
@@ -18,8 +18,8 @@ type Props = {
   busy: string | null;
 };
 
-type Kind = "problem" | "result" | "medication" | "link" | "insight" | "document";
-type AnyItem = Problem | Observation | Medication | Link | Insight | Document;
+type Kind = "problem" | "result" | "medication" | "link" | "insight" | "document" | "order";
+type AnyItem = Problem | Observation | Medication | Link | Insight | Document | Order;
 type Item = { kind: Kind; it: AnyItem };
 
 const LOW_CONFIDENCE = 0.6;
@@ -110,6 +110,7 @@ function Batch({
   const [showRoutine, setShowRoutine] = useState(false);
   const links = (b.proposed.links ?? []) as Link[];
   const items: Item[] = [
+    ...(b.proposed.orders ?? []).map((x) => ({ kind: "order" as Kind, it: x as AnyItem })),
     ...(b.proposed.documents ?? []).map((x) => ({ kind: "document" as Kind, it: x as AnyItem })),
     ...(b.proposed.insights ?? []).map((x) => ({ kind: "insight" as Kind, it: x as AnyItem })),
     ...(b.proposed.problems ?? []).map((x) => ({ kind: "problem" as Kind, it: x as AnyItem })),
@@ -120,7 +121,7 @@ function Batch({
 
   const touches = (x: Item): boolean => {
     const id = x.it.id;
-    if (x.kind === "insight" || x.kind === "document") return focusIds.has((x.it as Insight | Document).problem_id);
+    if (x.kind === "insight" || x.kind === "document" || x.kind === "order") return focusIds.has((x.it as Insight | Document | Order).problem_id);
     if (x.kind === "link") {
       const l = x.it as Link;
       return focusIds.has(l.to) || focusIds.has(l.from);
@@ -139,12 +140,12 @@ function Batch({
   const card = (x: Item) => (
     <Card key={x.it.id} kind={x.kind} it={x.it} b={b} name={name} highlight={highlight} onHover={onHover} onReview={onReview} onReadDocument={onReadDocument} busy={busy} />
   );
-  const title = b.note_id ? `Note ${b.note_id.replace("note_", "")}` : b.kind ? `${b.kind[0].toUpperCase() + b.kind.slice(1)} · ${name(b.problem_id!)}` : `Reasoning · ${name(b.problem_id!)}`;
+  const title = b.note_id ? `Note ${b.note_id.replace("note_", "")}` : b.kind ? `${b.kind[0].toUpperCase() + b.kind.slice(1)} · ${name(b.problem_id!)}` : b.ordered_at ? `Orders · ${name(b.problem_id!)}` : `Reasoning · ${name(b.problem_id!)}`;
 
   return (
     <section>
       <div className="batch-title">
-        <b>{title}</b> · {b.model.split("/").pop()} · {fmtTime(b.extracted_at ?? b.reasoned_at ?? b.composed_at)}
+        <b>{title}</b> · {b.model.split("/").pop()} · {fmtTime(b.extracted_at ?? b.reasoned_at ?? b.composed_at ?? b.ordered_at)}
         {open > 1 && (
           <>
             {" "}
@@ -275,10 +276,21 @@ function Card({
     hoverIds = (it as Insight).evidence;
   } else if (kind === "document") {
     hoverIds = (it as Document).provenance.evidence ?? [];
+  } else if (kind === "order") {
+    const o = it as Order;
+    hoverIds = o.provenance.evidence ?? [];
+    const target = o.kind === "medication_change" ? ` · ${o.change === "stop" ? "stop" : "change dose of"} ${name(o.med_id!)}${o.dose ? " → " + o.dose : ""}`
+      : o.kind === "referral" ? ` · to ${o.audience}` : o.code ? ` · ${o.code.system} ${o.code.value}` : "";
+    what = (
+      <>
+        <b>{o.name}</b>{target}
+        <div className="hint" style={{ marginTop: 2 }}>{o.detail}{o.provenance.from_insight ? ` · from ${o.provenance.from_insight}` : ""}</div>
+      </>
+    );
   }
   const signed = st === "accepted";
   const dim = st === "proposed" && (prov.confidence ?? 1) < LOW_CONFIDENCE;
-  const badge = signed ? "signed" : st === "rejected" ? "rejected" : kind === "document" ? `${(it as Document).kind} · ${(it as Document).audience}` : kind;
+  const badge = signed ? "signed" : st === "rejected" ? "rejected" : kind === "document" ? `${(it as Document).kind} · ${(it as Document).audience}` : kind === "order" ? `order · ${(it as Order).kind.replace("_", " ")}` : kind;
   const quiet = kind === "insight" || kind === "document";
   return (
     <div

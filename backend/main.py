@@ -21,7 +21,9 @@ sys.path.insert(0, str(ROOT))
 
 from ehr.extract import PROPOSED_DIR, load_note_file, run_extraction  # noqa: E402
 from ehr.reason import monitored_codes, run_reasoning  # noqa: E402
+from ehr.billing import code_visit  # noqa: E402
 from ehr.brief import deterministic_brief, run_live_brief  # noqa: E402
+from ehr.orders import run_orders  # noqa: E402
 from ehr.compose import run_compose  # noqa: E402
 from ehr.review import REASON_CODES, apply_review, ledger_for_problem, list_queues  # noqa: E402
 from ehr.trend import DATA_DIR, load_patient, trend_from_patient  # noqa: E402
@@ -76,6 +78,7 @@ def patient_summary(pid: str):
         "counts": {k: len(d[k]) for k in ("problems", "observations", "medications", "encounters", "notes", "links", "insights")},
         "insights": d["insights"],
         "documents": d.get("documents", []),
+        "orders": d.get("orders", []),
     }
 
 
@@ -146,7 +149,9 @@ def timeline(pid: str, prob: str, window: str = "1y", all_meds: bool = True):
 
     return {"patient": d["patient"], "problem": problem, "window": win, "series": series, "medications": meds,
             "encounters": encounters, "links": links,
-            "insights": [i for i in d["insights"] if i["problem_id"] == prob], "proposed": proposed}
+            "insights": [i for i in d["insights"] if i["problem_id"] == prob],
+            "orders": [o for o in d.get("orders", []) if o["problem_id"] == prob and start <= (o.get("ordered_at") or o["created_at"])[:10] <= end],
+            "proposed": proposed}
 
 
 @app.get("/api/patients/{pid}/problems/{prob}/brief")
@@ -336,12 +341,40 @@ def compose_doc(pid: str, body: ComposeBody):
         raise HTTPException(502, f"composition failed: {type(e).__name__}: {e}")
 
 
+class OrdersBody(BaseModel):
+    problem_id: str
+    mode: str = "live"  # live | replay
+    window: str = "1y"
+
+
+@app.post("/api/patients/{pid}/orders")
+def orders(pid: str, body: OrdersBody):
+    replay = None
+    if body.mode == "replay":
+        replay = PROPOSED_DIR / pid / f"orders_{body.problem_id}.raw.json"
+        if not replay.exists():
+            raise HTTPException(400, "no saved model response to replay for these orders; run live once")
+    try:
+        return run_orders(pid, body.problem_id, window=body.window, replay=replay, data_dir=DATA_DIR)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+    except Exception as e:
+        raise HTTPException(502, f"ordering failed: {type(e).__name__}: {e}")
+
+
+@app.get("/api/patients/{pid}/coding")
+def coding(pid: str, encounter: str | None = None, on: str | None = None):
+    """Diagnosis codes and E/M level derived from what was signed on the visit day. Computed, never stored."""
+    d = _patient(pid)
+    return code_visit(d, encounter, on=on or date.today().isoformat(), proposed_dir=PROPOSED_DIR)
+
+
 PRISTINE = DATA_DIR / ".pristine"   # snapshot of every chart at server start; gitignored
 
 
 def _is_clean(chart: dict) -> bool:
     """A chart with nothing AI-signed on it: the state the demo starts from."""
-    return not chart.get("documents") and all(
+    return not chart.get("documents") and not chart.get("orders") and all(
         x["provenance"]["source"] == "fhir_import"
         for k in ("problems", "observations", "medications", "links", "insights") for x in chart.get(k, []))
 

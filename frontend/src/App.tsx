@@ -5,7 +5,8 @@ import ProblemList from "./ProblemList";
 import Timeline from "./Timeline";
 import Brief from "./Brief";
 import Trail from "./Trail";
-import type { Brief as BriefT, Document, NoteFile, PatientSummary, QueueBatch, Timeline as TL, TrailEntry } from "./types";
+import Coding from "./Coding";
+import type { Brief as BriefT, Coding as CodingT, Document, NoteFile, PatientSummary, QueueBatch, Timeline as TL, TrailEntry } from "./types";
 
 const PID = "pt_001";
 const WINDOWS = ["3m", "6m", "1y", "2y", "5y", "all"];
@@ -22,6 +23,7 @@ export default function App() {
   const [tl, setTl] = useState<TL | null>(null);
   const [brief, setBrief] = useState<BriefT | null>(null);
   const [trail, setTrail] = useState<TrailEntry[]>([]);
+  const [coding, setCoding] = useState<CodingT | null>(null);
   const [queues, setQueues] = useState<QueueBatch[]>([]);
   const [notes, setNotes] = useState<NoteFile[]>([]);
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
@@ -49,6 +51,7 @@ export default function App() {
     api.timeline(PID, problem, window_).then((d) => live && setTl(d)).catch((e) => setError(String(e.message ?? e)));
     api.brief(PID, problem).then((b) => live && setBrief(b)).catch(() => live && setBrief(null));
     api.trail(PID, problem).then((t) => live && setTrail(t)).catch(() => live && setTrail([]));
+    api.coding(PID).then((c) => live && setCoding(c)).catch(() => live && setCoding(null));
     return () => {
       live = false;
     };
@@ -85,6 +88,7 @@ export default function App() {
       for (const p of b.proposed.problems ?? []) m[p.id] = p.name;
       for (const med of b.proposed.medications ?? []) m[med.id] = med.name;
       for (const o of b.proposed.observations ?? []) m[o.id] = `${o.name} ${o.value} ${o.unit ?? ""}`;
+      for (const o of b.proposed.orders ?? []) m[o.id] = `order: ${o.name}`;
       if (b.note_id) m[b.note_id] = `note ${b.note_id.replace("note_", "")}`;
     }
     return m;
@@ -134,6 +138,21 @@ export default function App() {
     setError(null);
     try {
       await api.compose(PID, problem, "referral", "nephrology", mode, window_);
+      await refresh();
+    } catch (e) {
+      setError(String((e as Error).message ?? e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const runOrders = async (mode: "live" | "replay") => {
+    if (!problem) return;
+    setMenu(null);
+    setBusy("orders");
+    setError(null);
+    try {
+      await api.orders(PID, problem, mode, window_);
       await refresh();
     } catch (e) {
       setError(String((e as Error).message ?? e));
@@ -199,7 +218,7 @@ export default function App() {
           </small>
         </div>
         <span className="spacer" />
-        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Reasoning…" : busy === "compose" ? "Composing the referral…" : busy === "brief" ? "Writing the brief…" : busy === "reset" ? "Resetting…" : "Signing…"}</span>}
+        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Reasoning…" : busy === "compose" ? "Composing the referral…" : busy === "orders" ? "Drafting orders…" : busy === "brief" ? "Writing the brief…" : busy === "reset" ? "Resetting…" : "Signing…"}</span>}
         <button className="btn ghost small" disabled={!!busy} onClick={runReset} title="Restore the chart to its state at server start">
           Reset demo
         </button>
@@ -241,15 +260,21 @@ export default function App() {
         </div>
         <div className="rel" onClick={(e) => e.stopPropagation()}>
           <button className="btn" disabled={!!busy || !problem} onClick={() => setMenu(menu === "compose" ? null : "compose")}>
-            Generate referral ▾
+            Compose ▾
           </button>
           {menu === "compose" && (
             <div className="menu">
+              <button onClick={() => runOrders("live")}>
+                <div className="x">Orders from signed insights <small>· Claude turns signed actions into orders to sign</small></div>
+              </button>
+              <button onClick={() => runOrders("replay")}>
+                <div className="x">Orders · replay last run <small>· no API call</small></div>
+              </button>
               <button onClick={() => runCompose("live")}>
                 <div className="x">Nephrology referral with Claude <small>· chart state + signed insights + your decisions</small></div>
               </button>
               <button onClick={() => runCompose("replay")}>
-                <div className="x">Replay last Claude run <small>· no API call</small></div>
+                <div className="x">Referral · replay last run <small>· no API call</small></div>
               </button>
             </div>
           )}
@@ -282,6 +307,7 @@ export default function App() {
           <div className="empty">{selected ? `No monitored lab series is linked to ${selected.name} in this window.` : "Pick a problem."}</div>
         )}
         {selected && <Trail entries={trail} labels={labels} highlight={highlight} onHover={hover} />}
+        {selected && coding && coding.signed_today > 0 && <Coding coding={coding} highlight={highlight} onHover={hover} />}
       </main>
 
       <Inbox queues={queues} problemId={problem} focusIds={focusIds} chartMedIds={new Set((tl?.medications ?? []).map((m) => m.id))} chartInsights={summary.insights} chartDocuments={summary.documents ?? []} labels={labels} highlight={highlight} onHover={hover} onReview={review} onReadDocument={setReadingDoc} busy={busy} />

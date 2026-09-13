@@ -31,7 +31,7 @@ from pathlib import Path
 from ehr.extract import PROPOSED_DIR, queue_path, save_patient
 from ehr.trend import DATA_DIR, load_patient
 
-KINDS = ("problems", "observations", "medications", "links", "insights", "documents")
+KINDS = ("problems", "observations", "medications", "links", "insights", "documents", "orders")
 REASON_CODES = ("already_known", "not_relevant", "disagree", "needs_confirmation", "other")
 DEFAULT_REVIEWER = "Dr. Chen"
 
@@ -89,10 +89,16 @@ def accept_item(patient: dict, batch: dict, item_id: str, _seen: set | None = No
     it["review"] = review or review_record("accepted")
     chart_item = dict(it)
     chart_item["status"] = "active" if kind == "problems" else "accepted"
+    if kind == "orders":
+        chart_item["ordered_at"] = chart_item["review"]["at"]
     target = patient.setdefault(kind, [])
     if not any(x["id"] == chart_item["id"] for x in target):
         target.append(chart_item)
     done.append(f"{kind[:-1]} {item_id}")
+    if kind == "orders" and it.get("kind") == "medication_change" and it.get("med_id"):
+        done.append(accept_medication_change(patient, {"med_id": it["med_id"], "change": it["change"],
+                                                       "effective": chart_item["ordered_at"][:10], "dose": it.get("dose"),
+                                                       "route": None, "frequency": None, "status": "proposed"}, chart_item["review"]))
     return done
 
 
@@ -136,6 +142,7 @@ def list_queue(batch: dict) -> str:
                 "links": lambda x: f"{x['from']} -{x['type']}-> {x['to']}",
                 "insights": lambda x: f"{x['statement']}\n{'':14}action: {x['suggested_action']}\n{'':14}evidence: {x['evidence']}",
                 "documents": lambda x: f"{x['kind']} to {x['audience']}: {x['title']} ({len(x['sections'])} sections)",
+                "orders": lambda x: f"order {x['kind']}: {x['name']} - {x['detail']}",
             }[kind](it)
             rv = it.get("review")
             if rv and (rv.get("reason") or rv.get("reason_code")):
@@ -166,6 +173,8 @@ def _summary_of(kind: str, it: dict) -> str:
         return f"link: {it['from']} {it['type']} {it['to']}"
     if kind == "documents":
         return f"{it.get('kind', 'document')} to {it.get('audience', '')}: {it.get('title', '')}"
+    if kind == "orders":
+        return f"order ({it.get('kind')}): {it.get('name', '')}"
     return it.get("title") or it["id"]
 
 

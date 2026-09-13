@@ -143,6 +143,7 @@ export type Timeline = {
   encounters: Encounter[];
   links: Link[];
   insights: Insight[];
+  orders: Order[];
   proposed: {
     observations: Observation[];
     medications: Medication[];
@@ -167,7 +168,9 @@ export type QueueBatch = {
     links?: Link[];
     insights?: Insight[];
     documents?: Document[];
+    orders?: Order[];
   };
+  ordered_at?: string;
   kind?: string;
   audience?: string;
   composed_at?: string;
@@ -195,6 +198,7 @@ export type PatientSummary = {
   counts: Record<string, number>;
   insights: Insight[];
   documents: Document[];
+  orders: Order[];
 };
 
 export type BriefLine = { kind: string; text: string; ids: string[]; code?: string };
@@ -221,4 +225,42 @@ export type TrailEntry = {
   reason: string | null;
   by: string | null;
   at: string;
+};
+
+export type Order = {
+  id: string;
+  patient_id: string;
+  problem_id: string;
+  kind: "lab" | "medication_change" | "referral" | "imaging";
+  name: string;
+  detail: string;
+  code: { system: string; value: string } | null;
+  med_id: string | null;
+  change: "stop" | "dose_change" | null;
+  dose: string | null;
+  audience: string | null;
+  status: string;
+  provenance: Provenance & { from_insight?: string; evidence?: string[] };
+  created_at: string;
+  ordered_at?: string;
+  review?: Review;
+  queue?: string;
+};
+
+export type Coding = {
+  patient_id: string;
+  encounter_id: string | null;
+  date: string;
+  status: "computed";
+  problems_addressed: { problem_id: string; name: string; evidence: string[]; complexity?: string }[];
+  mdm: {
+    problems: { level: string; why: string[] };
+    data: { level: string; why: string[] };
+    risk: { level: string; why: string[] };
+    level: string;
+    cpt: string;
+    rule: string;
+  };
+  diagnosis_codes: { problem_id: string | null; name: string; code: string | null; description: string; mapping: string; evidence?: string[] }[];
+  signed_today: number;
 };
