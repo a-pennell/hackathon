@@ -91,6 +91,14 @@ file over the pointer. Reset from the shell:
 The decision moment: creatinine (LOINC `38483-4`) rises from 1.6 to 5.7 over the year, eGFR falls
 to 15.6, the note reveals daily naproxen since April, and metformin 500 mg is still on board.
 
+## Where this goes next
+
+`docs/roadmap/00-north-star-and-gap-analysis.md` maps the prototype onto the target architecture
+in the NDE documentation set (`~/Projects/NDE/docs`) and sequences twelve PRDs in `docs/prd/`
+(ledger → verbs → focus and edges → attestation → evidence → courses → composer → compiler → Work →
+shell → operations → permissions). `docs/roadmap/schema-v2-proposal.md` lists every schema change
+those PRDs need, flagged for team agreement; `docs/patient-model-schema.md` is unchanged.
+
 ## Schema additions proposed (not yet in docs/patient-model-schema.md)
 
 Two shapes the build needs that the schema doc does not define. Both are additive; flag for team sign-off.
