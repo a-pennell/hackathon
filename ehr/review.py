@@ -155,7 +155,7 @@ def list_queue(batch: dict) -> str:
         lines.append(f"  [{ch['status']:<8}] change {ch['med_id']}: {ch['change']} effective {ch['effective']}"
                      f"  quote={ch['provenance']['quote']!r}")
     for r in batch.get("rejected", []):
-        lines.append(f"  [dropped ] {r['kind']}: {r['reason']}")
+        lines.append(f"  [dropped ] {r.get('kind', 'note')}: {r['reason']}")  # reasoning/composition batches record reason only
     return "\n".join(lines)
 
 
