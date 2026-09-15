@@ -1,0 +1,105 @@
+{
+  "parsed": {
+    "orders": [
+      {
+        "kind": "referral",
+        "name": "Nephrology referral (urgent)",
+        "detail": "Urgent nephrology evaluation for eGFR 15.6 with three weeks of fatigue, poor appetite and nausea suggestive of uremia; restage CKD.",
+        "loinc": null,
+        "med_id": null,
+        "change": null,
+        "dose": null,
+        "audience": "Nephrology",
+        "from_insight": "ins_0057_01",
+        "evidence": [
+          "prob_0057",
+          "obs_243df5cd",
+          "obs_eab4656a",
+          "obs_7f3ce7a6",
+          "obs_2a3f64c5",
+          "note_demo_002",
+          "lnk_demo_002_21"
+        ],
+        "confidence": 0.91
+      },
+      {
+        "kind": "medication_change",
+        "name": "Stop naproxen",
+        "detail": "Confirm naproxen 500 mg BID is fully discontinued; counsel patient to avoid all OTC NSAIDs.",
+        "loinc": null,
+        "med_id": "med_demo_002_01",
+        "change": "stop",
+        "dose": null,
+        "audience": null,
+        "from_insight": "ins_0057_02",
+        "evidence": [
+          "med_demo_002_01",
+          "lnk_demo_002_33",
+          "obs_7f3ce7a6",
+          "obs_243df5cd"
+        ],
+        "confidence": 0.89
+      },
+      {
+        "kind": "lab",
+        "name": "Creatinine (serum)",
+        "detail": "Repeat renal panel from a single laboratory to confirm true current level before further dose adjustments.",
+        "loinc": "2160-0",
+        "med_id": null,
+        "change": null,
+        "dose": null,
+        "audience": null,
+        "from_insight": "ins_0057_04",
+        "evidence": [
+          "obs_61063e77",
+          "obs_7f3ce7a6",
+          "obs_f51c5961"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "kind": "lab",
+        "name": "BUN",
+        "detail": "Draw with serum creatinine at the same laboratory to resolve the assay/specimen discrepancy.",
+        "loinc": "6299-2",
+        "med_id": null,
+        "change": null,
+        "dose": null,
+        "audience": null,
+        "from_insight": "ins_0057_04",
+        "evidence": [
+          "obs_3093fcf6",
+          "obs_f51c5961",
+          "obs_61063e77"
+        ],
+        "confidence": 0.87
+      },
+      {
+        "kind": "medication_change",
+        "name": "Stop metformin",
+        "detail": "Discontinue metformin 500 mg given eGFR 15.6 and lactic acidosis risk; continue glycemic management with insulin alone.",
+        "loinc": null,
+        "med_id": "med_metformin_hydrochloride",
+        "change": "stop",
+        "dose": null,
+        "audience": null,
+        "from_insight": "ins_0057_03",
+        "evidence": [
+          "med_metformin_hydrochloride",
+          "obs_243df5cd",
+          "med_insulin_isophane_human_insulin_regular_human_inj",
+          "note_demo_002"
+        ],
+        "confidence": 0.9
+      }
+    ]
+  },
+  "model": "claude-opus-5",
+  "usage": {
+    "input_tokens": 4870,
+    "output_tokens": 899,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 955
+  },
+  "request_id": "req_011Cf5ykhWut8hcUhjfTt1kL"
+}
