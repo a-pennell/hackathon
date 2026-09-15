@@ -120,8 +120,14 @@ def code_visit(patient: dict, encounter_id: str | None = None, *, on: str | None
             if why_id not in addressed[prob_id]["evidence"]:
                 addressed[prob_id]["evidence"].append(why_id)
 
+    def active_on(p: dict) -> bool:
+        # a problem resolved before the coded day no longer owns its monitored series
+        return p["status"] == "active" or (p["status"] == "resolved" and (p.get("resolved_date") or "") > day)
+
     series_owner = {}
     for p in patient["problems"]:
+        if not active_on(p):
+            continue
         for c in monitored_codes(patient, p["id"]):
             series_owner.setdefault(f"LOINC:{c}", []).append(p["id"])
     for kind, it in signed_today:
@@ -150,7 +156,7 @@ def code_visit(patient: dict, encounter_id: str | None = None, *, on: str | None
     for a in addressed.values():
         p = problems_by_id[a["problem_id"]]
         moving = None
-        for code in monitored_codes(patient, p["id"]):
+        for code in (monitored_codes(patient, p["id"]) if active_on(p) else []):
             t = trend_from_patient(patient, code, "1y", as_of=day)
             if t["n_points"] < 2 or t["direction"] not in ("rising", "falling"):
                 continue

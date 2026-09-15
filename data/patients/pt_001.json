@@ -134,11 +134,18 @@
         "system": "SNOMED-CT",
         "value": "431855005"
       },
-      "status": "active",
+      "status": "resolved",
       "onset_date": "2018-02-07",
-      "resolved_date": null,
+      "resolved_date": "2026-09-15",
       "provenance": {
         "source": "fhir_import"
+      },
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-15T21:37:28+00:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "Restaged to CKD stage 4 (ins_0057_01); earlier stage entries superseded"
       }
     },
     {
@@ -329,11 +336,18 @@
         "system": "SNOMED-CT",
         "value": "431856006"
       },
-      "status": "active",
+      "status": "resolved",
       "onset_date": "2021-01-20",
-      "resolved_date": null,
+      "resolved_date": "2026-09-15",
       "provenance": {
         "source": "fhir_import"
+      },
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-15T21:37:28+00:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "Restaged to CKD stage 4 (ins_0057_01); earlier stage entries superseded"
       }
     },
     {
@@ -854,11 +868,18 @@
         "system": "SNOMED-CT",
         "value": "433144002"
       },
-      "status": "active",
+      "status": "resolved",
       "onset_date": "2025-11-26",
-      "resolved_date": null,
+      "resolved_date": "2026-09-15",
       "provenance": {
         "source": "fhir_import"
+      },
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-15T21:37:28+00:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "Restaged to CKD stage 4 (ins_0057_01); earlier stage entries superseded"
       }
     },
     {
@@ -74600,6 +74621,90 @@
         "decision": "accepted",
         "reason_code": null,
         "reason": null
+      }
+    },
+    {
+      "id": "lnk_restage_01",
+      "from": "LOINC:2160-0",
+      "to": "prob_demo_002_01",
+      "type": "monitors",
+      "status": "accepted",
+      "provenance": {
+        "source": "clinician",
+        "evidence": [
+          "ins_0057_01"
+        ]
+      },
+      "created_at": "2026-09-15T21:37:28+00:00",
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-15T21:37:28+00:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "Restaged to CKD stage 4 (ins_0057_01); earlier stage entries superseded"
+      }
+    },
+    {
+      "id": "lnk_restage_02",
+      "from": "LOINC:38483-4",
+      "to": "prob_demo_002_01",
+      "type": "monitors",
+      "status": "accepted",
+      "provenance": {
+        "source": "clinician",
+        "evidence": [
+          "ins_0057_01"
+        ]
+      },
+      "created_at": "2026-09-15T21:37:28+00:00",
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-15T21:37:28+00:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "Restaged to CKD stage 4 (ins_0057_01); earlier stage entries superseded"
+      }
+    },
+    {
+      "id": "lnk_restage_03",
+      "from": "LOINC:33914-3",
+      "to": "prob_demo_002_01",
+      "type": "monitors",
+      "status": "accepted",
+      "provenance": {
+        "source": "clinician",
+        "evidence": [
+          "ins_0057_01"
+        ]
+      },
+      "created_at": "2026-09-15T21:37:28+00:00",
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-15T21:37:28+00:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "Restaged to CKD stage 4 (ins_0057_01); earlier stage entries superseded"
+      }
+    },
+    {
+      "id": "lnk_restage_04",
+      "from": "LOINC:6299-2",
+      "to": "prob_demo_002_01",
+      "type": "monitors",
+      "status": "accepted",
+      "provenance": {
+        "source": "clinician",
+        "evidence": [
+          "ins_0057_01"
+        ]
+      },
+      "created_at": "2026-09-15T21:37:28+00:00",
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-15T21:37:28+00:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "Restaged to CKD stage 4 (ins_0057_01); earlier stage entries superseded"
       }
     }
   ],

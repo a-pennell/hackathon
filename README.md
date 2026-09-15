@@ -117,6 +117,12 @@ Two shapes the build needs that the schema doc does not define. Both are additiv
 4. **Visit coding** (`ehr/billing.py`) is computed on demand and never stored, like a TrendSummary: the
    E/M level follows the 2021 MDM rule (level met by two of three elements) over what was signed that
    day, and the ICD-10 codes come from a small demo table. Nothing is ever generated to justify a code.
+5. **Clinician chart edits** carry `provenance: {source: "clinician", evidence: [ids]}` plus a review
+   record. Used when restaging CKD: the stage 1-3 problems were set `resolved` (with `resolved_date`
+   and a review record naming the signed restage insight) and the `monitors` links for the creatinine,
+   eGFR and BUN series were re-pointed at the stage 4 problem. Nothing is deleted; the old problems
+   keep their links and history. Visit coding only lets a problem that is active on the coded day own
+   a monitored series, so a resolved stage no longer counts as "progressing".
 
 ## Things the team should know
 
