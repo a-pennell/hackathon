@@ -21,6 +21,7 @@ human accepts it.
 | `ehr/compose.py` | chart state + signed insights + review decisions -> a generated referral letter with citations |
 | `ehr/brief.py` | pre-visit brief per problem: computed on open (no model), or Claude-written over the same evidence |
 | `ehr/orders.py` | signed insights -> proposed orders (labs, medication changes, referrals); signing a medication change edits the course |
+| `ehr/overview.py` | the patient overview: what changed since the last routine visit, ranked by clinical meaning; active concerns by what they need; open loops. Computed on demand |
 | `ehr/card.py` | the problem card: representation, supporting and doesn't-fit evidence, plan, expected trajectory and what changed, computed from the chart on demand (never stored) |
 | `ehr/billing.py` | visit coding computed from what was signed today: diagnosis codes (demo ICD-10 map) and the E/M level by medical decision making, every element justified by ids |
 | `ehr/llm.py` | the single Claude API call site (`claude-opus-5`, structured output) |
@@ -38,16 +39,19 @@ Open http://localhost:8000. The built frontend is committed in `frontend/dist`; 
 `frontend/src`, rebuild with `cd frontend && npm install && npm run build` (Node 22). For live
 frontend reloads use `npm run dev` (port 5173, proxies `/api` to 8000).
 
-The header switches between two views of the same chart. **Desk** is the original three-pane
-chart desk: the problem list (left, newest monitored problem first), the problem-scoped timeline
-(centre: monitored lab series with reference bands, medication courses as bands on the same
-axis, encounters as ticks), and the review queue (right). **Card** (the default) is the
-problem card from `docs/design/clinical-reasoning-ehr.md`: one screen for one concern, with a
+The header switches between three views of the same chart. **Overview** (the default) is the
+orientation screen from `docs/design/clinical-reasoning-ehr.md`: who this is, why they are here,
+what changed since the last routine visit ranked by clinical meaning, the active concerns by what
+they need, and the open loops; each row opens its problem's card. **Desk** is the original
+three-pane chart desk: the problem list (left, newest monitored problem first), the problem-scoped
+timeline (centre: monitored lab series with reference bands, medication courses as bands on the
+same axis, encounters as ticks), and the review queue (right). **Card** is the
+problem card from the same design: one screen for one concern, with a
 proposed representation, the clinician's assessment, supporting and doesn't-fit evidence,
 insights, plan, expected trajectory and what changed, the timeline mounted as its trajectory
 section, and every proposal from a note sitting in the slot it would fill instead of in an inbox.
-The card carries its own explanation above and below it; it is a demo of the component, so what
-you accept or write on it is not written to the chart. Everything AI-proposed is drawn in *pencil*
+Overview and Card carry their own explanations above and below them; they are demos of the
+components, so what you accept or write on the card is not written to the chart. Everything AI-proposed is drawn in *pencil*
 (dashed, amber) until a clinician signs it; signed items become ink.
 
 ## Demo runbook
@@ -57,26 +61,38 @@ Every Claude call in the demo (extraction, reasoning, brief, orders, referral) h
 `data/proposed/pt_001/*.raw.json`, so the demo replays them offline and byte-for-byte. Live mode
 needs `ANTHROPIC_API_KEY` exported in the shell that starts the server.
 
-In the UI, from a fresh chart (CKD stage 3 selected). The header has a **Claude: live / saved**
-switch: *saved* replays the recorded responses (no network), *live* calls the API. The sheet opens
-with a **pre-visit brief** (what moved, what changed on the medication list, what is waiting, what
-you decided last time) and closes with the **decision trail** and **visit coding**, all of which
-update as you sign and reject.
+In the UI, from a fresh chart. The header has a **Claude: live / saved** switch: *saved* replays
+the recorded responses (no network), *live* calls the API. It also has a view switch,
+**Overview · Card · Desk**: the demo runs on the first two; Desk is the original three-pane
+chart desk and is still there for comparison. Every screen carries its own explanation above
+and below it.
 
-1. **Read a note** → pick note 2 → **Read (saved)**. Findings land in **To sign** in pencil,
-   about a dozen cards, each carrying the links it proposes; the naproxen course appears dashed
-   on the sheet with a "cause?" tag.
-2. Reject "Chronic kidney disease stage 4" with a reason; **sign all** the rest. Every decision
-   shows a 10-second **Undo**. Signed items move into a collapsed "signed" strip.
-3. **What's changed?** Four insights, each citing real ids: restage CKD; naproxen as contributor;
-   **stop metformin at eGFR 15.6**; the two creatinine assays disagree. Hover the chips; sign.
-4. **Draft orders** (saved): the signed actions become five orders; a signed
-   medication change edits the course on the sheet.
-5. **Draft referral**: a letter rendered from the chart, the signed insights and your decisions,
+1. **Overview** opens cold: who this is, "here for: office visit, 11 Sep" with the note still
+   waiting, what changed since the last routine visit (ranked, not listed), the active concerns
+   by what they need, and the open loops. Kidney disease is one concern with three related
+   entries, marked *worsening*; the creatinine crossing is already in the list.
+2. **Read it** on the note → **Read (saved)**. Back on the Overview the list re-ranks: the
+   proposed restaging leads, then the creatinine change, then the discordant assays. The kidney
+   row now says **Review 10 changes**; click it.
+3. **The card.** The proposals sit where they belong: the stage-4 problem under the title, the
+   naproxen course and the results under *Supporting* in pencil, findings for other problems
+   folded at the bottom. Reject "Chronic kidney disease stage 4" with a reason; sign the naproxen
+   course and the results; **Sign all** the fold. Every decision shows a 10-second **Undo**.
+   Accept the proposed representation, or edit it first; write an assessment if you like (both
+   stay on the page in this demo).
+4. **What's changed?** Four insights land under *Insights*, statement and evidence first,
+   suggestion folded: restage CKD; naproxen as contributor; **stop metformin at eGFR 15.6**;
+   the two creatinine assays disagree. Hover the chips; sign. *Doesn't fit* already showed the
+   assay discordance and, until you sign the stop, metformin active at eGFR 15.6.
+5. **Draft orders**: the signed actions appear under *Plan* in pencil; sign them. The card now
+   proposes an **Expected** line (creatinine falling within two weeks of stopping naproxen, by
+   date) and what to **Reassess if** it does not; the trajectory below carries the courses.
+6. **Draft referral**: a letter rendered from the chart, the signed insights and your decisions,
    every section carrying tap-through citations. **Read** it, then **Sign referral**. The
-   **Visit coding** panel updates with each signature.
-6. **Reset demo** restores the chart to its server-start state and clears the queues.
-   (Start the server from a clean chart, since that is the state it snapshots.)
+   decision trail and **Visit coding** sit behind doors at the foot of the card.
+7. Back to **Overview**: the referral and the two labs sit under *Pending* until their answers
+   land on the chart. **Reset demo** restores the chart to its server-start state and clears the
+   queues. (Start the server from a clean chart, since that is the state it snapshots.)
 
 Same flow from the shell:
 

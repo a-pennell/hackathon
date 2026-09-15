@@ -290,3 +290,16 @@ export type Card = {
   decisions: number;
   lead_code: string | null;
 };
+
+/* The patient overview (ehr/overview.py): orientation, computed from the chart. */
+export type OverviewChange = { rank: number; kind: string; text: string; why: string; ids: string[]; problem_id: string; problem_name: string; tag: string | null };
+export type OverviewConcern = {
+  id: string; name: string; status: string; onset_date: string | null; members: { id: string; name: string }[]; epistemic: string; qualifiers: string[]; monitored: boolean;
+  pending: number; top_rank: number; lead: { text: string; detail: string } | null; action: { label: string; kind: string } | null; decisions: number;
+};
+export type OverviewLoop = { id: string; kind: string; text: string; detail: string; status: string; problem_id: string; problem_name: string };
+export type Overview = {
+  patient: Patient; as_of: string; since: { date: string; why: string; encounter_id?: string };
+  here_for: { encounter: { id: string; time: string; type: string; summary: string } | null; note: { id: string; file: string; author: string; time: string; has_queue: boolean; has_replay: boolean } | null };
+  changes: OverviewChange[]; other_changes: number; concerns: OverviewConcern[]; more_concerns: number; pending: OverviewLoop[];
+};

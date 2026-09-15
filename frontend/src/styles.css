@@ -406,3 +406,33 @@ svg.tl .order.med { fill: var(--select); }
 .pcard .other .other-list { flex-basis: 100%; }
 .pcard .doors { margin-top: calc(var(--u) * 4); padding-top: calc(var(--u) * 2); border-top: 1px solid var(--rule); }
 .pcard .doors .trail, .pcard .doors .coding { margin: calc(var(--u) * 3) 0 0; }
+
+/* ------------------------------------------------------------ overview */
+.ov { background: var(--paper-2); border: 1px solid var(--rule-strong); box-shadow: 0 1px 0 var(--rule-soft); }
+.ov .ovbar { display: flex; align-items: baseline; gap: calc(var(--u) * 3); flex-wrap: wrap; padding: calc(var(--u) * 3) calc(var(--u) * 5); border-bottom: 1px solid var(--rule); }
+.ov .ovbar h1 { font-family: var(--serif); font-weight: 400; font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+.ov .ovbar .dim { color: var(--graphite); font-size: 12.5px; }
+.ov .ovbar .here { margin-left: auto; font-size: 12.5px; color: var(--ink-2); display: flex; gap: calc(var(--u) * 2); align-items: baseline; }
+.ov .ovbar .here b { font-weight: 600; color: var(--ink); }
+.ovgrid { display: grid; grid-template-columns: 1.1fr 1fr; }
+.ovgrid > section { padding: calc(var(--u) * 3) calc(var(--u) * 5) calc(var(--u) * 4); }
+.ovgrid > section + section { border-left: 1px solid var(--rule); }
+@media (max-width: 900px) { .ovgrid { grid-template-columns: 1fr; } .ovgrid > section + section { border-left: none; border-top: 1px solid var(--rule); } }
+.ov h3 { font-family: var(--sans); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--graphite); margin: 0 0 calc(var(--u) * 2); display: flex; align-items: baseline; gap: calc(var(--u) * 2); }
+.ov h3 .cnt { font-family: var(--mono); font-weight: 400; letter-spacing: 0; text-transform: none; }
+.ov h3 + h3 { margin-top: calc(var(--u) * 5); }
+.ovrow { display: flex; align-items: center; gap: calc(var(--u) * 2.5); padding: calc(var(--u) * 2) 2px; border-top: 1px solid var(--rule-soft); border-radius: var(--r-sm); }
+.ovrow:first-of-type { border-top: none; }
+.ovrow.hi, .ovrow:hover { background: var(--select-wash); }
+.ovrow .rank { font-family: var(--mono); font-size: 11px; color: var(--graphite); width: 14px; flex: none; }
+.ovrow .grow { flex: 1; min-width: 0; font-size: 13px; }
+.ovrow .grow b { font-weight: 600; }
+.ovrow .why { font-size: 11px; color: var(--graphite); margin-top: 1px; }
+.ovrow .why .p { color: var(--select); }
+.ovrow .tag { flex: none; }
+.ovrow .btn { flex: none; }
+.ovrow.concern { cursor: pointer; }
+.ovrow .name { font-family: var(--serif); font-size: 14.5px; }
+.ov .quiet { font-size: 12.5px; color: var(--graphite); font-style: italic; padding: calc(var(--u) * 2) 0; }
+.ov .more { font-size: 11.5px; color: var(--graphite); padding-top: calc(var(--u) * 2); }
+.ov .more button { color: var(--select); text-decoration: underline; text-underline-offset: 2px; }

@@ -7,7 +7,8 @@ import Brief from "./Brief";
 import Trail from "./Trail";
 import Coding from "./Coding";
 import Card from "./Card";
-import type { Brief as BriefT, Card as CardT, Coding as CodingT, Document, NoteFile, PatientSummary, QueueBatch, Timeline as TL, TrailEntry } from "./types";
+import Overview from "./Overview";
+import type { Brief as BriefT, Card as CardT, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientSummary, QueueBatch, Timeline as TL, TrailEntry } from "./types";
 
 const PID = "pt_001";
 const WINDOWS = ["3m", "6m", "1y", "2y", "5y", "all"];
@@ -24,11 +25,12 @@ export default function App() {
   const [tl, setTl] = useState<TL | null>(null);
   const [brief, setBrief] = useState<BriefT | null>(null);
   const [card, setCard] = useState<CardT | null>(null);
-  const [view, setView] = useState<"desk" | "card">(() => {
+  const [overview, setOverview] = useState<OverviewT | null>(null);
+  const [view, setView] = useState<"overview" | "card" | "desk">(() => {
     try {
-      return (localStorage.getItem("view") as "desk" | "card") || "card";
+      return (localStorage.getItem("view") as "overview" | "card" | "desk") || "overview";
     } catch {
-      return "card";
+      return "overview";
     }
   });
   const [trail, setTrail] = useState<TrailEntry[]>([]);
@@ -52,8 +54,9 @@ export default function App() {
   const [readingDoc, setReadingDoc] = useState<Document | null>(null);
 
   const refresh = useCallback(async () => {
-    const [s, q, n] = await Promise.all([api.patient(PID), api.queue(PID), api.notes()]);
+    const [s, q, n, o] = await Promise.all([api.patient(PID), api.queue(PID), api.notes(), api.overview(PID).catch(() => null)]);
     setSummary(s);
+    setOverview(o);
     setQueues(q.batches);
     setQueueLabels(q.labels);
     setNotes(n.filter((x) => x.patient_id === PID));
@@ -159,7 +162,7 @@ export default function App() {
     }
   };
 
-  const setViewPersist = (v: "desk" | "card") => {
+  const setViewPersist = (v: "overview" | "card" | "desk") => {
     setView(v);
     try {
       localStorage.setItem("view", v);
@@ -271,7 +274,7 @@ export default function App() {
   const selected = summary.problems.find((p) => p.id === problem);
 
   return (
-    <div className={`desk ${view === "card" ? "cardview" : ""}`} onClick={() => menu && setMenu(null)}>
+    <div className={`desk ${view !== "desk" ? "cardview" : ""}`} onClick={() => menu && setMenu(null)}>
       <header className="head">
         <div className="who">
           {pt.name}
@@ -280,8 +283,9 @@ export default function App() {
           </small>
         </div>
         <span className="seg view" title="Desk: list, sheet and inbox. Card: the problem card, with proposals in their slots">
-          <button className={view === "desk" ? "on" : ""} onClick={() => setViewPersist("desk")}>Desk</button>
+          <button className={view === "overview" ? "on" : ""} onClick={() => setViewPersist("overview")}>Overview</button>
           <button className={view === "card" ? "on" : ""} onClick={() => setViewPersist("card")}>Card</button>
+          <button className={view === "desk" ? "on" : ""} onClick={() => setViewPersist("desk")}>Desk</button>
         </span>
         <span className="spacer" />
         {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Looking at what changed…" : busy === "compose" ? "Drafting the referral…" : busy === "orders" ? "Drafting orders…" : busy === "brief" ? "Writing the brief…" : busy === "reset" ? "Resetting…" : "Saving…"}</span>}
@@ -335,6 +339,18 @@ export default function App() {
 
       <main className="sheet">
         {error && <div className="err">{error}</div>}
+        {view === "overview" && overview && (
+          <Overview
+            data={overview}
+            problems={summary.problems}
+            highlight={highlight}
+            onHover={hover}
+            onOpen={(id) => { setProblem(id); setViewPersist("card"); }}
+            onReadNote={(id) => { const n = notes.find((x) => x.id === id); if (n) setReading(n); }}
+            busy={busy}
+          />
+        )}
+        {view === "overview" && !overview && <div className="empty">Computing the overview…</div>}
         {view === "card" && selected && card && card.problem_id === selected.id && (
           <Card
             key={card.problem_id}

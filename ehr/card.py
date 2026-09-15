@@ -91,7 +91,19 @@ def _epistemic(problem: dict) -> tuple[str, str]:
     return "working", "no code on the chart"
 
 
-def _qualifiers(patient: dict, problem: dict, lead: dict | None, today: date, expectation: dict | None) -> list[dict]:
+def _lead(trends: list[dict]) -> dict | None:
+    """The series the clinician is here for: one outside its range first, then the one that moved most."""
+    return min(trends, key=lambda t: (0 if t.get("ref_range_crossing") else 1, -abs(t["delta_pct"] or 0)), default=None)
+
+
+def _worsening(t: dict) -> bool | None:
+    if t.get("direction") not in ("rising", "falling"):
+        return None
+    wr = _worse_when_rising(t)
+    return None if wr is None else (t["direction"] == "rising") == wr
+
+
+def _qualifiers(patient: dict, problem: dict, lead: dict | None, today: date, expectation: dict | None, trends: list[dict] = ()) -> list[dict]:
     q = []
     kin = [p for p in patient["problems"] if _stem(p["name"]) == _stem(problem["name"]) and p.get("onset_date")]
     first = min(kin, key=lambda p: p["onset_date"]) if kin else problem
@@ -100,14 +112,14 @@ def _qualifiers(patient: dict, problem: dict, lead: dict | None, today: date, ex
         days = (today - date.fromisoformat(onset[:10])).days
         why = f"onset {_dmy(onset)}" + (f" ({first['name']})" if first["id"] != problem["id"] else "")
         q.append({"label": "chronic" if days > 365 else "new", "computed": True, "why": why})
-    if lead and lead.get("direction") in ("rising", "falling"):
-        wr = _worse_when_rising(lead)
-        if wr is None:
-            q.append({"label": "progressive", "computed": True, "why": f"{lead['name']} {lead['direction']}"})
-        else:
-            worsening = (lead["direction"] == "rising") == wr
-            q.append({"label": "worsening" if worsening else "improving", "computed": True,
-                      "why": f"{lead['name']} {lead['direction']} {abs(lead['delta_pct'] or 0):.0f}% over the window"})
+    bad = [t for t in trends if _worsening(t)] or ([lead] if lead and _worsening(lead) else [])
+    if bad:
+        t = bad[0]
+        q.append({"label": "worsening", "computed": True, "why": f"{t['name']} {t['direction']} {abs(t['delta_pct'] or 0):.0f}% over the window"})
+    elif lead and lead.get("direction") in ("rising", "falling"):
+        good = _worsening(lead) is False
+        q.append({"label": "improving" if good else "progressive", "computed": True,
+                  "why": f"{lead['name']} {lead['direction']} {abs(lead['delta_pct'] or 0):.0f}% over the window"})
     elif lead:
         q.append({"label": "stable", "computed": True, "why": f"{lead['name']} steady"})
     if expectation and expectation.get("status") == "missed":
@@ -128,7 +140,7 @@ def _representation(patient: dict, problem: dict, ctx: dict, today: date, win: d
         cites += [p["id"] for p in others[:3]]
     parts = [context + "."]
 
-    trends = sorted(ctx["trends"], key=lambda t: -abs(t["delta_pct"] or 0))
+    trends = sorted(ctx["trends"], key=lambda t: (0 if t.get("ref_range_crossing") else 1, -abs(t["delta_pct"] or 0)))
     if trends:
         t = trends[0]
         ev = t.get("evidence_ids", {})
@@ -180,7 +192,7 @@ def _representation(patient: dict, problem: dict, ctx: dict, today: date, win: d
 
 def _supporting(patient: dict, problem: dict, ctx: dict) -> list[dict]:
     out = []
-    for t in sorted(ctx["trends"], key=lambda t: -abs(t["delta_pct"] or 0)):
+    for t in sorted(ctx["trends"], key=lambda t: (0 if t.get("ref_range_crossing") else 1, -abs(t["delta_pct"] or 0))):
         ev = t.get("evidence_ids", {})
         if t["direction"] in ("rising", "falling") and ev.get("latest"):
             out.append({"id": ev["latest"], "ids": [i for i in (ev.get("baseline"), ev.get("latest")) if i], "kind": "result",
@@ -231,7 +243,7 @@ def _doesnt_fit(patient: dict, problem: dict, ctx: dict, start: str, end: str, e
                 break
 
     # 2. a counter-trend move in the lead series while a suspected-cause course continued
-    lead = max(ctx["trends"], key=lambda t: abs(t["delta_pct"] or 0), default=None)
+    lead = _lead(ctx["trends"])
     if lead and lead["direction"] in ("rising", "falling"):
         pts = series.get(lead["code"], [])
         targets = _targets(patient, problem)
@@ -273,7 +285,7 @@ def _doesnt_fit(patient: dict, problem: dict, ctx: dict, start: str, end: str, e
 
 def _expectation(patient: dict, problem: dict, ctx: dict, today: date) -> dict | None:
     """When a suspected cause was stopped, propose what should happen next and check whether it has."""
-    lead = max(ctx["trends"], key=lambda t: abs(t["delta_pct"] or 0), default=None)
+    lead = _lead(ctx["trends"])
     if not lead:
         return None
     stopped = []
@@ -355,7 +367,7 @@ def problem_card(patient: dict, problem_id: str, window="1y", *, proposed_dir: P
     else:
         win = window
     ctx = build_context(patient, problem_id, win)
-    lead = max(ctx["trends"], key=lambda t: abs(t["delta_pct"] or 0), default=None)
+    lead = _lead(ctx["trends"])
     expectation = _expectation(patient, problem, ctx, today)
     epistemic, why = _epistemic(problem)
     brief = deterministic_brief(patient, problem_id, "90d", proposed_dir=proposed_dir, today=today)
@@ -365,7 +377,7 @@ def problem_card(patient: dict, problem_id: str, window="1y", *, proposed_dir: P
         "problem": {k: problem.get(k) for k in ("id", "name", "status", "onset_date", "code", "provenance")},
         "kind": "problem" if problem.get("code") else "concern",
         "epistemic": {"value": epistemic, "computed": True, "why": why},
-        "qualifiers": _qualifiers(patient, problem, lead, today, expectation),
+        "qualifiers": _qualifiers(patient, problem, lead, today, expectation, ctx["trends"]),
         "representation": _representation(patient, problem, ctx, today, win),
         "assessment": None,
         "supporting": _supporting(patient, problem, ctx),

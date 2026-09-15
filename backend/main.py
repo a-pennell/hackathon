@@ -24,6 +24,7 @@ from ehr.reason import monitored_codes, run_reasoning  # noqa: E402
 from ehr.billing import code_visit  # noqa: E402
 from ehr.brief import deterministic_brief, run_live_brief  # noqa: E402
 from ehr.card import problem_card  # noqa: E402
+from ehr.overview import patient_overview  # noqa: E402
 from ehr.orders import run_orders  # noqa: E402
 from ehr.compose import run_compose  # noqa: E402
 from ehr.review import REASON_CODES, apply_review, ledger_for_problem, list_queues, undo_review  # noqa: E402
@@ -81,6 +82,25 @@ def patient_summary(pid: str):
         "documents": d.get("documents", []),
         "orders": d.get("orders", []),
     }
+
+
+@app.get("/api/patients/{pid}/overview")
+def overview(pid: str, since: str | None = None):
+    """Orientation: what changed, ranked; active concerns by what they need; open loops. Computed, never stored."""
+    d = _patient(pid)
+    o = patient_overview(d, since=since, proposed_dir=PROPOSED_DIR)
+    # The note that arrived with the newest visit, if a demo note file carries it, and whether it has been read.
+    enc = (o["here_for"] or {}).get("encounter")
+    note = None
+    if enc:
+        for p in sorted(NOTES_DIR.glob("*.json")):
+            n, e = load_note_file(p)
+            if e and e.get("id") == enc["id"]:
+                note = {"id": n["id"], "file": str(p.relative_to(ROOT)), "author": n["author"], "time": n["time"],
+                        "has_queue": (PROPOSED_DIR / pid / f"{n['id']}.json").exists(),
+                        "has_replay": (PROPOSED_DIR / pid / f"{n['id']}.raw.json").exists()}
+    o["here_for"]["note"] = note
+    return o
 
 
 @app.get("/api/patients/{pid}/problems/{prob}/timeline")
