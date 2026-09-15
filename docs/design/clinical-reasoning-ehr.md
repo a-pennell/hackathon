@@ -542,8 +542,8 @@ that needs no substrate work is the **card-first workspace over the current JSON
 first cut of it is built: `ehr/card.py` computes the card and the **Card** view renders it with
 proposals in their slots; `ehr/overview.py` computes the Level 1 screen (frame 1) with the §9
 ranking and the **Overview** view renders it, both with explanations around them (README, "Run
-the app"). They stop short of persistence, alternatives and the corridor, which need the
-appendix's schema additions. In full: the
+the app"); the expectation corridor of §10 is drawn on the trajectory. They stop short of
+persistence and alternatives, which need the appendix's schema additions. In full: the
 representation and assessment as fields on the existing problem, `expected` as a field on the
 `monitors` link, proposals rendered into the card's slots from the existing queues, the timeline
 mounted as the card's trajectory section. The current three-pane desk is not extended; it is

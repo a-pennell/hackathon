@@ -303,7 +303,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
               </span>
             </h3>
             {tl && tl.series.length > 0 ? (
-              <Timeline data={tl} highlight={highlight} onHover={(id) => onHover(id ? [id] : null)} onOpenNote={onOpenNote} />
+              <Timeline data={tl} highlight={highlight} onHover={(id) => onHover(id ? [id] : null)} onOpenNote={onOpenNote} corridor={card.expected} />
             ) : (
               <div className="quiet">No monitored series in this window.</div>
             )}
@@ -349,7 +349,8 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
           <li><b>Insights</b> show the statement and the evidence first; the suggestion is folded until asked for, so the judgment forms before the recommendation arrives.</li>
           <li><b>Expected</b> and <b>Reassess if</b> are one object read two ways. When a suspected cause is stopped, the card proposes which series should move, which way and by when, and evaluates it against every result that arrives afterwards. A missed expectation becomes an <span className="tag warn">unexpected</span> qualifier, a <span className="v against">−</span> line, and the first item under Changed.</li>
           <li><b>Proposals sit in the slot they would fill.</b> A finding from a note lands under Supporting, an order under Plan, a superseding problem under the title. Proposals about other problems fold at the bottom and can be signed in one gesture; consequential items on this problem are signed one at a time.</li>
-          <li><b>Not in this slice:</b> alternatives with discriminators, the expectation corridor on the trajectory, and persistence of what you accept or write here. Those are the schema additions flagged in the design document's appendix.</li>
+          <li><b>The trajectory</b> draws the expectation as a corridor on its series: from the value at the stop toward a quarter's move, until the due date, with the axis extended past today. A result inside it is quiet; one outside it after the due date is ringed as a mismatch, and the corridor turns vermilion.</li>
+          <li><b>Not in this slice:</b> alternatives with discriminators, and persistence of what you accept or write here. Those are the schema additions flagged in the design document's appendix.</li>
         </ul>
       </section>
     </div>

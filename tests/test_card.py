@@ -56,6 +56,7 @@ def test_expectation_from_a_stopped_cause(reason_patient, tmp_path):
     e = c["expected"]
     assert e["statement"] == "Creatinine falling within 14 days of stopping Ibuprofen"
     assert e["code"] == "2160-0" and e["direction"] == "falling" and e["by"] == "2026-09-03"
+    assert e["ref_value"] == 1.5 and e["target_value"] == 1.12                 # the value at the stop, and a quarter's fall: the corridor
     assert e["status"] == "not_yet"                                              # 1.8 on 30 Aug is above 1.5 at the stop, but the horizon is open
     assert e["tier"] == "proposed" and e["reconsider_if"][0]["trigger"] == "no fall in Creatinine by 3 Sep 2026"
     # past the horizon with no fall: missed, and it shows up as a qualifier and under doesn't fit

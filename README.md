@@ -86,7 +86,8 @@ and below it.
    assay discordance and, until you sign the stop, metformin active at eGFR 15.6.
 5. **Draft orders**: the signed actions appear under *Plan* in pencil; sign them. The card now
    proposes an **Expected** line (creatinine falling within two weeks of stopping naproxen, by
-   date) and what to **Reassess if** it does not; the trajectory below carries the courses.
+   date) and what to **Reassess if** it does not, and the trajectory below draws it as a
+   corridor from the stop toward the target, with the axis extended to the due date.
 6. **Draft referral**: a letter rendered from the chart, the signed insights and your decisions,
    every section carrying tap-through citations. **Read** it, then **Sign referral**. The
    decision trail and **Visit coding** sit behind doors at the foot of the card.

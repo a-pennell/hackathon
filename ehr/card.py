@@ -40,6 +40,7 @@ from ehr.trend import DATA_DIR, load_patient
 
 PLAN_KIND = {"lab": "diagnostic", "imaging": "diagnostic", "medication_change": "therapeutic", "referral": "referral"}
 EXPECTATION_DAYS = 14
+EXPECTATION_MOVE = 0.25   # the corridor is drawn from the value at the stop toward a quarter's move
 ABBREV = {"Diabetes mellitus type 2": "T2DM", "Chronic congestive heart failure": "HFrEF", "Essential hypertension": "HTN",
           "Chronic kidney disease stage 3": "CKD 3", "Ischemic heart disease": "IHD"}
 
@@ -322,7 +323,9 @@ def _expectation(patient: dict, problem: dict, ctx: dict, today: date) -> dict |
     elif today.isoformat() > by:
         status = "missed"
     statement = f"{lead['name']} {want} within {EXPECTATION_DAYS} days of stopping {med['name']}"
-    return {"statement": statement, "code": lead["code"], "direction": want, "since": end, "by": by, "status": status,
+    target = None if ref is None else round(ref * (1 - EXPECTATION_MOVE) if want == "falling" else ref * (1 + EXPECTATION_MOVE), 2)
+    return {"statement": statement, "code": lead["code"], "name": lead["name"], "direction": want, "since": end, "by": by, "status": status,
+            "ref_value": ref, "target_value": target,
             "tier": "proposed", "source": "computed", "ids": ids,
             "reconsider_if": [
                 {"trigger": f"no {'fall' if want == 'falling' else 'rise'} in {lead['name']} by {_dmy(by)}",

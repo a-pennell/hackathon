@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Encounter, Medication, Observation, Series, Timeline as TL } from "./types";
+import type { CardExpectation, Encounter, Medication, Observation, Series, Timeline as TL } from "./types";
 
-type Props = { data: TL; highlight: Set<string>; onHover?: (id: string | null) => void; onOpenNote?: (noteId: string) => void };
+/** An expectation drawn as a corridor on its series: from the value at the stop toward the target, until the due date. */
+export type Corridor = Pick<CardExpectation, "code" | "direction" | "since" | "by" | "status" | "ref_value" | "target_value">;
+
+type Props = { data: TL; highlight: Set<string>; onHover?: (id: string | null) => void; onOpenNote?: (noteId: string) => void; corridor?: Corridor | null };
 
 const GUTTER = 176; // the flowsheet margin: lane names, units, latest values
 const RIGHT = 24;
@@ -22,7 +25,7 @@ const nice = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 
 
 type Tip = { x: number; y: number; body: React.ReactNode } | null;
 
-export default function Timeline({ data, highlight, onHover, onOpenNote }: Props) {
+export default function Timeline({ data, highlight, onHover, onOpenNote, corridor }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(900);
   const [tip, setTip] = useState<Tip>(null);
@@ -37,7 +40,9 @@ export default function Timeline({ data, highlight, onHover, onOpenNote }: Props
   }, []);
 
   const t0 = day(data.window.start);
-  const t1 = day(data.window.end) + 86400000;
+  // The axis runs to the expectation's due date when that lies past the window, so the corridor is not clipped.
+  const t1 = Math.max(day(data.window.end), corridor ? day(corridor.by) : 0) + 86400000;
+  const todayX = corridor && day(corridor.by) > day(data.window.end) ? GUTTER + ((day(data.window.end) - t0) / (t1 - t0)) * (width - GUTTER - RIGHT) : null;
   const x = (iso: string) => GUTTER + ((day(iso) - t0) / (t1 - t0)) * (width - GUTTER - RIGHT);
 
   // Proposed (pencil) observations attach to the series of the same code.
@@ -93,7 +98,7 @@ export default function Timeline({ data, highlight, onHover, onOpenNote }: Props
       <svg className="tl" width={width} height={height}>
         {/* lab lanes */}
         {data.series.map((s, i) => (
-          <Lane key={s.code} s={s} i={i} x={x} width={width} pencil={pencilByCode[s.code] ?? []} highlight={highlight} show={show} hide={hide} onHover={onHover} />
+          <Lane key={s.code} s={s} i={i} x={x} width={width} pencil={pencilByCode[s.code] ?? []} highlight={highlight} show={show} hide={hide} onHover={onHover} corridor={corridor && corridor.code === s.code ? corridor : null} />
         ))}
 
         {/* medication lanes */}
@@ -206,6 +211,12 @@ export default function Timeline({ data, highlight, onHover, onOpenNote }: Props
           <line key={"g" + ms} className="grid" x1={xms(ms)} x2={xms(ms)} y1={0} y2={medTop + 22 + meds.length * MED_H} pointerEvents="none" />
         ))}
 
+        {todayX !== null && (
+          <g pointerEvents="none">
+            <line className="today" x1={todayX} x2={todayX} y1={0} y2={height - AXIS_H} />
+            <text className="axis-label" x={todayX + 4} y={12}>today</text>
+          </g>
+        )}
         {cursor !== null && (
           <g pointerEvents="none">
             <line className="cursor" x1={cursor} x2={cursor} y1={0} y2={height - AXIS_H} />
@@ -225,15 +236,17 @@ export default function Timeline({ data, highlight, onHover, onOpenNote }: Props
 }
 
 function Lane({
-  s, i, x, width, pencil, highlight, show, hide, onHover,
+  s, i, x, width, pencil, highlight, show, hide, onHover, corridor,
 }: {
   s: Series; i: number; x: (iso: string) => number; width: number; pencil: Observation[]; highlight: Set<string>;
-  show: (e: React.MouseEvent, body: React.ReactNode) => void; hide: () => void; onHover?: (id: string | null) => void;
+  show: (e: React.MouseEvent, body: React.ReactNode) => void; hide: () => void; onHover?: (id: string | null) => void; corridor?: Corridor | null;
 }) {
   const top = i * (LANE_H + LANE_GAP) + 8;
   const plotTop = top + 10;
   const plotH = LANE_H - 22;
   const vals = [...s.points.map((p) => p.value), ...pencil.map((p) => p.value)];
+  if (corridor?.ref_value != null) vals.push(corridor.ref_value);
+  if (corridor?.target_value != null) vals.push(corridor.target_value);
   const rr = s.reference_range;
   if (rr?.low != null) vals.push(rr.low);
   if (rr?.high != null) vals.push(rr.high);
@@ -277,10 +290,25 @@ function Lane({
         </text>
       )}
       <path className="line" d={path} />
+      {corridor && corridor.ref_value != null && corridor.target_value != null && (() => {
+        const x0 = x(corridor.since), x1 = x(corridor.by);
+        const yRef = y(corridor.ref_value), yTarget = y(corridor.target_value);
+        const label = `expected: ${corridor.direction} by ${fmt(corridor.by)} · ${corridor.status.replace("_", " ")}`;
+        return (
+          <g
+            onMouseMove={(e) => show(e, <><div className="t">EXPECTATION · proposed by rules</div><div>{s.name} {corridor.direction} from {nice(corridor.ref_value!)} toward {nice(corridor.target_value!)} by {fmt(corridor.by)}: <b>{corridor.status.replace("_", " ")}</b></div></>)}
+            onMouseLeave={hide}
+          >
+            <polygon className={`corridor ${corridor.status}`} points={`${x0.toFixed(1)},${yRef.toFixed(1)} ${x1.toFixed(1)},${yRef.toFixed(1)} ${x1.toFixed(1)},${yTarget.toFixed(1)}`} />
+            <line className={`corridor-edge ${corridor.status}`} x1={x0} x2={x0} y1={plotTop} y2={plotTop + plotH} />
+            <text className={`corridor-label ${corridor.status}`} x={x0 + 4} y={corridor.direction === "falling" ? Math.min(yTarget + 12, plotTop + plotH - 2) : Math.max(yTarget - 4, plotTop + 9)}>{label}</text>
+          </g>
+        );
+      })()}
       {s.points.map((p) => (
         <circle
           key={p.id}
-          className={`pt ${out(p.value) ? "out" : ""} ${highlight.has(p.id) ? "hi" : ""}`}
+          className={`pt ${out(p.value) ? "out" : ""} ${highlight.has(p.id) ? "hi" : ""} ${corridor && day(p.time) > day(corridor.since) && (corridor.direction === "falling" ? p.value >= (corridor.ref_value ?? Infinity) : p.value <= (corridor.ref_value ?? -Infinity)) && day(p.time) > day(corridor.by) ? "mismatch" : ""}`}
           cx={x(p.time)}
           cy={y(p.value)}
           r={highlight.has(p.id) ? 5 : 3}

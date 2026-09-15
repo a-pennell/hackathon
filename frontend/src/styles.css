@@ -436,3 +436,14 @@ svg.tl .order.med { fill: var(--select); }
 .ov .quiet { font-size: 12.5px; color: var(--graphite); font-style: italic; padding: calc(var(--u) * 2) 0; }
 .ov .more { font-size: 11.5px; color: var(--graphite); padding-top: calc(var(--u) * 2); }
 .ov .more button { color: var(--select); text-decoration: underline; text-underline-offset: 2px; }
+
+/* the expectation corridor: from the value at the stop toward the target, until the due date */
+svg.tl .corridor { fill: rgba(47, 107, 79, 0.14); stroke: var(--accepted); stroke-width: 1; stroke-dasharray: 4 3; stroke-linejoin: round; }
+svg.tl .corridor.met { stroke-dasharray: none; fill: rgba(47, 107, 79, 0.22); }
+svg.tl .corridor.missed { fill: var(--flag-wash); stroke: var(--flag); }
+svg.tl .corridor-edge { stroke: var(--accepted); stroke-dasharray: 2 3; }
+svg.tl .corridor-edge.missed { stroke: var(--flag); }
+svg.tl .corridor-label { font-family: var(--mono); font-size: 10px; fill: var(--accepted); }
+svg.tl .corridor-label.missed { fill: var(--flag); }
+svg.tl .pt.mismatch { fill: none; stroke: var(--flag); stroke-width: 2; r: 6; }
+svg.tl .today { stroke: var(--graphite); stroke-dasharray: 2 3; }

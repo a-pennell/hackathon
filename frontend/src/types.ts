@@ -269,7 +269,8 @@ export type Coding = {
 export type CardEvidence = { id: string; ids: string[]; kind: string; text: string; detail: string; source: string; valence: "for" | "against" | "unexplained" };
 export type CardPlan = { id: string; plan_kind: string; text: string; detail: string; status: string; ids: string[] };
 export type CardExpectation = {
-  statement: string; code: string; direction: string; since: string; by: string;
+  statement: string; code: string; name: string; direction: string; since: string; by: string;
+  ref_value: number | null; target_value: number | null;
   status: "met" | "not_yet" | "missed"; tier: string; source: string; ids: string[];
   reconsider_if: { trigger: string; then: string }[];
 };
