@@ -74719,7 +74719,7 @@
     {
       "id": "ins_0057_01",
       "patient_id": "pt_001",
-      "problem_id": "prob_0057",
+      "problem_id": "prob_demo_002_01",
       "statement": "Renal function has deteriorated sharply over the past year: eGFR fell from 55.45 on 2025-09-10 to 15.6 on 2026-08-19 (-71.9%, roughly -0.53 mL/min/week), with whole-blood creatinine rising from 1.62 to 5.7 over the same window (up from 3.69 in May and 4.4 in late July). The patient reports about three weeks of fatigue, poor appetite and morning nausea, which is consistent with uremic symptoms at this level of function. The chart still carries this problem as CKD stage 3, which no longer matches an eGFR of 15.6.",
       "evidence": [
         "prob_0057",
@@ -74757,7 +74757,7 @@
     {
       "id": "ins_0057_02",
       "patient_id": "pt_001",
-      "problem_id": "prob_0057",
+      "problem_id": "prob_demo_002_01",
       "statement": "Naproxen 500 mg twice daily was started 2026-04-01, and the steepest part of the creatinine rise follows it (3.69 in May, 4.4 in late July, 5.7 on 2026-08-19) with eGFR reaching 15.6. The note documents the patient was unaware the NSAID was a problem for his kidneys, and it is recorded as a suspected contributor. Concurrent lisinopril 10 mg daily and as-needed furosemide 40 mg compound the hemodynamic risk of an NSAID in advanced CKD.",
       "evidence": [
         "med_demo_002_01",
@@ -74793,7 +74793,7 @@
     {
       "id": "ins_0057_03",
       "patient_id": "pt_001",
-      "problem_id": "prob_0057",
+      "problem_id": "prob_demo_002_01",
       "statement": "Metformin 500 mg remains on the active list with an eGFR of 15.6 on 2026-08-19, well below the threshold at which metformin is contraindicated because of lactic acidosis risk. The patient is also on insulin isophane/regular, so glycemic cover would remain if metformin were held. Nausea and poor appetite over the past three weeks further raise the concern about continuing it.",
       "evidence": [
         "med_metformin_hydrochloride",
@@ -74825,7 +74825,7 @@
     {
       "id": "ins_0057_04",
       "patient_id": "pt_001",
-      "problem_id": "prob_0057",
+      "problem_id": "prob_demo_002_01",
       "statement": "The two creatinine series disagree substantially at the same timepoint: serum creatinine is 1.9408 on 2026-08-19, essentially unchanged from 1.8853 a year earlier (+2.9%), while whole-blood creatinine is 5.7 on the same date. BUN is also flat at 17.25 versus 16.39 at baseline, which would be unusual alongside a true creatinine of 5.7. This raises the possibility of an assay, specimen or transcription discrepancy that should be resolved before acting on the absolute values.",
       "evidence": [
         "obs_19ab2d4e",

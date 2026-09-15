@@ -122,7 +122,10 @@ Two shapes the build needs that the schema doc does not define. Both are additiv
    and a review record naming the signed restage insight) and the `monitors` links for the creatinine,
    eGFR and BUN series were re-pointed at the stage 4 problem. Nothing is deleted; the old problems
    keep their links and history. Visit coding only lets a problem that is active on the coded day own
-   a monitored series, so a resolved stage no longer counts as "progressing".
+   a monitored series, so a resolved stage no longer counts as "progressing". The four signed insights
+   (and the reasoning / referral queue batches they came from) were re-pointed from the stage 3 id to
+   the stage 4 id so the decision ledger follows the restaged problem; ids and provenance are unchanged,
+   and the `*.raw.json` recordings keep their `prob_0057` stems.
 
 ## Things the team should know
 
