@@ -231,18 +231,19 @@ def patient_overview(patient: dict, *, since: str | None = None, proposed_dir: P
         if not any(k[1] == e["med_id"] and k[2] == e["kind"] and k[3] == e["date"] for k in seen_meds):
             changes.append({"rank": 8, "kind": "medication", "text": f"{e['text']}, {_dmy(e['date'])}", "why": "on the medication list, not linked to an active problem",
                             "ids": [e["med_id"]], "problem_id": None, "problem_name": "Medications", "tag": None, "key": ("med", e["med_id"], e["kind"], e["date"])})
-    uniq, seen = [], set()
-    for l in sorted(changes, key=lambda l: (l["rank"], l["problem_name"] or "")):
-        if l["key"] in seen:
-            continue
-        seen.add(l["key"])
-        uniq.append({k: v for k, v in l.items() if k != "key"})
-
     def order(c):
         urgent = 0 if c["top_rank"] <= 2 else 1
         bad = 0 if ("worsening" in c["qualifiers"] or "unexpected" in c["qualifiers"]) else 1
         return (urgent, bad, c["top_rank"], 0 if c["monitored"] else 1, 0 if c["pending"] else 1, -(int((c["onset_date"] or "0000")[:4])))
     concerns.sort(key=order)
+    # A change linked to two concerns belongs to the one that ranks higher, not the one that sorts first by name.
+    position = {c["id"]: i for i, c in enumerate(concerns)}
+    uniq, seen = [], set()
+    for l in sorted(changes, key=lambda l: (l["rank"], position.get(l["problem_id"], len(position)))):
+        if l["key"] in seen:
+            continue
+        seen.add(l["key"])
+        uniq.append({k: v for k, v in l.items() if k != "key"})
     newest = max(patient["encounters"], key=lambda e: e["time"], default=None)
     return {
         "patient": patient["patient"], "as_of": today.isoformat(), "since": since_info,

@@ -90,3 +90,15 @@ def test_pending_loops_follow_the_loop_rule(reason_patient):
     p["observations"].append(obs(40, "2026-08-31", 1.6))                         # the result lands: the loop closes
     o = patient_overview(p, proposed_dir=Path("/nonexistent"), today=TODAY)
     assert [(x["kind"], x["status"]) for x in o["pending"]] == [("referral", "awaiting"), ("lab", "resulted")]
+
+
+def test_a_change_on_two_concerns_goes_to_the_higher_ranked_one(reason_patient):
+    p = with_visits(reason_patient)
+    p["medications"][0]["segments"][0]["end"] = "2026-08-30"                    # ibuprofen stopped; a suspected cause on CKD
+    p["problems"].append({"id": "prob_knee", "patient_id": "pt_t", "name": "Aching knee", "code": None, "status": "active",
+                          "onset_date": "2026-06-01", "resolved_date": None, "provenance": {"source": "fhir_import"}})
+    p["links"].append(link(30, "med_ibuprofen", "prob_knee", "treats"))         # ...and it treats the knee, which sorts first by name
+    o = patient_overview(p, proposed_dir=Path("/nonexistent"), today=TODAY)
+    stop = next(l for l in o["changes"] if l["text"] == "Ibuprofen 600 mg stopped, 30 Aug")
+    assert stop["problem_id"] == "prob_ckd"                                     # CKD is worsening, so it ranks above the knee
+    assert sum(1 for l in o["changes"] if l["text"] == stop["text"]) == 1
