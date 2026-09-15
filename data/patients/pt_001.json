@@ -156,11 +156,18 @@
         "system": "SNOMED-CT",
         "value": "127013003"
       },
-      "status": "active",
+      "status": "resolved",
       "onset_date": "2018-02-07",
-      "resolved_date": null,
+      "resolved_date": "2026-09-15",
       "provenance": {
         "source": "fhir_import"
+      },
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-09-15T21:39:49+00:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": "Superseded by CKD stage 4 (ins_0057_01); kidney disease now tracked under prob_demo_002_01"
       }
     },
     {
