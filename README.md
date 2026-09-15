@@ -46,7 +46,8 @@ ink. "A note arrives" opens a demo note and extracts it (live, or replaying a sa
 
 ## Demo runbook
 
-The two Claude calls have been run live once (`claude-opus-5`) and their responses are saved as
+Every Claude call in the demo (extraction, reasoning, brief, orders, referral) has been run live once
+(`claude-opus-5`) and the responses are saved as
 `data/proposed/pt_001/*.raw.json`, so the demo replays them offline and byte-for-byte. Live mode
 needs `ANTHROPIC_API_KEY` exported in the shell that starts the server.
 
@@ -63,7 +64,7 @@ update as you sign and reject.
    shows a 10-second **Undo**. Signed items move into a collapsed "signed" strip.
 3. **What's changed?** Four insights, each citing real ids: restage CKD; naproxen as contributor;
    **stop metformin at eGFR 15.6**; the two creatinine assays disagree. Hover the chips; sign.
-4. **Draft orders** (needs one live run to record): the signed actions become orders; a signed
+4. **Draft orders** (saved): the signed actions become five orders; a signed
    medication change edits the course on the sheet.
 5. **Draft referral**: a letter rendered from the chart, the signed insights and your decisions,
    every section carrying tap-through citations. **Read** it, then **Sign referral**. The
@@ -79,6 +80,8 @@ python3 -m ehr.review pt_001 note_demo_002 --accept-all --accept-changes
 python3 -m ehr.reason pt_001 --problem prob_0057 --replay data/proposed/pt_001/reason_prob_0057.raw.json
 python3 -m ehr.review pt_001 reason_prob_0057 --list
 python3 -m ehr.review pt_001 note_demo_002 --reject prob_demo_002_01 --reason-code needs_confirmation --reason "repeat serum creatinine first"
+python3 -m ehr.review pt_001 reason_prob_0057 --accept-all
+python3 -m ehr.orders pt_001 --problem prob_0057 --replay data/proposed/pt_001/orders_prob_0057.raw.json
 python3 -m ehr.compose pt_001 --problem prob_0057 --kind referral --audience nephrology   # or --replay <raw.json>
 ```
 
@@ -86,7 +89,7 @@ Drop `--replay` to call Claude live (each call is roughly 10-15k tokens). Every 
 timestamped copy (`note_demo_002.20260912T084512.raw.json`, never overwritten) and updates the
 `<stem>.raw.json` pointer that replay uses. To roll back a bad live run, copy an older timestamped
 file over the pointer. Reset from the shell:
-`git checkout data/patients/pt_001.json && rm data/proposed/pt_001/note_demo_002.json data/proposed/pt_001/reason_prob_0057.json`.
+`git checkout data/patients/pt_001.json && rm data/proposed/pt_001/note_demo_002.json data/proposed/pt_001/reason_prob_0057.json data/proposed/pt_001/orders_prob_0057.json`.
 
 The decision moment: creatinine (LOINC `38483-4`) rises from 1.6 to 5.7 over the year, eGFR falls
 to 15.6, the note reveals daily naproxen since April, and metformin 500 mg is still on board.
