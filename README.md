@@ -21,6 +21,7 @@ human accepts it.
 | `ehr/compose.py` | chart state + signed insights + review decisions -> a generated referral letter with citations |
 | `ehr/brief.py` | pre-visit brief per problem: computed on open (no model), or Claude-written over the same evidence |
 | `ehr/orders.py` | signed insights -> proposed orders (labs, medication changes, referrals); signing a medication change edits the course |
+| `ehr/card.py` | the problem card: representation, supporting and doesn't-fit evidence, plan, expected trajectory and what changed, computed from the chart on demand (never stored) |
 | `ehr/billing.py` | visit coding computed from what was signed today: diagnosis codes (demo ICD-10 map) and the E/M level by medical decision making, every element justified by ids |
 | `ehr/llm.py` | the single Claude API call site (`claude-opus-5`, structured output) |
 | `tests/` | `python3 -m pytest tests -q` |
@@ -37,12 +38,17 @@ Open http://localhost:8000. The built frontend is committed in `frontend/dist`; 
 `frontend/src`, rebuild with `cd frontend && npm install && npm run build` (Node 22). For live
 frontend reloads use `npm run dev` (port 5173, proxies `/api` to 8000).
 
-The screen is a chart desk: the problem list (left, newest monitored problem first), the
-problem-scoped timeline (centre: monitored lab series with reference bands, medication courses
-as bands on the same axis, encounters as ticks), and the review queue (right). Everything
-AI-proposed is drawn in *pencil* (dashed, amber) until a clinician signs it; signed items become
-ink. "A note arrives" opens a demo note and extracts it (live, or replaying a saved response);
-"Reason about this problem" runs the reasoning layer (live, replay, or rules-only).
+The header switches between two views of the same chart. **Desk** is the original three-pane
+chart desk: the problem list (left, newest monitored problem first), the problem-scoped timeline
+(centre: monitored lab series with reference bands, medication courses as bands on the same
+axis, encounters as ticks), and the review queue (right). **Card** (the default) is the
+problem card from `docs/design/clinical-reasoning-ehr.md`: one screen for one concern, with a
+proposed representation, the clinician's assessment, supporting and doesn't-fit evidence,
+insights, plan, expected trajectory and what changed, the timeline mounted as its trajectory
+section, and every proposal from a note sitting in the slot it would fill instead of in an inbox.
+The card carries its own explanation above and below it; it is a demo of the component, so what
+you accept or write on it is not written to the chart. Everything AI-proposed is drawn in *pencil*
+(dashed, amber) until a clinician signs it; signed items become ink.
 
 ## Demo runbook
 

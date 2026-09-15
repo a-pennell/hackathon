@@ -1,4 +1,4 @@
-import type { Brief, Coding, NoteFile, PatientSummary, QueueBatch, Timeline, TrailEntry } from "./types";
+import type { Brief, Card, Coding, NoteFile, PatientSummary, QueueBatch, Timeline, TrailEntry } from "./types";
 
 export type ReviewBody = { accept?: string[]; reject?: string[]; accept_all?: boolean; accept_changes?: boolean; reason?: string; reason_code?: string; by?: string };
 
@@ -33,6 +33,7 @@ export const api = {
   brief: (pid: string, prob: string, window = "90d") => req<Brief>(`/api/patients/${pid}/problems/${prob}/brief?window=${window}`),
   briefLive: (pid: string, prob: string, mode: "live" | "replay", window = "90d") =>
     req<Brief>(`/api/patients/${pid}/problems/${prob}/brief`, { method: "POST", body: JSON.stringify({ mode, window }) }),
+  card: (pid: string, prob: string, window = "1y") => req<Card>(`/api/patients/${pid}/problems/${prob}/card?window=${window}`),
   trail: (pid: string, prob: string) => req<TrailEntry[]>(`/api/patients/${pid}/problems/${prob}/trail`),
   orders: (pid: string, problem_id: string, mode: "live" | "replay", window: string) =>
     req<QueueBatch>(`/api/patients/${pid}/orders`, { method: "POST", body: JSON.stringify({ problem_id, mode, window }) }),

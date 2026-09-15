@@ -321,3 +321,88 @@ svg.tl .order.med { fill: var(--select); }
 /* which Claude: live or the saved draft */
 .mode { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--graphite); }
 .mode .seg button { padding: 2px 8px; }
+
+/* ------------------------------------------------------------- card view */
+/* The problem workspace as the card: the rail of problems, then the card. No inbox column;
+   proposals sit in the slot they would fill. */
+.desk.cardview { grid-template-columns: 232px 1fr; grid-template-areas: "head head" "list sheet"; }
+.desk.cardview .list .prob .name { font-size: 13px; }
+.seg.view button.on { color: var(--ink); font-weight: 600; }
+.cardpage { max-width: 1040px; margin: 0 auto; padding: calc(var(--u) * 4) calc(var(--u) * 6) calc(var(--u) * 12); }
+.explain { margin: 0 0 calc(var(--u) * 4); padding: calc(var(--u) * 3) calc(var(--u) * 4); border: 1px solid var(--rule); background: var(--paper-2); }
+.explain h2 { font-family: var(--serif); font-weight: 400; font-size: 16px; margin: 0 0 var(--u); }
+.explain p { margin: var(--u) 0 0; max-width: 78ch; font-size: 13px; color: var(--ink-2); }
+.explain p.qs { font-size: 11.5px; color: var(--graphite); }
+.explain p.qs b { font-family: var(--mono); font-weight: 500; color: var(--ink-2); }
+.explain ul { margin: var(--u) 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
+.explain li { margin: calc(var(--u) * 1.5) 0; max-width: 90ch; }
+.explain li b { color: var(--ink); font-weight: 600; }
+.explain.bottom { margin-top: calc(var(--u) * 4); }
+
+.pcard { background: var(--paper-2); border: 1px solid var(--rule-strong); box-shadow: 0 1px 0 var(--rule-soft); padding: calc(var(--u) * 4) calc(var(--u) * 5) calc(var(--u) * 3); }
+.pcard .ptitle { display: flex; align-items: baseline; gap: calc(var(--u) * 2); flex-wrap: wrap; }
+.pcard .ptitle h1 { font-family: var(--serif); font-weight: 400; font-size: 24px; margin: 0; letter-spacing: -0.01em; }
+.pcard .ptitle .stamp { margin-left: auto; }
+.stamp { font-family: var(--mono); font-size: 10.5px; color: var(--graphite); }
+.tag { display: inline-block; font-size: 10.5px; line-height: 17px; padding: 0 6px; border: 1px solid var(--rule-strong); border-radius: var(--r-sm); color: var(--ink); white-space: nowrap; vertical-align: middle; }
+.tag.ep { background: var(--select-wash); border-color: var(--select); color: var(--select); }
+.tag.warn { border-color: var(--flag); color: var(--flag); background: var(--flag-wash); }
+.tag.ok { border-color: var(--accepted); color: var(--accepted); background: rgba(47, 107, 79, 0.10); }
+.tag.soft { border-color: var(--rule); color: var(--graphite); }
+.pcard .slot { margin-top: calc(var(--u) * 3); }
+.pcard .slot-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pending); }
+.pcard .slot .card, .pcard section .card { margin: calc(var(--u) * 2) 0 0; }
+.pgrid { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 5); margin-top: calc(var(--u) * 4); }
+@media (max-width: 900px) { .pgrid { grid-template-columns: 1fr; } }
+.pcard section.full { margin-top: calc(var(--u) * 4); }
+.pcard h3 { font-family: var(--sans); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--graphite); margin: 0 0 calc(var(--u) * 2); display: flex; align-items: baseline; gap: calc(var(--u) * 2); }
+.pcard h3 .cnt { font-family: var(--mono); font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--graphite); }
+.pcard h3 .seg { margin-left: auto; }
+.serif { font-family: var(--serif); font-size: 14.5px; line-height: 1.55; color: var(--ink); }
+.pencil-box { border: 1px dashed rgba(168, 107, 18, 0.55); background: var(--pending-wash); padding: calc(var(--u) * 2.5) calc(var(--u) * 3); border-radius: var(--r-sm); }
+.pencil-box .row, .ink-box .row { display: flex; gap: calc(var(--u) * 2); align-items: center; margin-top: calc(var(--u) * 2); }
+.pencil-box .row .spacer, .ink-box .row .spacer, .pactions .spacer { flex: 1; }
+.pencil-box .hint, .pcard .hint { font-size: 11px; color: var(--graphite); }
+.ink-box { border-left: 3px solid var(--ink); padding: 2px 0 2px calc(var(--u) * 3); }
+.pcard textarea { width: 100%; font: inherit; font-family: var(--serif); font-size: 14px; line-height: 1.5; color: var(--ink); background: var(--paper); border: 1px solid var(--rule-strong); border-radius: var(--r-sm); padding: calc(var(--u) * 2); resize: vertical; }
+.pcard textarea:focus { outline: none; border-color: var(--select); }
+.pcard .quiet { font-size: 12.5px; color: var(--graphite); font-style: italic; }
+.pcard .link, .explain .link { color: var(--select); text-decoration: underline; text-underline-offset: 2px; font-size: inherit; }
+.pcard .link:disabled { opacity: 0.5; }
+.ev { list-style: none; margin: 0; padding: 0; }
+.ev li { display: flex; gap: calc(var(--u) * 2); align-items: baseline; padding: calc(var(--u) * 1.25) 2px; border-top: 1px solid var(--rule-soft); border-radius: var(--r-sm); }
+.ev li:first-child { border-top: none; }
+.ev li.hi, .ev li:hover { background: var(--select-wash); }
+.ev .v, .explain .v { font-family: var(--mono); font-weight: 700; width: 12px; flex: none; text-align: center; }
+.ev .v.for { color: var(--accepted); } .ev .v.against, .explain .v.against { color: var(--flag); } .ev .v.unx, .explain .v.unx { color: var(--flag); }
+.ev .txt { flex: 1; font-size: 13px; }
+.ev .txt .detail { display: block; font-size: 11px; color: var(--graphite); }
+.ev .src { font-size: 10.5px; color: var(--graphite); white-space: nowrap; }
+.insight { padding: calc(var(--u) * 2.5) calc(var(--u) * 3); border: 1px solid var(--rule); border-radius: var(--r-md); margin-top: calc(var(--u) * 2); background: var(--paper); }
+.insight.ink { border-left: 3px solid var(--accepted); }
+.insight .statement { font-size: 14px; }
+.insight .action { margin-top: var(--u); font-size: 12.5px; color: var(--ink-2); padding-left: calc(var(--u) * 3); border-left: 2px solid var(--rule); }
+.insight .link { display: inline-block; margin-top: calc(var(--u) * 1.5); font-size: 11.5px; }
+.insight .stamp { display: block; margin-top: var(--u); }
+.plan { display: grid; grid-template-columns: 1fr 1fr; gap: 2px calc(var(--u) * 5); font-size: 13px; }
+@media (max-width: 900px) { .plan { grid-template-columns: 1fr; } }
+.plan > div { display: flex; gap: calc(var(--u) * 2); align-items: baseline; padding: calc(var(--u) * 1.25) 2px; border-radius: var(--r-sm); }
+.plan > div.hi, .plan > div:hover { background: var(--select-wash); }
+.plan .k { font-family: var(--mono); font-size: 10.5px; color: var(--graphite); width: 82px; flex: none; }
+.plan .tag { margin-left: auto; }
+.exp { display: grid; grid-template-columns: 96px 1fr; gap: calc(var(--u) * 1.5) calc(var(--u) * 4); font-size: 13.5px; border-top: 1px solid var(--rule); padding-top: calc(var(--u) * 3); }
+.exp .k { font-family: var(--sans); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--graphite); padding-top: 3px; }
+.pencil-inline { border-bottom: 1px dashed var(--pending); color: var(--ink); }
+.pencil-inline .stamp { border-bottom: none; }
+.exp .changed .line { cursor: default; border-radius: var(--r-sm); padding: 0 2px; font-family: var(--serif); }
+.exp .changed .line:hover, .exp .changed .line.hi { background: var(--select-wash); }
+.exp .changed .line.queue { color: var(--pending); }
+.exp .changed .line.ledger { font-style: italic; color: var(--ink-2); }
+.pactions { display: flex; gap: calc(var(--u) * 2); flex-wrap: wrap; align-items: center; margin-top: calc(var(--u) * 4); padding-top: calc(var(--u) * 3); border-top: 1px solid var(--rule); }
+.pcard .trajectory { margin-top: calc(var(--u) * 3); }
+.pcard .other { margin-top: calc(var(--u) * 4); padding-top: calc(var(--u) * 2); border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u) * 3); }
+.pcard .other .fold, .pcard .doors .fold { font-size: 12px; color: var(--graphite); }
+.pcard .other .fold:hover, .pcard .doors .fold:hover { color: var(--ink); }
+.pcard .other .other-list { flex-basis: 100%; }
+.pcard .doors { margin-top: calc(var(--u) * 4); padding-top: calc(var(--u) * 2); border-top: 1px solid var(--rule); }
+.pcard .doors .trail, .pcard .doors .coding { margin: calc(var(--u) * 3) 0 0; }

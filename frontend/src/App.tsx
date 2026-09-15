@@ -6,7 +6,8 @@ import Timeline from "./Timeline";
 import Brief from "./Brief";
 import Trail from "./Trail";
 import Coding from "./Coding";
-import type { Brief as BriefT, Coding as CodingT, Document, NoteFile, PatientSummary, QueueBatch, Timeline as TL, TrailEntry } from "./types";
+import Card from "./Card";
+import type { Brief as BriefT, Card as CardT, Coding as CodingT, Document, NoteFile, PatientSummary, QueueBatch, Timeline as TL, TrailEntry } from "./types";
 
 const PID = "pt_001";
 const WINDOWS = ["3m", "6m", "1y", "2y", "5y", "all"];
@@ -22,6 +23,14 @@ export default function App() {
   const [window_, setWindow] = useState("1y");
   const [tl, setTl] = useState<TL | null>(null);
   const [brief, setBrief] = useState<BriefT | null>(null);
+  const [card, setCard] = useState<CardT | null>(null);
+  const [view, setView] = useState<"desk" | "card">(() => {
+    try {
+      return (localStorage.getItem("view") as "desk" | "card") || "card";
+    } catch {
+      return "card";
+    }
+  });
   const [trail, setTrail] = useState<TrailEntry[]>([]);
   const [coding, setCoding] = useState<CodingT | null>(null);
   const [queues, setQueues] = useState<QueueBatch[]>([]);
@@ -60,6 +69,7 @@ export default function App() {
     let live = true;
     api.timeline(PID, problem, window_).then((d) => live && setTl(d)).catch((e) => setError(String(e.message ?? e)));
     api.brief(PID, problem).then((b) => live && setBrief(b)).catch(() => live && setBrief(null));
+    api.card(PID, problem, window_).then((c) => live && setCard(c)).catch(() => live && setCard(null));
     api.trail(PID, problem).then((t) => live && setTrail(t)).catch(() => live && setTrail([]));
     api.coding(PID).then((c) => live && setCoding(c)).catch(() => live && setCoding(null));
     return () => {
@@ -146,6 +156,15 @@ export default function App() {
       setError(String((e as Error).message ?? e));
     } finally {
       setBusy(null);
+    }
+  };
+
+  const setViewPersist = (v: "desk" | "card") => {
+    setView(v);
+    try {
+      localStorage.setItem("view", v);
+    } catch {
+      /* private mode: fine */
     }
   };
 
@@ -252,7 +271,7 @@ export default function App() {
   const selected = summary.problems.find((p) => p.id === problem);
 
   return (
-    <div className="desk" onClick={() => menu && setMenu(null)}>
+    <div className={`desk ${view === "card" ? "cardview" : ""}`} onClick={() => menu && setMenu(null)}>
       <header className="head">
         <div className="who">
           {pt.name}
@@ -260,6 +279,10 @@ export default function App() {
             {pt.sex} · {age(pt.dob)} · DOB {pt.dob} · {pt.id}
           </small>
         </div>
+        <span className="seg view" title="Desk: list, sheet and inbox. Card: the problem card, with proposals in their slots">
+          <button className={view === "desk" ? "on" : ""} onClick={() => setViewPersist("desk")}>Desk</button>
+          <button className={view === "card" ? "on" : ""} onClick={() => setViewPersist("card")}>Card</button>
+        </span>
         <span className="spacer" />
         {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Looking at what changed…" : busy === "compose" ? "Drafting the referral…" : busy === "orders" ? "Drafting orders…" : busy === "brief" ? "Writing the brief…" : busy === "reset" ? "Resetting…" : "Saving…"}</span>}
         <span className="mode" title="Live asks Claude now; saved uses the recorded response, no network">
@@ -312,7 +335,32 @@ export default function App() {
 
       <main className="sheet">
         {error && <div className="err">{error}</div>}
-        {selected && (
+        {view === "card" && selected && card && card.problem_id === selected.id && (
+          <Card
+            key={card.problem_id}
+            card={card}
+            tl={tl && tl.problem.id === selected.id ? tl : null}
+            queues={queues}
+            chartInsights={summary.insights}
+            chartDocuments={summary.documents ?? []}
+            labels={labels}
+            highlight={highlight}
+            onHover={hover}
+            onReview={review}
+            onReadDocument={setReadingDoc}
+            onOpenNote={openChartNote}
+            busy={busy}
+            mode={mode}
+            window_={window_}
+            setWindow={setWindow}
+            windows={WINDOWS}
+            actions={{ reason: () => runReason(mode), orders: () => runOrders(mode), compose: () => runCompose(mode), readNote: () => setMenu("note") }}
+            trail={trail}
+            coding={coding}
+          />
+        )}
+        {view === "card" && selected && !card && <div className="empty">Computing the card…</div>}
+        {view === "desk" && selected && (
           <div className="sheet-head">
             <h1>{selected.name}</h1>
             <span className="since">
@@ -320,17 +368,17 @@ export default function App() {
             </span>
           </div>
         )}
-        {selected && <Brief brief={brief} highlight={highlight} onHover={hover} onAskClaude={() => askBrief(mode)} busy={!!busy} mode={mode} />}
-        {tl && tl.series.length > 0 ? (
+        {view === "desk" && selected && <Brief brief={brief} highlight={highlight} onHover={hover} onAskClaude={() => askBrief(mode)} busy={!!busy} mode={mode} />}
+        {view === "desk" && (tl && tl.series.length > 0 ? (
           <Timeline data={tl} highlight={highlight} onHover={(id) => hover(id ? [id] : null)} onOpenNote={openChartNote} />
         ) : (
           <div className="empty">{selected ? `No monitored lab series is linked to ${selected.name} in this window.` : "Pick a problem."}</div>
-        )}
-        {selected && <Trail entries={trail} labels={labels} highlight={highlight} onHover={hover} />}
-        {selected && coding && coding.signed_today > 0 && <Coding coding={coding} highlight={highlight} onHover={hover} />}
+        ))}
+        {view === "desk" && selected && <Trail entries={trail} labels={labels} highlight={highlight} onHover={hover} />}
+        {view === "desk" && selected && coding && coding.signed_today > 0 && <Coding coding={coding} highlight={highlight} onHover={hover} />}
       </main>
 
-      <Inbox queues={queues} problemId={problem} focusIds={focusIds} chartMedIds={new Set((tl?.medications ?? []).map((m) => m.id))} chartInsights={summary.insights} chartDocuments={summary.documents ?? []} labels={labels} highlight={highlight} onHover={hover} onReview={review} onReadDocument={setReadingDoc} busy={busy} />
+      {view === "desk" && <Inbox queues={queues} problemId={problem} focusIds={focusIds} chartMedIds={new Set((tl?.medications ?? []).map((m) => m.id))} chartInsights={summary.insights} chartDocuments={summary.documents ?? []} labels={labels} highlight={highlight} onHover={hover} onReview={review} onReadDocument={setReadingDoc} busy={busy} />}
 
       {toast && (
         <div className="toast" role="status">

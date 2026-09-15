@@ -23,6 +23,7 @@ from ehr.extract import PROPOSED_DIR, load_note_file, run_extraction  # noqa: E4
 from ehr.reason import monitored_codes, run_reasoning  # noqa: E402
 from ehr.billing import code_visit  # noqa: E402
 from ehr.brief import deterministic_brief, run_live_brief  # noqa: E402
+from ehr.card import problem_card  # noqa: E402
 from ehr.orders import run_orders  # noqa: E402
 from ehr.compose import run_compose  # noqa: E402
 from ehr.review import REASON_CODES, apply_review, ledger_for_problem, list_queues, undo_review  # noqa: E402
@@ -180,6 +181,16 @@ def brief_live(pid: str, prob: str, body: BriefBody):
         raise HTTPException(404, str(e))
     except Exception as e:
         raise HTTPException(502, f"brief failed: {type(e).__name__}: {e}")
+
+
+@app.get("/api/patients/{pid}/problems/{prob}/card")
+def card(pid: str, prob: str, window: str = "1y"):
+    """The problem card: the clinician's model of one concern, computed from the chart. Never stored."""
+    d = _patient(pid)
+    try:
+        return problem_card(d, prob, window, proposed_dir=PROPOSED_DIR)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
 
 
 @app.get("/api/patients/{pid}/problems/{prob}/trail")

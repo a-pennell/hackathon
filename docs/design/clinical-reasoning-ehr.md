@@ -538,7 +538,10 @@ Nothing in the sequencing moves. The additions land inside PRDs that already exi
 | Overview top half | PRD-08 `clinician_glance` + PRD-10 | two days |
 
 Roughly twelve days on top of the existing estimates, most of it UI. The first demonstrable slice
-that needs no substrate work is the **card-first workspace over the current JSON chart**: the
+that needs no substrate work is the **card-first workspace over the current JSON chart**, and a
+first cut of it is built: `ehr/card.py` computes the card, the **Card** view in the app renders it
+with proposals in their slots and explanations around it (README, "Run the app"). It stops short
+of persistence, alternatives and the corridor, which need the appendix's schema additions. In full: the
 representation and assessment as fields on the existing problem, `expected` as a field on the
 `monitors` link, proposals rendered into the card's slots from the existing queues, the timeline
 mounted as the card's trajectory section. The current three-pane desk is not extended; it is

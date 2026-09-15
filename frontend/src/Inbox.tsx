@@ -23,7 +23,7 @@ type AnyItem = Problem | Observation | Medication | Link | Insight | Document | 
 type Status = "proposed" | "accepted" | "rejected";
 
 /** One reviewable thing: a subject (proposed item, or a chart item / note the links hang off) plus its links. */
-type Group = {
+export type Group = {
   key: string;
   kind: Kind;
   subject: AnyItem | null;      // null when the subject already lives on the chart (a result, the note)
@@ -40,6 +40,8 @@ type Group = {
 };
 
 const LOW_CONFIDENCE = 0.6;
+/** The ids a Sign on this card decides: its proposed subject plus its proposed links. */
+export const decideIdsOf = (g: Group) => [...(g.subject && g.subject.status === "proposed" ? [g.subject.id] : []), ...g.links.filter((l) => l.status === "proposed").map((l) => l.id)];
 const fmtTime = (s?: string) => (s ? s.slice(0, 16).replace("T", " ") : "");
 const codeLabel = (code: string | null) => REASON_CODES.find((c) => c.code === code)?.label ?? code ?? "";
 const LINK_WORD: Record<string, string> = { relevant_to: "relevant to", evidence_for: "evidence for", treats: "treats", suspected_cause: "suspected cause of", monitors: "monitors" };
@@ -124,7 +126,7 @@ function ReviewLine({ r }: { r?: Review }) {
 
 /** Build review groups: every proposed item becomes a group carrying the links that leave it;
  *  links from things already on the chart (a note finding, a charted result) become their own groups. */
-function buildGroups(b: QueueBatch, name: (id: string) => string, chartMedIds: Set<string>): Group[] {
+export function buildGroups(b: QueueBatch, name: (id: string) => string, chartMedIds: Set<string>): Group[] {
   const links = (b.proposed.links ?? []) as Link[];
   const groups: Group[] = [];
   const claimed = new Set<string>();
@@ -307,7 +309,7 @@ function ReasonRow({ onConfirm, onCancel, busy }: { onConfirm: (code: string | n
   );
 }
 
-function GroupCard({
+export function GroupCard({
   g, b, name, highlight, onHover, onReview, onReadDocument, busy,
 }: { g: Group; b: QueueBatch; name: (id: string) => string; highlight: Set<string>; onHover: (ids: string[] | null) => void; onReview: Props["onReview"]; onReadDocument: Props["onReadDocument"]; busy: string | null }) {
   const [rejecting, setRejecting] = useState(false);

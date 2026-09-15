@@ -264,3 +264,29 @@ export type Coding = {
   diagnosis_codes: { problem_id: string | null; name: string; code: string | null; description: string; mapping: string; evidence?: string[] }[];
   signed_today: number;
 };
+
+/* The problem card (ehr/card.py): computed from the chart, never stored. */
+export type CardEvidence = { id: string; ids: string[]; kind: string; text: string; detail: string; source: string; valence: "for" | "against" | "unexplained" };
+export type CardPlan = { id: string; plan_kind: string; text: string; detail: string; status: string; ids: string[] };
+export type CardExpectation = {
+  statement: string; code: string; direction: string; since: string; by: string;
+  status: "met" | "not_yet" | "missed"; tier: string; source: string; ids: string[];
+  reconsider_if: { trigger: string; then: string }[];
+};
+export type Card = {
+  patient_id: string; problem_id: string; window: { start: string; end: string }; as_of: string;
+  problem: { id: string; name: string; status: string; onset_date: string | null; code: { system: string; value: string } | null; provenance: Provenance };
+  kind: "problem" | "concern";
+  epistemic: { value: string; computed: boolean; why: string };
+  qualifiers: { label: string; computed: boolean; why: string }[];
+  representation: { text: string; tier: string; source: string; cites: string[]; as_of: string };
+  assessment: null;
+  supporting: CardEvidence[];
+  doesnt_fit: CardEvidence[];
+  plan: CardPlan[];
+  expected: CardExpectation | null;
+  changed: BriefLine[];
+  pending: number;
+  decisions: number;
+  lead_code: string | null;
+};
