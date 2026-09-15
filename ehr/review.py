@@ -118,8 +118,12 @@ def accept_medication_change(patient: dict, change: dict, review: dict | None = 
     eff = change["effective"]
     change["review"] = review or review_record("accepted")
     if change["change"] == "stop":
-        last["end"] = eff
         change["status"] = "accepted"
+        if last.get("end") and last["end"] <= eff:
+            # The course already ended (a note recorded the stop); an order to stop it confirms
+            # that date rather than moving it to the day the order was signed.
+            return f"{med['id']} already stopped {last['end']}; order confirms"
+        last["end"] = eff
         return f"{med['id']} stopped {eff}"
     last["end"] = eff
     med["segments"].append({"start": eff, "end": None,

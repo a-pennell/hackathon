@@ -116,3 +116,15 @@ def test_coding_levels_and_codes(patient, tmp_path):
     # nothing signed on another day -> nothing addressed, straightforward
     c3 = code_visit(patient, None, on="2026-01-01", proposed_dir=pd)
     assert c3["problems_addressed"] == [] and c3["mdm"]["cpt"] == "99212"
+
+
+def test_stop_order_keeps_an_earlier_recorded_stop(reason_patient):
+    from ehr.review import accept_medication_change
+    p = copy.deepcopy(reason_patient)
+    ibu = next(m for m in p["medications"] if m["id"] == "med_ibuprofen")
+    ibu["segments"][-1]["end"] = "2026-08-20"                                   # the note said it was stopped on the 20th
+    msg = accept_medication_change(p, {"med_id": "med_ibuprofen", "change": "stop", "effective": "2026-08-30", "dose": None, "route": None, "frequency": None, "status": "proposed"})
+    assert ibu["segments"][-1]["end"] == "2026-08-20" and msg.startswith("med_ibuprofen already stopped 2026-08-20")
+    ibu["segments"][-1]["end"] = None                                           # still running: the order stops it today
+    accept_medication_change(p, {"med_id": "med_ibuprofen", "change": "stop", "effective": "2026-08-30", "dose": None, "route": None, "frequency": None, "status": "proposed"})
+    assert ibu["segments"][-1]["end"] == "2026-08-30"
