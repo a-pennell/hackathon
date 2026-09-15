@@ -253,7 +253,7 @@
     "problems": [
       {
         "ref": "new_1",
-        "quote": "CKD progressing. Creatinine has climbed steadily since the spring and eGFR is now under 20.",
+        "quote": "CKD progressing. Creatinine has climbed steadily since last fall and eGFR is now under 20.",
         "name": "Chronic kidney disease stage 4",
         "status": "active",
         "onset_date": "2026-08-19",
@@ -282,12 +282,12 @@
     "medications": [
       {
         "ref": "med_new_naproxen",
-        "quote": "he has been taking naproxen 500 mg twice a day most days since around April, over the counter",
+        "quote": "he has been taking naproxen 500 mg twice a day most days since around last October, over the counter",
         "name": "Naproxen",
         "dose": "500 mg",
         "route": "PO",
         "frequency": "twice a day",
-        "start": "2026-04-01",
+        "start": "2025-10-01",
         "end": "2026-09-11",
         "existing_med_id": null,
         "change": "new",
@@ -462,10 +462,10 @@
     ],
     "suspected_causes": [
       {
-        "quote": "Daily NSAID use since April, previously unknown to us. Counseled to stop naproxen today.",
+        "quote": "Daily NSAID use since last October, previously unknown to us. Counseled to stop naproxen today.",
         "cause_ref": "med_new_naproxen",
         "effect_ref": "new_1",
-        "rationale": "Note links daily over-the-counter naproxen use since April to the progressive decline in kidney function; patient counseled to stop",
+        "rationale": "Note links daily over-the-counter naproxen use since last October to the progressive decline in kidney function; patient counseled to stop",
         "confidence": 0.85
       },
       {

@@ -92,7 +92,7 @@ file over the pointer. Reset from the shell:
 `git checkout data/patients/pt_001.json && rm data/proposed/pt_001/note_demo_002.json data/proposed/pt_001/reason_prob_0057.json data/proposed/pt_001/orders_prob_0057.json`.
 
 The decision moment: creatinine (LOINC `38483-4`) rises from 1.6 to 5.7 over the year, eGFR falls
-to 15.6, the note reveals daily naproxen since April, and metformin 500 mg is still on board.
+to 15.6, the note reveals daily naproxen since last October, and metformin 500 mg is still on board.
 
 ## Where this goes next
 

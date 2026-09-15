@@ -24,7 +24,7 @@
         "confidence": 0.86
       },
       {
-        "statement": "Naproxen 500 mg twice daily was started 2026-04-01, and the steepest part of the creatinine rise follows it (3.69 in May, 4.4 in late July, 5.7 on 2026-08-19) with eGFR reaching 15.6. The note documents the patient was unaware the NSAID was a problem for his kidneys, and it is recorded as a suspected contributor. Concurrent lisinopril 10 mg daily and as-needed furosemide 40 mg compound the hemodynamic risk of an NSAID in advanced CKD.",
+        "statement": "Naproxen 500 mg twice daily was started around 2025-10-01, and the creatinine rise follows it: whole-blood creatinine was 1.62 on 2025-09-10, 2.2 in mid-October, 2.43 in mid-November and 4.5 by 2025-11-26, reaching 5.7 on 2026-08-19 with eGFR falling from 55.45 to 15.6 over the same window. The note documents the patient was unaware the NSAID was a problem for his kidneys, and it is recorded as a suspected contributor. Concurrent lisinopril 10 mg daily and as-needed furosemide 40 mg compound the hemodynamic risk of an NSAID in advanced CKD.",
         "evidence": [
           "med_demo_002_01",
           "lnk_demo_002_33",

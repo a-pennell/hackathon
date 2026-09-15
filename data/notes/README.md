@@ -21,7 +21,7 @@ with `status: "proposed"` and a verbatim `quote` (non-negotiables 1 and 2).
    reasoning layer should stay quiet. The note plants the seed: knee pain, "takes Aleve from the
    pharmacy when it's bad".
 2. **`note_demo_002`** (2026-09-11, the note that arrives live). Creatinine 5.7, eGFR 15.6, uremic
-   symptoms, and the patient admits to naproxen 500 mg twice daily since April. Metformin 500 mg
+   symptoms, and the patient admits to naproxen 500 mg twice daily since last October. Metformin 500 mg
    twice daily is still on the list. This is the decision moment: rising creatinine, NSAID as
    suspected cause, metformin needs review at this eGFR. The note deliberately leaves that decision
    "pending" so the system, not the author, surfaces it.
@@ -38,8 +38,8 @@ with `status: "proposed"` and a verbatim `quote` (non-negotiables 1 and 2).
 | "BP 80/48" | Observations 8480-6 = 80, 8462-4 = 48 | relevant_to → HTN (prob_0002) |
 | "Trace bilateral ankle edema" | finding | relevant_to → CHF (prob_0036) |
 | "one low of 62 last week" | Observation glucose = 62 (approx. date) | relevant_to → T2DM (prob_0004) |
-| "Both knees have been aching for a couple of months" / "likely osteoarthritis" | **new Problem** Bilateral knee osteoarthritis (status proposed) | evidence_for ← note |
-| "He takes Aleve from the pharmacy when it's bad, maybe a few times a week" | **new MedicationCourse** Naproxen (OTC, prn, start ~2026-03) | treats → knee OA (proposed) |
+| "Both knees have been aching since last fall" / "likely osteoarthritis" | **new Problem** Bilateral knee osteoarthritis (status proposed) | evidence_for ← note |
+| "He takes Aleve from the pharmacy when it's bad, maybe a few times a week" | **new MedicationCourse** Naproxen (OTC, prn, start ~2025-10) | treats → knee OA (proposed) |
 | "Uses furosemide 40 mg only when his ankles swell" | confirms existing med_furosemide prn | treats → CHF |
 
 ### note_demo_002 → the decision moment
@@ -48,7 +48,7 @@ with `status: "proposed"` and a verbatim `quote` (non-negotiables 1 and 2).
 |---|---|---|
 | "creatinine 5.7, up from 3.69 in May and 4.4 in late July" | Observation 38483-4 = 5.7 (2026-08-19, already in chart: dedupe or attach) | relevant_to → CKD |
 | "eGFR 15.6" | Observation 33914-3 = 15.6 | relevant_to → CKD |
-| "taking naproxen 500 mg twice a day most days since around April, over the counter" | **MedicationCourse** Naproxen 500 mg PO bid, start ~2026-04, end 2026-09-11 ("Counseled to stop naproxen today") | suspected_cause → CKD progression / creatinine series |
+| "taking naproxen 500 mg twice a day most days since around last October, over the counter" | **MedicationCourse** Naproxen 500 mg PO bid, start ~2025-10, end 2026-09-11 ("Counseled to stop naproxen today") | suspected_cause → CKD progression / creatinine series |
 | "Still on metformin 500 mg twice daily" | confirms existing med_metformin_hydrochloride | treats → T2DM |
 | "fatigue, poor appetite, and nausea most mornings" / "metallic taste" | findings | evidence_for → CKD (uremic symptoms) |
 | "1+ bilateral pitting edema to the ankles" / "uses furosemide about every other day now" | finding + med frequency change | relevant_to → CHF |
@@ -60,7 +60,7 @@ with `status: "proposed"` and a verbatim `quote` (non-negotiables 1 and 2).
 ### Expected Insight (reasoning layer, from `trend("pt_001", "38483-4", "1y")` + events)
 
 Statement along the lines of: *creatinine up ~250% over 12 months (1.62 → 5.7), eGFR 15.6; daily
-naproxen since April is a likely contributor; metformin is on board at an eGFR where it is
+naproxen since last October is a likely contributor; metformin is on board at an eGFR where it is
 contraindicated.* `evidence` must cite real ids: the creatinine observations, `med_metformin_hydrochloride`,
 and the proposed naproxen course once accepted. `suggested_action`: stop naproxen (done in note), stop
 metformin, nephrology (already referred).

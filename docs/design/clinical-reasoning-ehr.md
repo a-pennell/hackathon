@@ -170,7 +170,7 @@ interpretation, not a summary of data:
 
 ```json
 "representation": {
-  "text": "59M with T2DM, HFrEF and CKD 3, creatinine 1.6 → 5.7 over twelve months with eGFR now 15.6, steepest rise after daily naproxen from April; three weeks of fatigue, nausea and poor appetite. Still on metformin 500 mg.",
+  "text": "59M with T2DM, HFrEF and CKD 3, creatinine 1.6 → 5.7 over twelve months with eGFR now 15.6, rising from the month daily naproxen began, October 2025; three weeks of fatigue, nausea and poor appetite. Still on metformin 500 mg.",
   "qualifiers": ["chronic", "progressive", "worsening", "unexpected_rate"],
   "tier": "proposed | attested", "asserted_by": {...}, "as_of_event": "evt_…",
   "cites": ["obs_243df5cd", "obs_7f3ce7a6", "med_demo_002_01", "note_demo_002"]
@@ -333,7 +333,7 @@ concerns, each quiet until the clinician turns to it:
 
 | Kind | Question it asks | Trigger | pt_001 example |
 |---|---|---|---|
-| `mismatch` | What does not fit the current explanation? | `expectation.evaluated: missed`; new `valence: unexplained` finding | whole-blood creatinine already 5.5 in March, before naproxen started in April; serum creatinine flat at 1.9 while whole-blood reads 5.7 |
+| `mismatch` | What does not fit the current explanation? | `expectation.evaluated: missed`; new `valence: unexplained` finding | whole-blood creatinine fell to 3.69 in May while naproxen continued daily; serum creatinine flat at 1.9 while whole-blood reads 5.7 |
 | `discriminator` | Which evidence would separate the competing hypotheses? | two or more hypotheses with `standing: competing` and no resolved discriminator | a repeat serum creatinine and BUN from one lab separates "true stage 5" from "assay discrepancy" |
 | `missing` | What information would materially change the decision? | a plan or hypothesis whose discriminator is `not_ordered` or `unavailable` | no renal imaging on record; no urine albumin since November |
 | `contradiction` | What in the record disagrees with itself? | rule checks across diagnosis ↔ findings, medication ↔ problem state, plan ↔ goals, expected ↔ observed, steward ↔ steward | metformin 500 mg active with eGFR 15.6; CKD labelled stage 3 with eGFR 15.6 |
@@ -463,8 +463,8 @@ Concern, steward Dr. Chen · onset Nov 2025 · chronic care programme (CKD, HFrE
 
 Representation  (proposed by the system, 11 Sep · Accept · Edit)
   59M with T2DM, HFrEF and CKD 3, creatinine 1.6 → 5.7 over twelve months with eGFR now 15.6,
-  steepest rise after daily naproxen from April; three weeks of fatigue, nausea and poor
-  appetite. Still on metformin 500 mg.
+  rising from the month daily naproxen began, October 2025; three weeks of fatigue, nausea and
+  poor appetite. Still on metformin 500 mg.
 
 Assessment  (Dr. Chen, 11 Sep)
   Most consistent with NSAID-accelerated progression of established CKD, now in the stage 5
@@ -474,8 +474,8 @@ Assessment  (Dr. Chen, 11 Sep)
 Supporting                                      Doesn't fit
   + creatinine (whole blood) 1.62 → 5.7, 12 mo     − serum creatinine 1.94, flat over the year
   + eGFR 15.6 (19 Aug), from 55.45                 − BUN 17.3, flat; unusual beside a true 5.7
-  + naproxen daily since Apr (note, 11 Sep)        ○ whole-blood value already 5.5 in March,
-  + fatigue, nausea, poor appetite × 3 wk              before naproxen started
+  + naproxen daily since Oct 2025 (note, 11 Sep)   ○ fell to 3.69 in May while still on daily
+  + fatigue, nausea, poor appetite × 3 wk              naproxen
 
 Alternatives
   competing  Assay or specimen discrepancy · discriminator: repeat serum creatinine + BUN, one lab · ordered
@@ -491,7 +491,7 @@ Expected     creatinine falls within two weeks off naproxen if the hemodynamic c
 Reassess if  no fall by 25 Sep → renal ultrasound, nephrology now · potassium above 5.5 → same day
 
 Changed since 29 Jul
-  creatinine (whole blood) 4.38 → 5.7 ▲   naproxen revealed, daily since April   symptoms new: fatigue, nausea
+  creatinine (whole blood) 4.38 → 5.7 ▲   naproxen revealed, daily since last October   symptoms new: fatigue, nausea
 
 [Review evidence] [Update assessment] [View trajectory] [Add to plan] [Alternatives · 3]
 ```
