@@ -58,7 +58,7 @@ OUTPUT_SCHEMA = {
             "detail": {"type": "string"},
             "loinc": {"type": ["string", "null"]},
             "med_id": {"type": ["string", "null"]},
-            "change": {"type": ["string", "null"], "enum": ["stop", "dose_change", None]},
+            "change": {"anyOf": [{"type": "string", "enum": ["stop", "dose_change"]}, {"type": "null"}]},
             "dose": {"type": ["string", "null"]},
             "audience": {"type": ["string", "null"]},
             "from_insight": {"type": "string"},
