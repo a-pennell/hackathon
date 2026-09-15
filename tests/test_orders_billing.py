@@ -16,6 +16,11 @@ from tests.test_reason import patient as reason_patient  # noqa: E402,F401
 TODAY = "2026-09-13"
 
 
+def signed(by: str = "Dr. Chen") -> dict:
+    """A review record pinned to TODAY, so the test doesn't depend on the wall clock."""
+    return review_record("accepted", by) | {"at": f"{TODAY}T11:00:00-04:00"}
+
+
 @pytest.fixture
 def patient(reason_patient):
     p = copy.deepcopy(reason_patient)
@@ -25,7 +30,7 @@ def patient(reason_patient):
                       "statement": "Creatinine up 38% after ibuprofen; metformin on board.", "evidence": ["obs_0003", "med_ibuprofen", "med_metformin"],
                       "suggested_action": "Consider stopping ibuprofen and metformin and repeating creatinine in two weeks.", "status": "accepted",
                       "provenance": {"source": "reasoning", "model": "reasoner-v1/x", "trend_codes": ["2160-0"], "confidence": 0.9},
-                      "created_at": f"{TODAY}T09:00:00-04:00", "review": review_record("accepted", "Dr. Chen")}]
+                      "created_at": f"{TODAY}T09:00:00-04:00", "review": signed()}]
     return p
 
 
@@ -77,10 +82,10 @@ def queue_with_signatures(tmp_path, patient, extra_orders=()):
     note = {"patient_id": "pt_t", "note_id": "note_0007", "model": "extractor-v1/x", "extracted_at": f"{TODAY}T08:00:00-04:00",
             "proposed": {"links": [{"id": "lnk_n_01", "from": "note_0007", "to": "prob_ckd", "type": "evidence_for", "status": "accepted",
                                     "provenance": {"source": "nlp_extraction", "note_id": "note_0007", "quote": "nausea", "confidence": 0.9},
-                                    "created_at": f"{TODAY}T08:00:00-04:00", "review": review_record("accepted", "Dr. Chen")}]},
+                                    "created_at": f"{TODAY}T08:00:00-04:00", "review": signed()}]},
             "medication_changes": [{"med_id": "med_metformin", "change": "stop", "effective": TODAY, "status": "accepted",
                                     "provenance": {"source": "nlp_extraction", "quote": "stop metformin", "confidence": 0.9},
-                                    "review": review_record("accepted", "Dr. Chen")}],
+                                    "review": signed()}],
             "rejected": []}
     (q / "note_0007.json").write_text(json.dumps(note))
     if extra_orders:
@@ -108,7 +113,7 @@ def test_coding_levels_and_codes(patient, tmp_path):
     order = {"id": "ord_ckd_01", "patient_id": "pt_t", "problem_id": "prob_ckd", "kind": "lab", "name": "Serum creatinine", "detail": "2 weeks",
              "code": {"system": "LOINC", "value": "2160-0"}, "med_id": None, "change": None, "dose": None, "audience": None, "status": "accepted",
              "provenance": {"source": "ordering", "model": "x", "from_insight": "ins_ckd_01", "evidence": ["ins_ckd_01"], "confidence": 0.9},
-             "created_at": f"{TODAY}T10:00:00-04:00", "review": review_record("accepted", "Dr. Chen")}
+             "created_at": f"{TODAY}T10:00:00-04:00", "review": signed()}
     pd2 = queue_with_signatures(tmp_path / "b", patient, extra_orders=[order])
     c2 = code_visit(patient, None, on=TODAY, proposed_dir=pd2)
     assert c2["mdm"]["data"]["level"] == "moderate" and c2["mdm"]["cpt"] == "99214"
