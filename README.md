@@ -132,7 +132,9 @@ Two shapes the build needs that the schema doc does not define. Both are additiv
 - `data/patients/pt_001.json` is the **fresh** chart the demo starts from (nothing extracted, nothing
   signed); the server snapshots it at start for "Reset demo". One curation on top of the import: CKD
   stages 1 and 2 are `resolved` at the onset of the stage that superseded them (2021-01-20 and
-  2025-11-26), so the visit coding does not list three CKD stages as progressing. The chart as it
+  2025-11-26), and "Disorder of kidney due to diabetes mellitus" is `resolved` at stage 3 onset
+  (2025-11-26) since the kidney disease is tracked under the CKD stage from then on. So the visit
+  coding shows one CKD line, not four. The chart as it
   looks after the whole arc has been walked (note 2 signed, insights signed, stages restaged to 4)
   is in git history at commit `55e2e5f` if you need it.
 - The chart's creatinine story is under `38483-4` (whole blood, diabetes-care visits); `2160-0`
