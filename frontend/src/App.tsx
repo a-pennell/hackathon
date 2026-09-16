@@ -7,6 +7,7 @@ import Shell, { type Tab, type View } from "./Shell";
 import About from "./About";
 import { ChartTab } from "./ChartTab";
 import TimelineTab from "./TimelineTab";
+import DraftNote from "./DraftNote";
 import CareTab from "./CareTab";
 import { nextAction } from "./next";
 import { labelOf } from "./labels";
@@ -14,7 +15,7 @@ import NotesTab from "./NotesTab";
 import { waitingIn } from "./next";
 
 const LINK_WORD: Record<string, string> = { relevant_to: "bears on", evidence_for: "is evidence for", treats: "treats", suspected_cause: "is a suspected cause of", monitors: "monitors" };
-import type { Card as CardT, CareData, ChartData, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientRow, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry, TimelineData } from "./types";
+import type { Card as CardT, CareData, ChartData, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientRow, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry, TimelineData, VisitNoteRow } from "./types";
 
 const PID = new URLSearchParams(window.location.search).get("patient") ?? "pt_002";
 const WINDOWS = ["3m", "6m", "1y", "2y", "5y", "all"];
@@ -41,6 +42,8 @@ export default function App() {
   const [queueLabels, setQueueLabels] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<NoteFile[]>([]);
   const [notesScope, setNotesScope] = useState<"patient" | "mine">("patient");
+  const [draft, setDraft] = useState<QueueBatch | null>(null);
+  const [draftEnc, setDraftEnc] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +138,20 @@ export default function App() {
   }, [summary, tl, queues, queueLabels, notes]);
 
   // Counted the way the views show them: one per card, not one per link, so the chip and the call-to-action agree.
-  const pendingCount = useMemo(() => queues.reduce((n, b) => n + waitingIn(b), 0), [queues]);
+  const visitNotes: VisitNoteRow[] = useMemo(() => {
+    const rows: VisitNoteRow[] = [];
+    for (const b of queues) {
+      if (!b.stem.startsWith("visitnote_")) continue;
+      const d = (b.proposed.documents ?? [])[0];
+      if (!d) continue;
+      const here = overview?.here_for.encounter ?? null;
+      const enc = here && here.id === d.encounter_id ? here : null;
+      rows.push({ id: d.id, encounter_id: d.encounter_id ?? b.stem.replace("visitnote_", ""), patient_id: PID, time: enc?.time ?? d.created_at, author: d.review?.by ?? "Dr. Chen",
+        excerpt: (d.sections.find((s) => s.source !== "transcript")?.text ?? d.sections[0]?.text ?? "").replace(/\s+/g, " "), status: d.status === "accepted" ? "signed" : "in_progress", by: d.review?.by ?? null });
+    }
+    return rows;
+  }, [queues, overview]);
+  const pendingCount = useMemo(() => queues.filter((b) => !b.stem.startsWith("visitnote_")).reduce((n, b) => n + waitingIn(b), 0), [queues]);
 
   const fail = (e: unknown) => setError(String((e as Error).message ?? e));
 
@@ -198,6 +214,21 @@ export default function App() {
     setView("note");
     window.scrollTo(0, 0);
   };
+  const openDraft = (eid: string, compile: boolean) => run("draft", async () => {
+    let b: QueueBatch;
+    if (compile) b = await api.compileDraft(PID, eid);
+    else b = await api.getDraft(PID, eid).catch(() => api.compileDraft(PID, eid));
+    setDraft(b);
+    setDraftEnc(eid);
+    setTab("notes");
+    setView("draft");
+    window.scrollTo(0, 0);
+  });
+  const signDraft = (sections: { heading: string; text: string }[]) => draftEnc && run("sign", async () => {
+    const r = await api.signDraft(PID, draftEnc, sections);
+    setDraft(await api.getDraft(PID, draftEnc));
+    setToast({ stem: `visitnote_${draftEnc}`, ids: [], text: `Visit note signed by ${r.by}` });
+  });
   const openProblem = (id: string) => {
     setProblem(id);
     setTab("care");
@@ -256,6 +287,8 @@ export default function App() {
         if (b && ids.length) await review(b.stem, { accept: ids });
         return;
       }
+      case "draft": return openDraft(next.encounterId!, true);
+      case "finish-draft": return openDraft(next.encounterId!, false);
       default: setNotesScope(next.notesScope ?? "patient"); return goTab("notes");
     }
   };
@@ -273,7 +306,8 @@ export default function App() {
   const pt = summary.patient;
   const selected = summary.problems.find((p) => p.id === problem);
   const openNoteFile = noteId ? notes.find((x) => x.id === noteId) : null;
-  const crumb = view === "problem" && selected ? { back: "Care", onBack: () => goTab("care"), title: selected.name }
+  const crumb = view === "draft" && draft ? { back: "Notes", onBack: () => goTab("notes"), title: (draft.proposed.documents ?? [])[0]?.title ?? "Visit note" }
+    : view === "problem" && selected ? { back: "Care", onBack: () => goTab("care"), title: selected.name }
     : view === "note" && openNoteFile ? { back: tab[0].toUpperCase() + tab.slice(1), onBack: () => goTab(tab), title: `Note · ${openNoteFile.time.slice(0, 10)}` } : null;
 
   return (
@@ -306,7 +340,8 @@ export default function App() {
         {view === "timeline" && (tlTab ? <TimelineTab data={tlTab} highlight={highlight} onHover={hover} /> : <div className="empty">Loading the timeline…</div>)}
         {view === "chart" && (chart ? <ChartTab data={chart} onOpenProblem={openProblem} /> : <div className="empty">Loading the chart…</div>)}
         {view === "care" && (care ? <CareTab data={care} highlight={highlight} onHover={hover} onOpen={openProblem} /> : <div className="empty">Loading care…</div>)}
-        {view === "notes" && <NotesTab notes={notes} pid={PID} patients={patients} scope={notesScope} onScope={setNotesScope} queues={queues} onOpen={openNote} onRead={(n) => { openNote(n.id); if (n.file && (mode === "live" || n.has_replay)) runExtract(n, mode); }} busy={busy} />}
+        {view === "notes" && <NotesTab notes={notes} pid={PID} patients={patients} scope={notesScope} onScope={setNotesScope} queues={queues} visitNotes={visitNotes} onOpenVisitNote={(eid) => openDraft(eid, false)} onOpen={openNote} onRead={(n) => { openNote(n.id); if (n.file && (mode === "live" || n.has_replay)) runExtract(n, mode); }} busy={busy} />}
+        {view === "draft" && (draft ? <DraftNote batch={draft} labels={labels} problems={summary.problems} busy={busy} onSign={signDraft} onRecompile={() => draftEnc && openDraft(draftEnc, true)} onOpenProblem={openProblem} onOpenNote={openChartNote} onHover={hover} /> : <div className="empty">Compiling the visit note…</div>)}
         {view === "problem" && (
           <>
             <div className="sheet">

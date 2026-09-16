@@ -18,11 +18,13 @@ export const REASON_CODES: { code: string; label: string }[] = [
   { code: "other", label: "Other" },
 ];
 
-export type DocSection = { heading: string; text: string; cites: string[] };
+export type DocSection = { heading: string; text: string; cites: string[]; source?: "transcript" | "compiled"; edited?: boolean; problem_id?: string };
 export type Document = {
   id: string;
   patient_id: string;
-  problem_id: string;
+  problem_id: string | null;   // null for a visit note, which addresses several problems
+  encounter_id?: string;       // visit notes (ehr/draft.py)
+  problems_addressed?: string[];
   kind: string;
   audience: string;
   title: string;
@@ -362,3 +364,6 @@ export type CareData = {
 export type TimelineLane = "sessions" | "results" | "documents" | "changes" | "reasoning";
 export type TimelineItem = { lane: TimelineLane; at: string; day: string; kind: string; text: string; detail: string; by: string | null; ids: string[]; tag: string | null };
 export type TimelineData = { patient_id: string; as_of: string; lanes: Record<TimelineLane, number>; items: TimelineItem[] };
+
+/* A visit note row for the Notes tab: compiled from the encounter's decisions, in progress or signed. */
+export type VisitNoteRow = { id: string; encounter_id: string; patient_id: string; time: string; author: string; excerpt: string; status: "in_progress" | "signed"; by: string | null };

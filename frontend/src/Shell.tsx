@@ -3,7 +3,7 @@ import type { NextAction } from "./next";
 import type { Overview, Patient, PatientSummary } from "./types";
 
 export type Tab = "overview" | "timeline" | "care" | "chart" | "notes";
-export type View = Tab | "note" | "problem";
+export type View = Tab | "note" | "problem" | "draft";
 
 type Props = {
   patients: { id: string; name: string; problems_active: number }[];
@@ -35,7 +35,7 @@ const dmy = (iso: string) => {
 };
 const hm = (iso: string) => iso.slice(11, 16);
 const dmyFull = (iso: string) => { const d = new Date(iso.slice(0, 10) + "T00:00:00"); return `${d.getDate()} ${d.toLocaleString("en", { month: "short" })} ${d.getFullYear()}`; };
-const BUSY: Record<string, string> = { extract: "Reading the note…", sign: "Signing the note…", reason: "Looking at what changed…", compose: "Drafting the referral…", orders: "Drafting orders…", reset: "Resetting…" };
+const BUSY: Record<string, string> = { extract: "Reading the note…", sign: "Signing the note…", reason: "Looking at what changed…", compose: "Drafting the referral…", orders: "Drafting orders…", draft: "Compiling the visit note…", reset: "Resetting…" };
 
 export default function Shell({ patients, pid, summary, overview, view, tab, onTab, next, onNext, busy, mode, onMode, onReset, onAbout, pendingCount, onPending, crumb }: Props) {
   const [demo, setDemo] = useState(false);
@@ -110,7 +110,7 @@ export default function Shell({ patients, pid, summary, overview, view, tab, onT
 
       <div className="pt-tabs" role="tablist" aria-label="Patient sections">
         {(["overview", "timeline", "care", "chart", "notes"] as Tab[]).map((t) => (
-          <button key={t} className="pt-tab" role="tab" aria-selected={view === t || (view === "problem" && t === "care") || (view === "note" && t === "notes")} onClick={() => onTab(t)}>
+          <button key={t} className="pt-tab" role="tab" aria-selected={view === t || (view === "problem" && t === "care") || ((view === "note" || view === "draft") && t === "notes")} onClick={() => onTab(t)}>
             {t[0].toUpperCase() + t.slice(1)}
           </button>
         ))}

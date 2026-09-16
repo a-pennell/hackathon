@@ -111,9 +111,12 @@ def patient_timeline(patient: dict, *, proposed_dir: Path = PROPOSED_DIR, today:
         add("documents", n["time"], "note", f"Note by {n.get('author', '?')}", detail=(n.get("text") or "").strip().replace("\n", " ")[:110] + "…",
             by=r.get("by"), ids=[n["id"]] + ([n["encounter_id"]] if n.get("encounter_id") else []), tag=_note_tag(n))
     for d in patient.get("documents", []):
-        add("documents", _when(d, d.get("created_at", today.isoformat())), d.get("kind", "document"), d.get("title", "Document"),
-            detail=f"{names.get(d.get('problem_id'), '')} · {d.get('audience', '')}".strip(" ·"), by=(d.get("review") or {}).get("by"),
-            ids=[d["id"], d.get("problem_id")], tag=d.get("status"))
+        visit = d.get("kind") == "encounter_note"
+        detail = ("addresses " + ", ".join(names.get(x, x) for x in d.get("problems_addressed") or [])) if visit \
+            else f"{names.get(d.get('problem_id'), '')} · {d.get('audience', '')}".strip(" ·")
+        add("documents", _when(d, d.get("created_at", today.isoformat())), "visit note" if visit else d.get("kind", "document"), d.get("title", "Document"),
+            detail=detail, by=(d.get("review") or {}).get("by"), ids=[d["id"], d.get("problem_id"), d.get("encounter_id")] + list(d.get("problems_addressed") or []),
+            tag="signed" if d.get("status") == "accepted" else d.get("status"))
 
     # changes: courses, problems, plans, orders
     for m in patient.get("medications", []):

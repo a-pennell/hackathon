@@ -7,8 +7,9 @@ import type { NoteFile, Overview, PatientSummary, QueueBatch } from "./types";
 export type NextAction = {
   label: string;
   hint: string;
-  kind: "read" | "review" | "sign" | "reason" | "sign-insights" | "orders" | "sign-orders" | "done";
+  kind: "read" | "review" | "sign" | "reason" | "sign-insights" | "orders" | "sign-orders" | "draft" | "finish-draft" | "done";
   noteId?: string;
+  encounterId?: string;
   notesScope?: "patient" | "mine";  // what the Notes tab shows when the button opens it
   problemId?: string;
 };
@@ -42,6 +43,18 @@ export function nextAction(overview: Overview | null, notes: NoteFile[], queues:
     if (pendingOrders > 0) return { label: `Sign ${pendingOrders} order${pendingOrders > 1 ? "s" : ""} on ${short}`, kind: "sign-orders", hint: "orders drafted from the signed insights", problemId: c.id };
     const signedOrders = (summary?.orders ?? []).filter((o) => o.problem_id === c.id).length;
     if (signedInsights > 0 && !orders && signedOrders === 0) return { label: `Draft orders for ${short}`, hint: "turn the signed actions into orders", kind: "orders", problemId: c.id };
+  }
+  // The visit note: once the transcript is signed and every concern is settled, the visit's decisions compile into
+  // a draft the clinician edits and signs. Only for a visit that had a transcript (the composer for a blank visit
+  // is PRD-06).
+  const enc = overview?.here_for.encounter;
+  if (enc && here && notes.find((n) => n.id === here.id)?.status === "signed") {
+    const signedVisitNote = (summary?.documents ?? []).some((d) => d.kind === "encounter_note" && d.encounter_id === enc.id);
+    if (!signedVisitNote) {
+      const draft = queues.find((b) => b.stem === `visitnote_${enc.id}`);
+      if (draft) return { label: "Finish the visit note", hint: "the draft is compiled from what you did at this visit; edit it, then sign", kind: "finish-draft", encounterId: enc.id };
+      return { label: "Draft the visit note", hint: "compiled from what you did at this visit; every sentence cites the record", kind: "draft", encounterId: enc.id };
+    }
   }
   // Nothing owed here. The idle state is the clinician's documentation debt, not the patient's: unsigned notes on
   // other patients come first, and only then "nothing owed".

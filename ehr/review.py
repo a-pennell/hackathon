@@ -37,11 +37,21 @@ DEFAULT_REVIEWER = "Dr. Chen"
 
 
 def review_record(decision: str, by: str = DEFAULT_REVIEWER, reason: str | None = None,
-                  reason_code: str | None = None) -> dict:
+                  reason_code: str | None = None, encounter_id: str | None = None) -> dict:
+    """FLAGGED schema addition: `encounter_id` on the review record, the visit a signature happened in. It is what
+    lets the visit note be compiled from the decisions of one encounter (ehr/draft.py)."""
     if reason_code is not None and reason_code not in REASON_CODES:
         raise ValueError(f"reason_code must be one of {REASON_CODES}")
     return {"by": by, "at": datetime.now().astimezone().isoformat(timespec="seconds"), "decision": decision,
-            "reason_code": reason_code, "reason": (reason or "").strip() or None}
+            "reason_code": reason_code, "reason": (reason or "").strip() or None,
+            **({"encounter_id": encounter_id} if encounter_id else {})}
+
+
+def open_encounter(patient: dict) -> str | None:
+    """The visit a signature belongs to: the newest encounter on the chart that is not in the future."""
+    today = datetime.now().astimezone().date().isoformat()
+    encs = [e for e in patient.get("encounters", []) if e["time"][:10] <= today]
+    return max(encs, key=lambda e: e["time"])["id"] if encs else None
 
 
 def load_queue(patient_id: str, note_id: str, proposed_dir: Path = PROPOSED_DIR) -> tuple[Path, dict]:
@@ -286,22 +296,24 @@ def apply_review(patient_id: str, stem: str, *, accept: list[str] = (), reject: 
     data_dir = Path(data_dir)
     qp, batch = load_queue(patient_id, stem, data_dir.parent / "proposed")
     patient = load_patient(patient_id, data_dir)
+    enc = open_encounter(patient)
+    rec = lambda decision: review_record(decision, by, reason, reason_code, encounter_id=enc)  # noqa: E731
     done = []
     for iid in reject:
-        done.append(reject_item(batch, iid, review_record("rejected", by, reason, reason_code)))
+        done.append(reject_item(batch, iid, rec("rejected")))
     for iid in accept:
-        done += accept_item(patient, batch, iid, review=review_record("accepted", by, reason, reason_code))
+        done += accept_item(patient, batch, iid, review=rec("accepted"))
     if accept_all:
         # Sign everything that can be signed; a link into a rejected or missing endpoint is skipped, not fatal.
         for iid in [it["id"] for k in KINDS for it in batch["proposed"].get(k, []) if it["status"] == "proposed"]:
             try:
-                done += accept_item(patient, batch, iid, review=review_record("accepted", by, reason, reason_code))
+                done += accept_item(patient, batch, iid, review=rec("accepted"))
             except ValueError as e:
                 done.append(f"skipped {iid}: {e}")
     if accept_changes:
         for ch in batch.get("medication_changes", []):
             if ch["status"] == "proposed":
-                done.append(accept_medication_change(patient, ch, review_record("accepted", by, reason, reason_code)))
+                done.append(accept_medication_change(patient, ch, rec("accepted")))
     if done:
         save_patient(patient, data_dir)
         qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
@@ -326,26 +338,27 @@ def main(argv: list[str]) -> int:
     data_dir = Path(args.data_dir)
     qp, batch = load_queue(args.patient_id, args.note_id, data_dir.parent / "proposed")
     patient = load_patient(args.patient_id, data_dir)
+    enc = open_encounter(patient)
 
     done = []
     for iid in args.reject:
-        done.append(reject_item(batch, iid, review_record("rejected", args.by, args.reason, args.reason_code)))
+        done.append(reject_item(batch, iid, review_record("rejected", args.by, args.reason, args.reason_code, encounter_id=enc)))
     try:
         for iid in args.accept:
-            done += accept_item(patient, batch, iid, review=review_record("accepted", args.by, args.reason, args.reason_code))
+            done += accept_item(patient, batch, iid, review=review_record("accepted", args.by, args.reason, args.reason_code, encounter_id=enc))
     except (KeyError, ValueError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
     if args.accept_all:
         for iid in [it["id"] for k in KINDS for it in batch["proposed"].get(k, []) if it["status"] == "proposed"]:
             try:
-                done += accept_item(patient, batch, iid, review=review_record("accepted", args.by, args.reason, args.reason_code))
+                done += accept_item(patient, batch, iid, review=review_record("accepted", args.by, args.reason, args.reason_code, encounter_id=enc))
             except ValueError as e:
                 done.append(f"skipped {iid}: {e}")
     if args.accept_changes:
         for ch in batch.get("medication_changes", []):
             if ch["status"] == "proposed":
-                done.append(accept_medication_change(patient, ch, review_record("accepted", args.by, args.reason, args.reason_code)))
+                done.append(accept_medication_change(patient, ch, review_record("accepted", args.by, args.reason, args.reason_code, encounter_id=enc)))
 
     if done:
         save_patient(patient, data_dir)
@@ -373,6 +386,6 @@ def sign_note(patient_id: str, note_id: str, *, by: str = DEFAULT_REVIEWER, data
     if note is None:
         raise KeyError(f"{note_id} is not on this chart")
     note["status"] = "signed"
-    note["review"] = review_record("accepted", by)
+    note["review"] = review_record("accepted", by, encounter_id=note.get("encounter_id") or open_encounter(patient))
     save_patient(patient, data_dir)
     return {"note_id": note_id, "signed_at": note["review"]["at"], "by": by, "done": done}

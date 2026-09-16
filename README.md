@@ -118,7 +118,14 @@ been skipping metformin for stomach upset, and taking ibuprofen daily for her ba
    stopped an **Expected** line: systolic falling within two weeks, drawn as a corridor on the
    trajectory. **What's changed?** brings the insights; sign them. **Draft orders** turns the
    signed actions into orders; sign them.
-6. **Reset demo** restores the chart to its server-start state and clears the queues.
+6. **Draft the visit note.** Once the transcript is signed and the concerns are settled, the button
+   compiles the visit note from what you did: the transcript verbatim, the results recorded and
+   reviewed, and per problem addressed an assessment and a plan rendered from the causes asserted,
+   the rejections with their reasons, the signed insights, the plan items, the course changes and
+   the orders. Every section carries the ids it came from. Edit the prose, **sign the visit note**;
+   it lands on the record as a document of the visit, under Notes and on the Timeline. The chart
+   writes the note; nothing reaches the chart before the signature (`ehr/draft.py`).
+7. **Reset demo** restores the chart to its server-start state and clears the queues.
    (Start the server from a clean chart, since that is the state it snapshots.)
 
 ### The three-minute script
@@ -137,7 +144,8 @@ Claude on **saved**.
 | 2:00 | **Sign note** | "One signature commits the rest and attests the note. The record under it lists what it wrote: courses opened, links asserted, plan items set, my rejection with its reason." |
 | 2:15 | **Ask what changed on hypertension** | "The reasoning runs over the trends and the course events. Three insights, the second names the ibuprofen and expects a fall. The card shows the expectation as a corridor on the trajectory." |
 | 2:40 | **Sign 3 insights** · **Draft orders** · **Sign 5 orders** | "Signed actions become orders. Button says the next thing owed each time." |
-| 2:55 | Header | "Nothing owed on Jeane. Two unsigned notes on other patients: the button says so. Reset demo." |
+| 2:50 | **Draft the visit note** | "The chart writes the note. The transcript is the first section, verbatim. Every other section is compiled from what I just did, and every sentence cites the record: the cause I asserted, the one I rejected and why, the insights, the plan, the orders. I edit one line." **Sign the visit note.** |
+| 2:58 | Header | "Two unsigned notes on other patients: the button says so. Reset demo." |
 
 If time is short, skip 1:40 and let **Sign note** wait: the button reads "Sign note · 5 to review
 first", which makes the point that consequential items gate the signature.
@@ -151,6 +159,7 @@ python3 -m ehr.record pt_002 --note note_demo_102
 python3 -m ehr.reason pt_002 --problem prob_0007 --replay data/proposed/pt_002/reason_prob_0007.raw.json
 python3 -m ehr.overview pt_002
 python3 -m ehr.card pt_002 --problem prob_0007
+python3 -m ehr.draft pt_002 --encounter enc_c002          # the visit note, compiled; --sign to sign it as it stands
 ```
 
 Drop `--replay` to call Claude live (each call is roughly 10-15k tokens). Every live run writes a
@@ -198,6 +207,12 @@ Two shapes the build needs that the schema doc does not define. Both are additiv
 7. **Visit coding** (`ehr/billing.py`) is computed on demand and never stored, like a TrendSummary: the
    E/M level follows the 2021 MDM rule (level met by two of three elements) over what was signed that
    day, and the ICD-10 codes come from a small demo table. Nothing is ever generated to justify a code.
+
+7. **`encounter_id` on the review record** (`ehr/review.py`): the visit a signature happened in, stamped on
+   every accept and reject. It is what lets the visit note be compiled from one encounter's decisions.
+8. **Visit note as a Document** (`ehr/draft.py`): `kind: "encounter_note"`, `encounter_id`,
+   `problems_addressed[]`, `problem_id: null`; sections carry `source` (`transcript` | `compiled`) and
+   `edited`. Queued as `visitnote_<encounter_id>`, signed into `documents` like the referral letter.
 
 ## Things the team should know
 

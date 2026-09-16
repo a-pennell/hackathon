@@ -796,3 +796,27 @@ details.explain ul { border: 1px solid var(--rule); background: var(--paper-2); 
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .empty::after { animation: none; } }
 .btn:disabled { cursor: not-allowed; }
+
+
+/* ------------------------------------------------------------ visit note draft */
+.draft { background: var(--paper-2); border: 1px solid var(--rule-strong); box-shadow: 0 1px 0 var(--rule-soft); padding: calc(var(--u) * 5) calc(var(--u) * 6) calc(var(--u) * 6); max-width: 900px; margin: 0 auto; }
+.draft-head { display: flex; align-items: flex-start; gap: calc(var(--u) * 4); flex-wrap: wrap; border-bottom: 1px solid var(--rule); padding-bottom: calc(var(--u) * 3); }
+.draft-head h1 { font-family: var(--serif); font-weight: 400; font-size: 22px; margin: 4px 0 6px; letter-spacing: -0.01em; }
+.draft-head .stamp { font-family: var(--sans); font-size: 12px; color: var(--graphite); max-width: 72ch; }
+.draft-head .stamp .link { color: var(--select); text-decoration: underline; text-underline-offset: 2px; font-size: inherit; }
+.draft-head .actions { margin-left: auto; display: flex; gap: calc(var(--u) * 2); align-self: center; }
+.dsec { padding: calc(var(--u) * 4) 0 calc(var(--u) * 2); border-bottom: 1px solid var(--rule-soft); }
+.dsec-head { display: flex; align-items: baseline; gap: calc(var(--u) * 2); margin-bottom: calc(var(--u) * 2); }
+.dsec-head h2 { font-family: var(--sans); font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--graphite); margin: 0; }
+.dsec-head .link.small { font-size: 11px; color: var(--select); text-decoration: underline; text-underline-offset: 2px; margin-left: auto; }
+.dtext { display: block; width: 100%; font-family: var(--serif); font-size: 14.5px; line-height: 1.6; color: var(--ink); margin: 0; max-width: 72ch; }
+textarea.dtext { border: 1px solid var(--rule); border-radius: var(--r-sm); background: var(--paper); padding: calc(var(--u) * 3); resize: vertical; }
+textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; border-color: var(--select); }
+.dsec.transcript .dtext { white-space: pre-wrap; color: var(--ink-2); }
+.dsec.transcript textarea.dtext { background: var(--paper-inset); }
+.dsec.compiled textarea.dtext { border-style: dashed; border-color: var(--pending); background: var(--pending-wash); }
+.dsec.edited textarea.dtext { border-style: solid; border-color: var(--rule-strong); background: var(--paper); }
+.draft .cites { display: flex; flex-wrap: wrap; gap: 4px; margin-top: calc(var(--u) * 2); }
+.draft .cite { font-family: var(--mono); font-size: 10.5px; line-height: 16px; padding: 0 6px; border: 1px solid var(--rule); border-radius: 3px; color: var(--graphite); background: transparent; }
+.draft .cite:hover { border-color: var(--select); color: var(--select); }
+.ov.notes .note-row.visit .name { font-family: var(--serif); }

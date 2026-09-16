@@ -1,4 +1,4 @@
-import type { NoteFile, QueueBatch } from "./types";
+import type { NoteFile, QueueBatch, VisitNoteRow } from "./types";
 import { waitingIn } from "./next";
 
 type Props = {
@@ -8,6 +8,8 @@ type Props = {
   scope: "patient" | "mine";
   onScope: (s: "patient" | "mine") => void;
   queues: QueueBatch[];
+  visitNotes: VisitNoteRow[];        // compiled visit notes, in progress or signed
+  onOpenVisitNote: (encounterId: string) => void;
   onOpen: (id: string) => void;
   onRead: (n: NoteFile) => void;
   busy: string | null;
@@ -28,7 +30,7 @@ const dmy = (iso: string) => {
 /** Notes by state: in progress (read, not signed), waiting to be read, signed. The row's button is the next thing
  *  owed on that note: read it, review what is waiting, sign it, or open it. Scoped to this patient, or to every
  *  patient with a note on file (the clinician's day): a row on another patient opens that patient. */
-export default function NotesTab({ notes, pid, patients, scope, onScope, queues, onOpen, onRead, busy }: Props) {
+export default function NotesTab({ notes, pid, patients, scope, onScope, queues, visitNotes, onOpenVisitNote, onOpen, onRead, busy }: Props) {
   const rows = notes.filter((n) => scope === "mine" || n.patient_id === pid).sort((a, b) => b.time.localeCompare(a.time));
   const nameOf = (id: string) => patients.find((p) => p.id === id)?.name ?? id;
   const unsignedElsewhere = notes.filter((n) => n.patient_id !== pid && n.status !== "signed").length;
@@ -48,7 +50,17 @@ export default function NotesTab({ notes, pid, patients, scope, onScope, queues,
             return (
               <section key={st}>
                 <h3>{title} <span className="cnt">{list.length}</span></h3>
-                {list.length === 0 && <div className="quiet">{st === "in_progress" ? "No note is in progress." : st === "waiting" ? "Every note on file has been read." : "Nothing signed yet."}</div>}
+                {visitNotes.filter((v) => v.status === (st === "in_progress" ? "in_progress" : st === "signed" ? "signed" : "none") && (scope === "mine" || v.patient_id === pid)).map((v) => (
+                  <div key={v.id} className="ovrow note-row visit">
+                    <div className="grow">
+                      <span className="name">{scope === "mine" ? `${nameOf(v.patient_id)} · ` : ""}Visit note · {v.author} · {dmy(v.time)}</span>{" "}
+                      <span className={`tag ${v.status === "signed" ? "ok" : "pend"}`}>{v.status === "signed" ? `signed by ${v.by ?? v.author}` : "compiled · unsigned"}</span>
+                      <div className="why">{v.excerpt.slice(0, 160)}…</div>
+                    </div>
+                    <button className={`btn small ${v.status === "signed" ? "ghost" : "primary"}`} disabled={!!busy} onClick={() => onOpenVisitNote(v.encounter_id)}>{v.status === "signed" ? "Open" : "Finish"}</button>
+                  </div>
+                ))}
+                {list.length === 0 && !visitNotes.some((v) => v.status === st && (scope === "mine" || v.patient_id === pid)) && <div className="quiet">{st === "in_progress" ? "No note is in progress." : st === "waiting" ? "Every note on file has been read." : "Nothing signed yet."}</div>}
                 {list.map((n) => {
                   const waiting = st === "in_progress" ? waitingIn(queues.find((q) => q.note_id === n.id)) : 0;
                   const label = st === "waiting" ? "Read" : st === "in_progress" ? (waiting > 0 ? `Review · ${waiting}` : "Sign") : "Open";

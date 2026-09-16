@@ -566,7 +566,10 @@ note is the encounter canvas with the clinical diff and a panel rail. The **Note
 notes on file by state, each row's button the next thing owed on it, scoped to the patient or to
 all my patients; the header button's idle state is the clinician's documentation debt ("Unsigned
 notes · n") before it is "Nothing owed". `jobs-to-be-done.md` maps the jobs of seven roles onto
-what is built; outside primary care almost nothing is. What remains unbuilt is
+what is built; outside primary care almost nothing is. The **visit note** is compiled from the
+encounter's decisions (`ehr/draft.py`): the transcript verbatim, then an assessment and a plan per
+problem addressed, every sentence citing the record, edited and signed by the clinician (§14 the
+other way round: the chart writes the note). What remains unbuilt is
 persistence of the accepted representation and assessment, and alternatives, which need the
 appendix's schema additions. In full: the
 representation and assessment as fields on the existing problem, `expected` as a field on the
