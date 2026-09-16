@@ -130,6 +130,12 @@ been skipping metformin for stomach upset, and taking ibuprofen daily for her ba
    the orders. Every section carries the ids it came from. Edit the prose, **sign the visit note**;
    it lands on the record as a document of the visit, under Notes and on the Timeline. The chart
    writes the note; nothing reaches the chart before the signature (`ehr/draft.py`).
+   While the visit note is still a draft, later workspace signatures show **Updates available**.
+   **Review updates** incorporates unchanged sections and asks whether to keep your wording,
+   use the chart text, or edit a combined version when both changed. **Save draft** persists
+   your wording; navigation retains unsaved edits. Existing drafts are never overwritten by
+   recompilation. Signed workspace representations and clinician assessments are persisted
+   with their encounter and included in these updates. Signed visit notes require amendments.
 8. **Reset demo** restores the chart to its server-start state and clears the queues.
    (Start the server from a clean chart, since that is the state it snapshots.)
 
@@ -143,9 +149,9 @@ Claude on **saved**.
 |---|---|---|
 | 0:00 | Overview | "Jeane, 55, diabetes and hypertension. Since Dr. Chen last saw her in January: systolic 142 to 154, glucose 142 to 168. Both concerns worsening. Nothing pending. A note from this morning is waiting." |
 | 0:20 | **Read the note** | "The system reads it. Every passage it used is marked. The clinical diff lists what it proposes, in diff notation: two new problems, three courses, two suspected causes, nine plan items. Nothing has touched the chart." |
-| 0:45 | **Review** the first item, ibuprofen | "The consequential items come first, one at a time, and the causal one leads: ibuprofen, 400 mg, since May, stopped today, as a suspected cause of the hypertension. Observation and attribution are separately signable. What changes if I sign is spelled out. This is beat one." **Sign.** |
+| 0:45 | **Review** the first item, ibuprofen | "Five things need a decision, one at a time, and the causal one leads: ibuprofen, 400 mg, since May, stopped today, as a suspected cause of the hypertension. Observation and attribution are separately signable. What changes if I sign is spelled out. This is beat one." **Sign.** |
 | 1:15 | **Review** the metformin item | "The second cause it proposes is wrong: metformin as a cause of the diabetes. The note says adherence is the driver. **Reject**, disagree, one line: *non-adherence is the cause, not the drug*. The rejection is on the record with its reason. Beat two." |
-| 1:40 | Review and sign the other five, fast | "Albuminuria raised, back pain raised, acetaminophen, lisinopril, the metformin switch." |
+| 1:40 | Review and sign the other three, fast | "Albuminuria raised, back pain raised, the metformin switch. Everything else signs with the note." |
 | 2:00 | **Sign note** | "One signature commits the rest and attests the note. The record under it lists what it wrote: courses opened, links asserted, plan items set, my rejection with its reason." |
 | 2:15 | **Ask what changed on hypertension** | "The reasoning runs over the trends and the course events. Three insights, the second names the ibuprofen and expects a fall. The card shows the expectation as a corridor on the trajectory." |
 | 2:40 | **Sign 3 insights** · **Draft orders** · **Sign 5 orders** | "Signed actions become orders. Button says the next thing owed each time." |
@@ -153,8 +159,8 @@ Claude on **saved**.
 | 2:50 | **Draft the visit note** | "The chart writes the note. The transcript is the first section, verbatim. Every other section is compiled from what I just did, and every sentence cites the record: the cause I asserted, the one I rejected and why, the insights, the plan, the orders. I edit one line." **Sign the visit note.** |
 | 2:58 | Header | "Two unsigned notes on other patients: the button says so. Reset demo." |
 
-If time is short, skip 1:40 and let **Sign note** wait: the button reads "Sign note · 5 to review
-first", which makes the point that consequential items gate the signature.
+If time is short, skip 1:40 and let **Sign note** wait: the button reads "Sign note · 3 to review
+first", which makes the point that decisions gate the signature.
 
 Same flow from the shell:
 

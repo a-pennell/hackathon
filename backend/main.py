@@ -32,7 +32,10 @@ from ehr.review import REASON_CODES, apply_review, ledger_for_problem, list_queu
 from ehr.record import record_events
 from ehr.timeline import patient_timeline
 from ehr.draft import run_draft, sign_draft, stem_for
+from ehr.draft_updates import read_draft, save_draft, preview_updates, incorporate_updates
+from ehr.assessment import sign_assessment
 from ehr.intent import run_intent  # noqa: E402
+from ehr.corrections import catalog, preview, apply_correction
 from ehr.trend import DATA_DIR, load_patient, trend_from_patient  # noqa: E402
 
 NOTES_DIR = ROOT / "data" / "notes"
@@ -89,6 +92,7 @@ def patient_summary(pid: str):
         "documents": d.get("documents", []),
         "orders": d.get("orders", []),
         "plans": d.get("plans", []),
+        "corrections": d.get("corrections", []),
     }
 
 
@@ -319,6 +323,8 @@ def queue(pid: str):
         if i["id"] in wanted: labels[i["id"]] = f"insight: {i['statement'][:60]}"
     for pl in d.get("plans", []):
         if pl["id"] in wanted: labels[pl["id"]] = f"plan: {pl['text'][:60]}"
+    for item in d.get("note_plan_items", []):
+        if item["id"] in wanted: labels[item["id"]] = f"note plan text: {item['text'][:60]}"
     return {"batches": batches, "labels": labels}
 
 
@@ -358,6 +364,43 @@ def undo(pid: str, stem: str, body: UndoBody):
         return {"done": undo_review(pid, stem, body.ids, data_dir=DATA_DIR)}
     except FileNotFoundError:
         raise HTTPException(404, f"no queue {stem}")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class CorrectionBody(BaseModel):
+    item_id: str
+    action: str
+    reason: str = ""
+    expected_revision: str = ""
+    text: str = ""
+    effective: str | None = None
+    by: str = "Dr. Chen"
+
+
+@app.get("/api/patients/{pid}/corrections")
+def correction_catalog(pid: str):
+    _patient(pid)
+    return catalog(pid, DATA_DIR)
+
+
+@app.post("/api/patients/{pid}/corrections/preview")
+def correction_preview(pid: str, body: CorrectionBody):
+    _patient(pid)
+    try:
+        return preview(pid, body.item_id, body.action, DATA_DIR)
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+
+
+@app.post("/api/patients/{pid}/corrections")
+def sign_correction(pid: str, body: CorrectionBody):
+    _patient(pid)
+    try:
+        return apply_correction(pid, body.item_id, body.action, reason=body.reason, expected_revision=body.expected_revision,
+                                text=body.text, effective=body.effective, by=body.by, data_dir=DATA_DIR)
+    except ValueError as e:
+        raise HTTPException(409, str(e))
 
 
 class SignBody(BaseModel):
@@ -373,22 +416,46 @@ def sign(pid: str, note_id: str, body: SignBody):
         raise HTTPException(404, f"no queue for {note_id}; read the note first")
     except KeyError as e:
         raise HTTPException(404, str(e))
+    except ValueError as e:
+        raise HTTPException(409, str(e))
 
 
 class IntentBody(BaseModel):
     kind: str
     text: str
+    destination: str = "both"
+    encounter_id: str | None = None
     course_id: str | None = None
     change: str | None = None
     dose: str | None = None
     by: str = "Dr. Chen"
 
 
+class AssessmentBody(BaseModel):
+    text: str
+    kind: str
+    evidence: list[str] = []
+    by: str = "Dr. Chen"
+
+
+@app.post("/api/patients/{pid}/problems/{prob}/assessment")
+def sign_workspace_assessment(pid: str, prob: str, body: AssessmentBody):
+    try:
+        return sign_assessment(pid, prob, body.text, body.kind, body.evidence, body.by, DATA_DIR)
+    except FileNotFoundError:
+        raise HTTPException(404, "No patient on file")
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+
+
 @app.post("/api/patients/{pid}/problems/{prob}/intents")
 def add_intent_endpoint(pid: str, prob: str, body: IntentBody):
     """A clinician's own decision on a problem: a plan item (and an order or a course change), signed as it is made."""
     try:
-        return run_intent(pid, prob, body.kind, body.text, course_id=body.course_id, change=body.change, dose=body.dose, by=body.by, data_dir=DATA_DIR)
+        result = run_intent(pid, prob, body.kind, body.text, course_id=body.course_id, change=body.change, dose=body.dose, by=body.by, data_dir=DATA_DIR, destination=body.destination, encounter_id=body.encounter_id)
+        if body.destination != "treatment_plan":
+            result["draft"] = run_draft(pid, result["encounter_id"], data_dir=DATA_DIR)
+        return result
     except KeyError as e:
         raise HTTPException(404, str(e))
     except ValueError as e:
@@ -398,6 +465,13 @@ def add_intent_endpoint(pid: str, prob: str, body: IntentBody):
 class DraftSignBody(BaseModel):
     sections: list[dict] | None = None
     by: str = "Dr. Chen"
+    expected_revision: str | None = None
+
+
+class DraftUpdateBody(BaseModel):
+    sections: list[dict] | None = None
+    expected_revision: str = ""
+    resolutions: dict[str, dict] = {}
 
 
 @app.get("/api/patients/{pid}/encounters/{eid}/draft")
@@ -406,8 +480,37 @@ def get_draft(pid: str, eid: str):
     qp = PROPOSED_DIR / pid / f"{stem_for(eid)}.json"
     if not qp.exists():
         raise HTTPException(404, "no draft for this encounter")
-    b = json.loads(qp.read_text()); b["stem"] = qp.stem
-    return b
+    return read_draft(pid, eid, DATA_DIR)
+
+
+@app.post("/api/patients/{pid}/encounters/{eid}/draft/save")
+def save_visit_draft(pid: str, eid: str, body: DraftUpdateBody):
+    try:
+        return save_draft(pid, eid, body.sections, body.expected_revision, DATA_DIR)
+    except FileNotFoundError:
+        raise HTTPException(404, "no draft for this encounter")
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+
+
+@app.post("/api/patients/{pid}/encounters/{eid}/draft/updates")
+def preview_visit_updates(pid: str, eid: str, body: DraftUpdateBody):
+    try:
+        return preview_updates(pid, eid, body.sections, DATA_DIR)
+    except FileNotFoundError:
+        raise HTTPException(404, "no draft for this encounter")
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+
+
+@app.post("/api/patients/{pid}/encounters/{eid}/draft/incorporate")
+def incorporate_visit_updates(pid: str, eid: str, body: DraftUpdateBody):
+    try:
+        return incorporate_updates(pid, eid, body.sections, body.expected_revision, body.resolutions, DATA_DIR)
+    except FileNotFoundError:
+        raise HTTPException(404, "no draft for this encounter")
+    except ValueError as e:
+        raise HTTPException(409, str(e))
 
 
 @app.post("/api/patients/{pid}/encounters/{eid}/draft")
@@ -422,9 +525,11 @@ def compile_draft(pid: str, eid: str):
 @app.post("/api/patients/{pid}/encounters/{eid}/draft/sign")
 def sign_visit_note(pid: str, eid: str, body: DraftSignBody):
     try:
-        return sign_draft(pid, eid, body.sections, by=body.by, data_dir=DATA_DIR)
+        return sign_draft(pid, eid, body.sections, by=body.by, data_dir=DATA_DIR, expected_revision=body.expected_revision)
     except FileNotFoundError:
         raise HTTPException(404, "no draft for this encounter")
+    except ValueError as e:
+        raise HTTPException(409, str(e))
 
 
 @app.get("/api/patients/{pid}/timeline")
@@ -472,7 +577,7 @@ def notes():
                     "excerpt": note["text"].strip()[:200], "text": note["text"],
                     "has_replay": raw.exists(), "has_queue": queued.exists(),
                     "status": (on_chart or {}).get("status", "signed" if (on_chart or {}).get("review") else "received"),
-                    "review": (on_chart or {}).get("review")})
+                    "review": (on_chart or {}).get("review"), "amendments": (on_chart or {}).get("amendments", [])})
     return out
 
 
@@ -580,7 +685,7 @@ PRISTINE = DATA_DIR / ".pristine"   # snapshot of every chart at server start; g
 def _is_clean(chart: dict) -> bool:
     """A chart with nothing AI-signed on it: the state the demo starts from. A note signed before the demo
     (Jeane's January note) is curated and fine; a note signed during it brings accepted nlp items with it."""
-    return not chart.get("documents") and not chart.get("orders") and not chart.get("plans") and all(
+    return not chart.get("documents") and not chart.get("orders") and not chart.get("plans") and not chart.get("note_plan_items") and all(
         x["provenance"]["source"] in ("fhir_import", "curated")
         for k in ("problems", "observations", "medications", "links", "insights") for x in chart.get(k, []))
 

@@ -1,5 +1,5 @@
 export type Provenance = {
-  source: "fhir_import" | "nlp_extraction" | "reasoning";
+  source: "fhir_import" | "nlp_extraction" | "reasoning" | "clinician";
   note_id?: string;
   quote?: string;
   model?: string;
@@ -10,6 +10,11 @@ export type Provenance = {
 export type Patient = { id: string; name: string; dob: string; sex: string };
 
 export type Review = { by: string; at: string; decision: "accepted" | "rejected"; reason_code: string | null; reason: string | null };
+export type Amendment = { id: string; by: string; at: string; reason: string; text: string };
+export type CorrectionAction = "entered_in_error" | "stop" | "resolve" | "cancel" | "end_plan" | "amend";
+export type CorrectionItem = { id: string; kind: string; label: string; actions: CorrectionAction[]; item: Record<string, unknown> };
+export type Correction = Amendment & { action: CorrectionAction; item_id: string; kind: string; label: string; effective: string; before: Record<string, unknown>; after: Record<string, unknown> | null; related: { id: string; kind: string; label: string }[] };
+export type CorrectionPreview = { revision: string; kind: string; action: CorrectionAction; item: Record<string, unknown>; withdrawn: { id: string; kind: string; label: string }[]; related: { id: string; kind: string; label: string }[]; warnings: string[]; blockers: string[] };
 export const REASON_CODES: { code: string; label: string }[] = [
   { code: "already_known", label: "Already known" },
   { code: "not_relevant", label: "Not relevant here" },
@@ -18,8 +23,12 @@ export const REASON_CODES: { code: string; label: string }[] = [
   { code: "other", label: "Other" },
 ];
 
-export type DocSection = { heading: string; text: string; cites: string[]; source?: "transcript" | "compiled"; edited?: boolean; problem_id?: string };
+export type DocSection = { key?: string; heading: string; text: string; cites: string[]; source?: "transcript" | "compiled"; edited?: boolean; problem_id?: string };
+export type DraftEdit = { key: string; heading: string; text: string };
+export type DraftUpdates = { revision: string; changes: { key: string; heading: string; current: DocSection | null; incoming: DocSection | null; conflict: boolean; kind: "added" | "removed" | "changed" }[] };
+export type DraftResolution = { choice: "keep" | "update" | "edit"; text?: string };
 export type Document = {
+  amendments?: Amendment[];
   id: string;
   patient_id: string;
   problem_id: string | null;   // null for a visit note, which addresses several problems
@@ -125,6 +134,7 @@ export type Observation = {
 };
 
 export type Insight = {
+  kind?: "assessment" | "representation";
   id: string;
   problem_id: string;
   statement: string;
@@ -157,6 +167,8 @@ export type Timeline = {
 };
 
 export type QueueBatch = {
+  draft_revision?: string;
+  updates_count?: number;
   stem: string;
   patient_id: string;
   note_id?: string;
@@ -185,6 +197,7 @@ export type QueueBatch = {
 };
 
 export type NoteFile = {
+  amendments?: Amendment[];
   file: string | null; // null for a chart note that has no file under data/notes
   id: string;
   patient_id: string;
@@ -216,6 +229,7 @@ export type Plan = {
 export type RecordEvent = { kind: string; at: string; subject: string; text: string; by: string | null; source: string | null; note_id: string | null; quote: string | null; ids: string[] };
 
 export type PatientSummary = {
+  corrections?: Correction[];
   patient: Patient;
   problems: Problem[];
   counts: Record<string, number>;
@@ -244,7 +258,7 @@ export type TrailEntry = {
   source: string | null;
   confidence: number | null;
   quote: string | null;
-  decision: "accepted" | "rejected" | "pending";
+  decision: "accepted" | "rejected" | "pending" | "corrected";
   reason_code: string | null;
   reason: string | null;
   by: string | null;
@@ -291,7 +305,7 @@ export type Coding = {
 
 /* The problem card (ehr/card.py): computed from the chart, never stored. */
 export type CardEvidence = { id: string; ids: string[]; kind: string; text: string; detail: string; source: string; valence: "for" | "against" | "unexplained" };
-export type CardPlan = { id: string; plan_kind: string; text: string; detail: string; status: string; ids: string[] };
+export type CardPlan = { id: string; plan_kind: string; text: string; detail: string; status: string; ids: string[]; destination?: "treatment_plan" | "both" | null };
 export type CardExpectation = {
   statement: string; code: string; name: string; direction: string; since: string; by: string;
   ref_value: number | null; target_value: number | null;
@@ -343,12 +357,12 @@ export type ChartData = {
 export type PatientRow = { id: string; name: string; dob: string; sex: string; problems_active: number };
 
 /* Care tab (ehr/care.py): one card per concern with its plan, measures and open loops; the same objects by kind. */
-export type CarePlanRow = { id: string; kind: string; text: string; status: string; source: string; at: string; problem_id: string; problem_name: string };
+export type CarePlanRow = { id: string; kind: string; text: string; status: string; source: string; at: string; problem_id: string; problem_name: string; destination?: "treatment_plan" | "both" | null };
 export type CareMeasure = { text: string; detail: string; ids: string[]; latest_time: string | null; problem_id: string; problem_name: string };
 export type CareCard = {
   id: string; name: string; code: { system: string; value: string } | null; status: string; onset_date: string | null;
   members: { id: string; name: string }[]; epistemic: string; qualifiers: string[]; one_liner: string | null; assessment: null;
-  plan: { id: string; kind: string; text: string; status: string; source: string; at: string }[];
+  plan: Omit<CarePlanRow, "problem_id" | "problem_name">[];
   measures: { text: string; detail: string; ids: string[]; latest_time: string | null }[];
   loops: OverviewLoop[]; pending: number; expected: { statement: string; by: string; status: string } | null; decisions: number;
 };

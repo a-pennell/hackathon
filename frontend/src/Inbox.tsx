@@ -21,7 +21,7 @@ type Props = {
 
 type Kind = "problem" | "result" | "medication" | "link" | "insight" | "document" | "order" | "finding" | "plan";
 type AnyItem = Problem | Observation | Medication | Link | Insight | Document | Order | Plan;
-type Status = "proposed" | "accepted" | "rejected";
+type Status = "proposed" | "accepted" | "rejected" | "corrected";
 
 /** One reviewable thing: a subject (proposed item, or a chart item / note the links hang off) plus its links. */
 export type Group = {
@@ -133,9 +133,10 @@ export function buildGroups(b: QueueBatch, name: (id: string) => string, chartMe
   const claimed = new Set<string>();
   const statusOf = (subject: AnyItem | null, ls: Link[]): Status => {
     const all = [...(subject ? [subject.status] : []), ...ls.map((l) => l.status)] as Status[];
+    if (subject && !["proposed", "accepted", "rejected"].includes(subject.status)) return "corrected";
     if (all.some((s) => s === "proposed")) return "proposed";
     if (subject && subject.status === "rejected") return "rejected";
-    return all.every((s) => s === "accepted") ? "accepted" : all.includes("rejected") ? "rejected" : "proposed";
+    return all.includes("accepted") ? "accepted" : all.includes("rejected") ? "rejected" : "corrected";
   };
   const add = (kind: Kind, subject: AnyItem | null, subjectId: string, title: React.ReactNode, ls: Link[], extra: Partial<Group> = {}) => {
     ls.forEach((l) => claimed.add(l.id));
@@ -214,7 +215,7 @@ function Batch({
   return (
     <section>
       <div className="batch-title">
-        <b>{title}</b> · {b.model.split("/").pop()} · {fmtTime(b.extracted_at ?? b.reasoned_at ?? b.composed_at ?? b.ordered_at)}
+        <b>{title}</b> · {fmtTime(b.extracted_at ?? b.reasoned_at ?? b.composed_at ?? b.ordered_at)}
         {total > 1 && (
           <>
             {" "}·{" "}
@@ -323,7 +324,7 @@ export function GroupCard({
   const hint = g.subject ? b.review_hints?.[g.subject.id] : undefined;
   const quiet = g.kind === "insight" || g.kind === "document";
   const decideIds = [...(g.subject && g.subject.status === "proposed" ? [g.subject.id] : []), ...g.links.filter((l) => l.status === "proposed").map((l) => l.id)];
-  const badge = signed ? "signed" : st === "rejected" ? "rejected"
+  const badge = signed ? "signed" : st === "corrected" ? "corrected" : st === "rejected" ? "rejected"
     : g.kind === "document" ? `${(g.subject as Document).kind} · ${(g.subject as Document).audience}`
     : g.kind === "order" ? `order · ${(g.subject as Order).kind.replace("_", " ")}` : g.kind === "plan" ? "plan" : g.kind;
 
@@ -334,7 +335,6 @@ export function GroupCard({
       onMouseLeave={() => !quiet && onHover(null)}
     >
       <span className={`kind ${signed ? "ok" : st === "rejected" ? "rej" : ""}`}>{badge}</span>
-      {g.confidence != null && <span className="conf">{g.confidence}</span>}
       {g.kind === "insight" ? (
         <>
           <div className="statement">{(g.subject as Insight).statement}</div>
@@ -368,13 +368,23 @@ export function GroupCard({
               <span key={l.id} className={`l ${l.type === "suspected_cause" ? "cause" : ""}`} title={l.id}>
                 <span className="t">{word} </span><b>{name(other)}</b>
                 {g.alsoSigns?.includes(other) && l.status === "proposed" && <span className="t"> · signs it too</span>}
-                {l.status !== "proposed" && <span className="t"> · {l.status === "accepted" ? "signed" : "rejected"}</span>}
+                {l.status !== "proposed" && <span className="t"> · {l.status === "accepted" ? "signed" : l.status.replace(/_/g, " ")}</span>}
               </span>
             );
           })}
         </div>
       )}
       {hint && <div className="hint">{hint}</div>}
+      {(g.confidence != null || g.links.length > 0 || b.model) && (
+        <details className="system-details">
+          <summary>Source details</summary>
+          <div className="sd-grid">
+            {g.confidence != null && <><span>Estimate</span><span>{g.confidence}</span></>}
+            {b.model && <><span>Model</span><span>{b.model.split("/").pop()}</span></>}
+            <span>IDs</span><span>{[g.subjectId, ...g.links.map((l) => l.id)].join(", ")}</span>
+          </div>
+        </details>
+      )}
       <ReviewLine r={g.review} />
       {st === "proposed" && !rejecting && (
         <div className="row">

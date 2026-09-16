@@ -81,7 +81,7 @@ def care_view(patient: dict, *, proposed_dir: Path = PROPOSED_DIR, today: date |
         for pl in patient.get("plans", []):
             if pl["problem_id"] in ids:
                 src = "you" if pl["provenance"].get("source") == "clinician" else "note"
-                plan.append({"id": pl["id"], "kind": pl["kind"], "text": pl["text"], "status": "signed", "source": src, "at": (pl.get("review") or {}).get("at") or pl["created_at"]})
+                plan.append({"id": pl["id"], "kind": pl["kind"], "text": pl["text"], "destination": pl.get("destination"), "status": "signed", "source": src, "at": (pl.get("review") or {}).get("at") or pl["created_at"]})
         for o in patient.get("orders", []):
             if o["problem_id"] in ids:
                 text = o["name"] + (f" · {o['audience']}" if o.get("audience") else "")

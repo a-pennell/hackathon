@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { labelOf } from "./labels";
 import type { ReviewBody } from "./api";
-import { buildGroups, GroupCard, type Group } from "./Inbox";
+import { buildGroups, decideIdsOf, GroupCard, type Group } from "./Inbox";
 import ReviewDrawer, { isConsequential, type Reviewable } from "./ReviewDrawer";
 import Coding from "./Coding";
+import Amendments from "./Amendments";
 import type { CareData, ChartData, Coding as CodingT, NoteFile, Problem, QueueBatch, RecordEvent } from "./types";
 
 type Props = {
@@ -16,6 +17,7 @@ type Props = {
   onReview: (stem: string, body: ReviewBody) => Promise<void>;
   onRead: (mode: "live" | "replay") => void;
   onSign: () => void;
+  onCorrect: (id: string) => void;
   onOpenProblem: (id: string) => void;
   record: RecordEvent[];
   busy: string | null;
@@ -67,7 +69,7 @@ function spansOf(text: string, batch: QueueBatch | null): Span[] {
   return out;
 }
 
-export default function NoteView({ note, batch, problems, labels, highlight, onHover, onReview, onRead, onSign, onOpenProblem, record, busy, mode, chart, care, coding, lastNote }: Props) {
+export default function NoteView({ note, batch, problems, labels, highlight, onHover, onReview, onRead, onSign, onCorrect, onOpenProblem, record, busy, mode, chart, care, coding, lastNote }: Props) {
   const name = (id: string) => labelOf(labels, id);
   const [showSigned, setShowSigned] = useState(false);
   const [reviewing, setReviewing] = useState<Reviewable | null>(null);
@@ -102,6 +104,11 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
     const order = [...problems.map((p) => p.id), "_"];
     return [...m.entries()].sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
   }, [batchable, problems]);
+  const signGroup = (gs: Group[]) => {
+    if (!batch) return;
+    const ids = gs.flatMap(decideIdsOf);
+    if (ids.length > 0) onReview(batch.stem, { accept: ids });
+  };
 
   // The clinical diff: every proposal as one line in diff notation, before the cards.
   const changeset = useMemo(() => {
@@ -158,6 +165,7 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
             </button>
           )}
           {coding && coding.signed_today > 0 && <button className="btn" onClick={() => setCharge(true)} title="Visit coding computed from what was signed today">Charge capture</button>}
+          {signed && <button className="btn" onClick={() => onCorrect(note.id)}>Amend note</button>}
           {batch && !signed && (
             <button className="btn primary" disabled={!!busy || gated > 0} onClick={onSign} title={gated > 0 ? `${gated} consequential item${gated > 1 ? "s" : ""} first, one at a time` : "Signs every batchable proposal you have not rejected, then the note itself"}>
               {gated > 0 ? `Sign note · ${gated} to review first` : `Sign note${batchable.length > 0 ? ` · ${batchable.length}` : ""}`}
@@ -167,24 +175,25 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
 
         <div className="ngrid">
           <section className="ntext">
+            <Amendments items={note.amendments} />
             <h3>{note.file ? note.file.split("/").pop() : "chart note"} <span className="cnt">{spans.length ? `${spans.length} passages the reading used` : ""}</span></h3>
             <pre className="note-body">{pieces}</pre>
           </section>
           <div className="panelrail">
-          <section className="nprops">
+          <section className="nprops" aria-labelledby="note-proposals-title">
             {changeset.length > 0 && (
-              <div className="changeset" aria-label="The clinical diff">
-                <div className="cs-head"><span className="eyebrow">The clinical diff</span><span className="cnt">{changeset.filter((r) => r.status === "proposed").length} proposed · {changeset.filter((r) => r.status === "accepted").length} signed · {changeset.filter((r) => r.status === "rejected").length} rejected</span></div>
+              <div className="changeset" aria-label="What this note changes">
+                <div className="cs-head"><span className="eyebrow">What this note changes</span><span className="cnt">{changeset.filter((r) => r.status === "proposed").length} proposed · {changeset.filter((r) => r.status === "accepted").length} signed · {changeset.filter((r) => r.status === "rejected").length} rejected</span></div>
                 {changeset.map((r, i) => (
                   <div key={i} className={`cs-row ${r.cls} ${r.status} ${r.ids.some((id) => highlight.has(id)) ? "hi" : ""}`} onMouseEnter={() => onHover(r.ids)} onMouseLeave={() => onHover(null)}><span className="sym">{r.sym}</span><span className="txt">{r.text}</span><span className="st">{r.status === "proposed" ? "" : r.status}</span></div>
                 ))}
               </div>
             )}
-            <h3>What this note proposes <span className="cnt">{batch ? `${waiting} waiting · ${decided.length + changes.length - openChanges.length} decided` : "read the note to find out"}</span></h3>
+            <h3 id="note-proposals-title">What this note proposes <span className="cnt">{batch ? `${waiting} waiting · ${decided.length + changes.length - openChanges.length} decided` : "read the note to find out"}</span></h3>
             {!batch && <div className="quiet">Nothing has been read from this note. Reading it proposes changes; nothing reaches the chart until you sign.</div>}
             {(consequential.length > 0 || openChanges.length > 0) && (
               <div className="pgroup consequential">
-                <div className="pgroup-head">Consequential · reviewed one at a time <span className="cnt">{consequential.length + openChanges.length}</span></div>
+                <div className="pgroup-head">Decisions · one at a time <span className="cnt">{consequential.length + openChanges.length}</span></div>
                 {consequential.map((g) => (
                   <div key={g.key} className="crow" onMouseEnter={() => onHover(g.hoverIds)} onMouseLeave={() => onHover(null)}>
                     <span className="kind">{g.kind === "problem" ? "problem" : g.kind === "medication" && g.subject ? "course" : "cause"}</span>
@@ -207,6 +216,7 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
                 <div className="pgroup-head">
                   {pid === "_" ? "About the note" : <button className="link" onClick={() => onOpenProblem(pid)}>{name(pid)}</button>}
                   <span className="cnt">{gs.length}</span>
+                  {gs.length > 1 && <button className="btn small ghost group-sign" disabled={!!busy} onClick={() => signGroup(gs)}>Sign these {gs.length}</button>}
                 </div>
                 {gs.map((g) => <GroupCard key={g.key} g={g} b={batch!} name={name} highlight={highlight} onHover={onHover} onReview={onReview} onReadDocument={() => undefined} busy={busy} />)}
               </div>
@@ -214,7 +224,7 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
             {decided.length > 0 && (
               <div className="strip">
                 <button onClick={() => setShowSigned((v) => !v)}>{showSigned ? "▾" : "▸"} <span className="n">{decided.length}</span> decided</button>
-                {showSigned && decided.map((g) => <GroupCard key={g.key} g={g} b={batch!} name={name} highlight={highlight} onHover={onHover} onReview={onReview} onReadDocument={() => undefined} busy={busy} />)}
+                {showSigned && decided.map((g) => <div key={g.key}><GroupCard g={g} b={batch!} name={name} highlight={highlight} onHover={onHover} onReview={onReview} onReadDocument={() => undefined} busy={busy} />{g.status === "accepted" && <button className="btn small" onClick={() => onCorrect(g.subject?.id ?? g.links[0]?.id)}>Correct entry</button>}</div>)}
               </div>
             )}
             {batch && batch.rejected.length > 0 && (

@@ -117,9 +117,9 @@ export default function ReviewDrawer({ item, labels, problems, onReview, onClose
       <div className="scrim" onClick={onClose} />
       <aside className="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
         <div className="dhead">
-          <span className="eyebrow">Consequential change · individual review required</span>
+          <span className="eyebrow">A decision · reviewed on its own</span>
           <h2 id="drawer-title">{title}</h2>
-          <p>{kind} · proposed {b.extracted_at?.slice(0, 16).replace("T", " ") ?? ""} by {prov?.model ?? b.model}{subject ? ` · ${subject.id}` : ""}</p>
+          <p>{kind} · proposed {b.extracted_at?.slice(0, 16).replace("T", " ") ?? ""}</p>
           <button className="dclose" aria-label="Close" onClick={onClose}>✕</button>
         </div>
         <div className="dbody">
@@ -141,10 +141,6 @@ export default function ReviewDrawer({ item, labels, problems, onReview, onClose
                   {hasTwoParts && <label className="accept"><input type="checkbox" checked={attrPart} onChange={(e) => setAttrPart(e.target.checked)} /> accept this part: the links it makes</label>}
                 </div>
               </div>
-              <div className="arow">
-                <span className="lab">Confidence</span>
-                <div className="val"><span className={`conf ${band(confidence)}`}>{band(confidence)}</span> the system’s estimate that you sign this as written{prov?.note_id ? ` · from ${name(prov.note_id)}` : ""}</div>
-              </div>
             </div>
           </section>
 
@@ -158,6 +154,19 @@ export default function ReviewDrawer({ item, labels, problems, onReview, onClose
 
           <section className="dsect">
             <p className="guard"><b>Why this needs your signature.</b> {g?.kind === "problem" ? "A problem raised or restaged changes what every later reader believes about this patient, and a wrong one is the error the system cannot catch later." : c ? "A course change rewrites the medication history every problem is read against." : "A cause asserted on the record shapes every later explanation, and a wrong one is hard to unlearn."} Both the proposal and your decision stay on the record either way.</p>
+          </section>
+
+          <section className="dsect">
+            <details className="system-details drawer-details">
+              <summary>Source details</summary>
+              <div className="sd-grid">
+                <span>Estimate</span><span><span className={`conf ${band(confidence)}`}>{band(confidence)}</span>{confidence ?? "unknown"}</span>
+                <span>Model</span><span>{prov?.model?.split("/").pop() ?? b.model.split("/").pop()}</span>
+                {prov?.note_id && <><span>Source note</span><span>{name(prov.note_id)}</span></>}
+                {subject && <><span>Proposal ID</span><span>{subject.id}</span></>}
+                {links.length > 0 && <><span>Link IDs</span><span>{links.map((l) => l.id).join(", ")}</span></>}
+              </div>
+            </details>
           </section>
 
           <section className="dsect">
@@ -182,4 +191,6 @@ export default function ReviewDrawer({ item, labels, problems, onReview, onClose
   );
 }
 
-export const isConsequential = (g: Group) => g.kind === "problem" || (g.kind === "medication" && !!g.subject) || g.links.some((l: Link) => l.type === "suspected_cause");
+/** What must be decided one at a time: a problem raised or restaged, and a cause asserted. A course opened by the note
+ *  (acetaminophen for the back) signs with the note; a change to a course already on the chart is gated separately. */
+export const isConsequential = (g: Group) => g.kind === "problem" || g.links.some((l: Link) => l.type === "suspected_cause");

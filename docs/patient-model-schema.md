@@ -219,6 +219,81 @@ Every id in `evidence` must exist — the UI renders them as tap-through citatio
 
 ---
 
+## 11. Signed Corrections And Amendments
+
+The provider correction workflow adds these optional fields. Existing charts need no migration.
+
+- `corrections`: append-only signed events with a `correction_` ID, item ID and kind, action,
+  reason, author (`by`), signature time (`at`), effective date, complete `before`/`after`
+  snapshots, archived dependent entries, and related entries retained for separate review.
+- `archived_items`: `{kind, item, correction_id}` rows retaining the complete original entry
+  and signature. Entries marked in error, canceled orders, and ended plans leave current
+  chart collections but remain in this archive and the record. Medication stops instead
+  close a segment in place; they do not archive a valid course.
+- `amendments` on signed notes/documents: signed `{id, by, at, reason, text}` additions.
+  Original text and signatures remain unchanged. Amendment text does not mutate clinical
+  chart entries or orders.
+- `medication_effect` on signed medication-change orders, note changes, and clinician plans:
+  `{med_id, before, after}`, where before/after are complete segment arrays. Reversal requires
+  that the current segments still match `after`. Legacy changes without snapshots cannot
+  be automatically reversed.
+- Corrected queue entries retain their original review stamp and gain `correction_id` and
+  terminal status `entered_in_error`, `cancel`, `end_plan`, or `superseded`. They cannot be
+  re-signed. Dependent links/insights leave current reasoning when evidence is marked in
+  error; related orders and documents require separate provider decisions.
+
+Every correction requires a matching chart/queue revision from a prior preview. The local
+JSON prototype does not dispatch cancellations to outside pharmacies or laboratories.
+
+## 12. Draft Synchronization
+
+Visit-note queues retain `source_sections`, the last chart-generated sections reviewed
+by the provider. Each section has a stable `key` built from its source, problem, and
+section role. Provider wording is stored separately in the document's sections.
+Reopening or recompiling an existing draft never replaces that wording.
+
+Draft reads return a computed `updates_count` and `draft_revision`. Update previews
+compare the current chart with `source_sections`, preserving edits to other sections.
+Changes to a provider-edited section require an explicit keep, replace, or manually
+merged resolution. Applying updates advances the source baseline and saves the draft;
+it does not change the chart. Saves and update applications check revisions, and signing
+rejects unreviewed chart updates. Signed documents remain immutable except for amendments.
+
+Explicitly accepted workspace representations and signed clinician assessments are stored
+as accepted Insights with optional `kind: representation | assessment`, clinician provenance,
+the full statement, an empty suggested action, evidence IDs, and an encounter-scoped review
+stamp. Updates append a new signed version. The visit draft uses the latest clinician
+assessment for that encounter, falling back to its latest accepted representation, and
+preserves the full authored text rather than truncating it to a generated summary.
+
+## 13. Plan Destinations
+
+Clinician intent accepts `destination: note | treatment_plan | both`. The form defaults to
+`note`; legacy API/CLI callers without a destination retain `both` behavior.
+
+- `note`: an unsigned authoring source in `note_plan_items`, with ID, patient/problem/
+  encounter IDs, kind, text, clinician provenance, and creation time. It is not a signed
+  Plan, order, or medication change. It appears only in that encounter's Note: Plan.
+- `treatment_plan`: an accepted Plan with the selected destination and encounter review
+  stamp. Diagnostic/referral items create orders; explicitly selected medication changes
+  apply to the chart. None of these actions is added to Note: Plan by the compiler.
+- `both`: the same signed treatment action, also selected for Note: Plan once. The note
+  text remains unsigned until the provider signs the visit note.
+
+Orders inherit their originating Plan's destination. Medication event compilation excludes
+the before/after event delta of treatment-only changes without hiding unrelated changes.
+Plans without a destination retain their existing note inclusion behavior.
+
+The API creates a draft if needed. Existing drafts expose additions through the reviewed
+update workflow, preserving provider edits and removals. Note-only source records are
+authoring history, not standalone chart assertions; the signed document is the final text.
+Removing text from a draft does not remove a treatment plan or order. Note/both additions
+to an already signed visit note are rejected before any chart action; use an amendment
+or explicitly choose treatment-plan-only instead.
+
+The UI sends the active encounter ID explicitly. An encounter not yet ingested is rejected
+instead of silently routing new text or treatment decisions to an older visit.
+
 ## Saturday-morning definition of done
 
 1. This file agreed on (argue now, not Sunday).

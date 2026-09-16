@@ -5,7 +5,7 @@ const nice = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 
 
 /** Chart: what we know. Medications, results by series, problems, history. Lenses on the same objects the
  *  problem cards use; nothing here is a second copy. */
-export function ChartTab({ data, onOpenProblem }: { data: ChartData; onOpenProblem: (id: string) => void }) {
+export function ChartTab({ data, onOpenProblem, onCorrect }: { data: ChartData; onOpenProblem: (id: string) => void; onCorrect: (id: string) => void }) {
   const active = data.problems.filter((p) => p.status === "active");
   const resolved = data.problems.filter((p) => p.status !== "active");
   return (
@@ -18,7 +18,7 @@ export function ChartTab({ data, onOpenProblem }: { data: ChartData; onOpenProbl
             const stopped = !!last.end;
             return (
               <div key={m.id} className={`row3 ${stopped ? "dim" : ""}`}>
-                <span className="name">{m.name}</span>
+                <span className="name">{m.name} <button className="link small" onClick={() => onCorrect(m.id)}>Change</button></span>
                 <span className="num">{last.dose ?? ""} {last.route ?? ""} {last.frequency ?? ""}</span>
                 <span className="meta">{stopped ? `stopped ${fmt(last.end)}` : `since ${fmt(last.start) || "?"}`}{m.provenance.source === "nlp_extraction" ? " · from a note" : ""}</span>
               </div>
@@ -49,7 +49,7 @@ export function ChartTab({ data, onOpenProblem }: { data: ChartData; onOpenProbl
             <div key={p.id} className="row3 clickable" onClick={() => onOpenProblem(p.id)}>
               <span className="name">{p.name}</span>
               <span className="num">{p.code?.value ?? ""}</span>
-              <span className="meta">since {p.onset_date?.slice(0, 4) ?? "?"}</span>
+              <span className="meta">since {p.onset_date?.slice(0, 4) ?? "?"} <button className="link small" onClick={(e) => { e.stopPropagation(); onCorrect(p.id); }}>Change</button></span>
             </div>
           ))}
           {resolved.map((p) => (
@@ -64,4 +64,3 @@ export function ChartTab({ data, onOpenProblem }: { data: ChartData; onOpenProbl
     </div>
   );
 }
-

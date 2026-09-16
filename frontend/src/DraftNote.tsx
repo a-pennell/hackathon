@@ -1,14 +1,21 @@
 import { useState } from "react";
+import { api } from "./api";
+import Amendments from "./Amendments";
 import { labelOf } from "./labels";
-import type { DocSection, Document, Problem, QueueBatch } from "./types";
+import type { DocSection, Document, Problem, QueueBatch, DraftEdit, DraftUpdates, DraftResolution } from "./types";
+
+type Section = DocSection & { collapsed?: boolean };
 
 type Props = {
   batch: QueueBatch;
   labels: Record<string, string>;
   problems: Problem[];
   busy: string | null;
-  onSign: (sections: { heading: string; text: string }[]) => void;
-  onRecompile: () => void;
+  onSign: (sections: DraftEdit[]) => void;
+  onCorrect: (id: string) => void;
+  texts: Record<string, string>;
+  onTexts: (texts: Record<string, string>) => void;
+  onDraftChanged: (batch: QueueBatch) => Promise<void>;
   onOpenProblem: (id: string) => void;
   onOpenNote: (id: string) => void;
   onHover: (ids: string[] | null) => void;
@@ -22,15 +29,43 @@ const dmy = (iso: string) => {
 /** The visit note as a composition: the transcript verbatim, then sections compiled from what the clinician did at this
  *  visit, every sentence citing the record. The clinician edits the prose and signs. Nothing here reaches the chart until
  *  the signature; the citations survive the edit. */
-export default function DraftNote({ batch, labels, problems, busy, onSign, onRecompile, onOpenProblem, onOpenNote, onHover }: Props) {
+export default function DraftNote({ batch, texts, onTexts, onDraftChanged, labels, problems, busy, onSign, onCorrect, onOpenProblem, onOpenNote, onHover }: Props) {
   const doc = (batch.proposed.documents ?? [])[0] as Document | undefined;
-  const [text, setText] = useState<Record<number, string>>({});
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [updates, setUpdates] = useState<DraftUpdates | null>(null);
+  const [resolutions, setResolutions] = useState<Record<string, DraftResolution>>({});
   if (!doc) return <div className="empty">No draft was compiled for this visit.</div>;
   const signed = doc.status === "accepted";
   const name = (id: string) => labelOf(labels, id);
-  const sections = doc.sections as DocSection[];
-  const valueOf = (i: number) => text[i] ?? sections[i].text;
-  const dirty = sections.some((s, i) => (text[i] ?? s.text) !== s.text);
+  const sections = doc.sections as Section[];
+  const keyOf = (s: DocSection) => s.key ?? `${s.source ?? "compiled"}:${s.problem_id ?? "visit"}:${s.problem_id ? s.heading.split(" · ")[0] : s.heading}`;
+  const valueOf = (i: number) => texts[keyOf(sections[i])] ?? sections[i].text;
+  const dirty = sections.some((s, i) => valueOf(i) !== s.text);
+  const edit = (s: DocSection, text: string) => { onTexts({ ...texts, [keyOf(s)]: text }); setNotice(""); };
+  const submitted = (): DraftEdit[] => sections.map((s, i) => ({ key: keyOf(s), heading: s.heading, text: valueOf(i) }));
+  const disabled = !!busy || working;
+  const pending = batch.updates_count ?? 0;
+  const unresolved = updates?.changes.some((c) => c.conflict && !resolutions[c.key]);
+  const operate = async (fn: () => Promise<void>) => {
+    setWorking(true); setError(""); setNotice("");
+    try { await fn(); } catch (e) { setError((e as Error).message); } finally { setWorking(false); }
+  };
+  const checkUpdates = () => operate(async () => {
+    const result = await api.draftUpdates(batch.patient_id, doc.encounter_id!, submitted());
+    setUpdates(result.changes.length ? result : null); setResolutions({});
+    if (!result.changes.length) setNotice("The draft is up to date with the chart.");
+  });
+  const save = () => operate(async () => {
+    const result = await api.saveDraft(batch.patient_id, doc.encounter_id!, submitted(), batch.draft_revision!);
+    onTexts({}); await onDraftChanged(result); setNotice("Draft saved.");
+  });
+  const incorporate = () => operate(async () => {
+    if (!updates) return;
+    const result = await api.incorporateDraft(batch.patient_id, doc.encounter_id!, submitted(), updates.revision, resolutions);
+    onTexts({}); setUpdates(null); setResolutions({}); await onDraftChanged(result); setNotice("Chart updates reviewed. Draft saved.");
+  });
   const events = new Set(doc.provenance.evidence ?? []).size;
 
   return (
@@ -48,23 +83,57 @@ export default function DraftNote({ batch, labels, problems, busy, onSign, onRec
             </p>
           </div>
           <div className="actions">
-            {!signed && <button className="btn ghost" disabled={!!busy} onClick={onRecompile} title="Throw this draft away and compile it again from the record">Recompile</button>}
-            {!signed && <button className="btn primary" disabled={!!busy} onClick={() => onSign(sections.map((s, i) => ({ heading: s.heading, text: valueOf(i) })))}>Sign the visit note{dirty ? " · with your edits" : ""}</button>}
+            {signed && <button className="btn" onClick={() => onCorrect(doc.id)}>Amend note</button>}
+            {!signed && <button className="btn ghost" disabled={disabled || !!updates} onClick={checkUpdates}>Check for updates</button>}
+            {!signed && <button className="btn" disabled={disabled || !dirty || !!updates} onClick={save}>Save draft</button>}
+            {!signed && <button className="btn primary" disabled={disabled || pending > 0 || !!updates} onClick={() => onSign(submitted())}>Sign the visit note{dirty ? " · with your edits" : ""}</button>}
           </div>
         </header>
+        <Amendments items={doc.amendments} />
+        {error && <div className="err" role="alert">{error}</div>}
+        {notice && <p className="draft-notice" role="status">{notice}</p>}
+        {!signed && pending > 0 && !updates && <div className="draft-update-banner" role="status">
+          <span><b>Updates available</b> · {pending} section{pending === 1 ? "" : "s"} changed in the chart</span>
+          <button className="btn" disabled={disabled} onClick={checkUpdates}>Review updates</button>
+        </div>}
+        {updates && <section className="draft-updates" aria-label="Review chart updates">
+          <h2>Review chart updates</h2>
+          {updates.changes.map((c) => <section key={c.key} className="draft-section-update">
+            <h3>{c.heading} <span className="tag soft">{c.kind}</span></h3>
+            {c.conflict && <><p className="draft-conflict">Your wording and the chart both changed.</p><h4>Your current text</h4><p className="draft-update-text">{c.current?.text || "Removed from the note"}</p></>}
+            <h4>Updated chart text</h4><p className="draft-update-text">{c.incoming?.text ?? "This section is no longer supported by the current chart."}</p>
+            {c.conflict && <>
+              <label className="draft-resolution">Include in the draft<select aria-label={`Resolve ${c.heading}`} value={resolutions[c.key]?.choice ?? ""} disabled={disabled} onChange={(e) => setResolutions((old) => ({ ...old, [c.key]: { choice: e.target.value as DraftResolution["choice"], text: c.current?.text ?? "" } }))}>
+                <option value="" disabled>Choose a resolution</option>
+                <option value="keep">Keep my text</option><option value="update">{c.incoming ? "Use updated chart text" : "Remove this section"}</option><option value="edit">Edit combined text</option>
+              </select></label>
+              {resolutions[c.key]?.choice === "edit" && <textarea className="dtext" aria-label={`Combined text for ${c.heading}`} rows={5} disabled={disabled} value={resolutions[c.key].text ?? ""} onChange={(e) => setResolutions((old) => ({ ...old, [c.key]: { choice: "edit", text: e.target.value } }))} />}
+            </>}
+          </section>)}
+          <div className="draft-update-actions"><button className="btn" disabled={disabled} onClick={() => setUpdates(null)}>Back to draft</button><button className="btn primary" disabled={disabled || unresolved} onClick={incorporate}>Apply reviewed updates</button></div>
+        </section>}
+        {!signed && dirty && <p className="note-edit-notice" role="status">These edits change the note only. Chart entries, medications, and orders remain unchanged.</p>}
 
-        {sections.map((s, i) => (
-          <section key={i} className={`dsec ${s.source ?? "compiled"} ${s.edited ? "edited" : ""}`} onMouseEnter={() => onHover(s.cites)} onMouseLeave={() => onHover(null)}>
+        {sections.map((s, i) => s.collapsed ? (
+          <details key={keyOf(s)} className={`dsec folded ${s.source ?? "compiled"}`}>
+            <summary><span className="eyebrow">{s.heading}</span> <span className="tag soft">folded · the sections below restate it from the record</span></summary>
+            <p className="dtext serif">{s.text}</p>
+            <div className="cites">{s.cites.map((id) => <button key={id} className="cite" title={id} onClick={() => onOpenNote(id)}>{name(id)}</button>)}</div>
+          </details>
+        ) : (
+          <section key={keyOf(s)} className={`dsec ${s.source ?? "compiled"} ${s.edited ? "edited" : ""}`} onMouseEnter={() => onHover(s.cites)} onMouseLeave={() => onHover(null)}>
             <div className="dsec-head">
               <h2>{s.heading}</h2>
               <span className={`tag ${s.source === "transcript" ? "soft" : "pencil"}`}>{s.source === "transcript" ? "transcript · verbatim" : s.edited ? "compiled · edited by you" : "compiled from the record"}</span>
               {s.problem_id && <button className="link small" onClick={() => onOpenProblem(s.problem_id!)}>open the card</button>}
+              {!signed && valueOf(i) && <button className="link small" disabled={disabled || !!updates} onClick={() => edit(s, "")}>Remove from note</button>}
+              {!signed && !valueOf(i) && s.text && <button className="link small" disabled={disabled || !!updates} onClick={() => edit(s, s.text)}>Restore text</button>}
             </div>
             {signed ? (
               <p className="dtext serif">{s.text}</p>
             ) : (
               <textarea className="dtext serif" value={valueOf(i)} rows={Math.max(2, Math.ceil(valueOf(i).length / 95) + (valueOf(i).match(/\n/g)?.length ?? 0))}
-                onChange={(e) => setText((t) => ({ ...t, [i]: e.target.value }))} aria-label={s.heading} />
+                disabled={disabled || !!updates} onChange={(e) => edit(s, e.target.value)} aria-label={s.heading} />
             )}
             <div className="cites">
               {s.cites.map((id) => (

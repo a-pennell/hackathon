@@ -8,11 +8,14 @@ import About from "./About";
 import { ChartTab } from "./ChartTab";
 import TimelineTab from "./TimelineTab";
 import DraftNote from "./DraftNote";
+import CorrectionDrawer from "./CorrectionDrawer";
+import Amendments from "./Amendments";
 import CareTab from "./CareTab";
 import { nextAction } from "./next";
 import { labelOf } from "./labels";
 import NotesTab from "./NotesTab";
 import { waitingIn } from "./next";
+import type { DraftEdit } from "./types";
 
 const LINK_WORD: Record<string, string> = { relevant_to: "bears on", evidence_for: "is evidence for", treats: "treats", suspected_cause: "is a suspected cause of", monitors: "monitors" };
 import type { Card as CardT, CareData, ChartData, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientRow, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry, TimelineData, VisitNoteRow } from "./types";
@@ -44,6 +47,14 @@ export default function App() {
   const [notesScope, setNotesScope] = useState<"patient" | "mine">("patient");
   const [draft, setDraft] = useState<QueueBatch | null>(null);
   const [draftEnc, setDraftEnc] = useState<string | null>(null);
+  const [draftTexts, setDraftTexts] = useState<Record<string, Record<string, string>>>(() => {
+    try { return JSON.parse(sessionStorage.getItem(`draft-texts:${PID}`) ?? "{}"); } catch { return {}; }
+  });
+  const editDraft = (eid: string, texts: Record<string, string>) => setDraftTexts((old) => {
+    const next = { ...old, [eid]: texts };
+    try { sessionStorage.setItem(`draft-texts:${PID}`, JSON.stringify(next)); } catch { /* State still retains edits during navigation. */ }
+    return next;
+  });
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +66,8 @@ export default function App() {
       return "replay";
     }
   });
-  const [toast, setToast] = useState<{ stem: string; ids: string[]; text: string } | null>(null);
+  const [toast, setToast] = useState<{ stem: string; ids: string[]; text: string; correction?: boolean; draftEncounter?: string } | null>(null);
+  const [correcting, setCorrecting] = useState<{ id?: string } | null>(null);
   const [reading, setReading] = useState<NoteFile | null>(null);
   const [readingDoc, setReadingDoc] = useState<Document | null>(null);
 
@@ -67,12 +79,20 @@ export default function App() {
     setQueueLabels(q.labels);
     setNotes(n);  // every patient's notes: the Notes tab and the idle call-to-action read across patients
     setPatients(ps);
-    setProblem((p) => p ?? o?.concerns[0]?.id ?? s.problems.find((x) => (x.monitored_codes?.length ?? 0) > 0)?.id ?? null);
+    setProblem((p) => p && s.problems.some((x) => x.id === p) ? p : o?.concerns[0]?.id ?? s.problems.find((x) => (x.monitored_codes?.length ?? 0) > 0)?.id ?? null);
   }, []);
 
   useEffect(() => {
     refresh().catch((e) => setError(String(e.message ?? e)));
   }, [refresh]);
+
+  const activeDraftEnc = draftEnc ?? queues.find((q) => q.stem === `visitnote_${overview?.here_for.encounter?.id}`)?.proposed.documents?.[0]?.encounter_id;
+  useEffect(() => {
+    if (!activeDraftEnc) return;
+    let live = true;
+    api.getDraft(PID, activeDraftEnc).then((b) => { if (live) { setDraft(b); setDraftEnc(activeDraftEnc); } }).catch((e) => live && setError(e.message));
+    return () => { live = false; };
+  }, [activeDraftEnc, queues]);
 
   useEffect(() => {
     if (!problem) return;
@@ -165,7 +185,7 @@ export default function App() {
         await refresh();
         const n = r.decided.length;
         const verb = body.reject?.length ? "Rejected" : "Signed";
-        if (n > 0) setToast({ stem, ids: r.decided, text: `${verb} ${n === 1 ? "1 item" : n + " items"}` });
+        if (n > 0) setToast({ stem, ids: r.decided, text: `${verb} ${n === 1 ? "1 item" : n + " items"}`, correction: !body.reject?.length });
       } catch (e) {
         fail(e);
       } finally {
@@ -225,15 +245,31 @@ export default function App() {
     setView("draft");
     window.scrollTo(0, 0);
   });
-  const signDraft = (sections: { heading: string; text: string }[]) => draftEnc && run("sign", async () => {
-    const r = await api.signDraft(PID, draftEnc, sections);
+  const signDraft = (sections: DraftEdit[]) => draftEnc && run("sign", async () => {
+    let r;
+    try { r = await api.signDraft(PID, draftEnc, sections, draft?.draft_revision); }
+    catch (e) { setDraft(await api.getDraft(PID, draftEnc)); throw e; }
+    editDraft(draftEnc, {});
     setDraft(await api.getDraft(PID, draftEnc));
     setToast({ stem: `visitnote_${draftEnc}`, ids: [], text: `Visit note signed by ${r.by}` });
   });
-  const addIntent = (problemId: string, body: import("./IntentForm").IntentBody) => run("intent", async () => {
-    const r = await api.addIntent(PID, problemId, body);
-    setToast({ stem: "intent", ids: [r.plan_id], text: `Signed and added: ${body.text}` });
-  });
+  const addIntent = async (problemId: string, body: import("./IntentForm").IntentBody) => {
+    setBusy("intent"); setError(null);
+    try {
+      const r = await api.addIntent(PID, problemId, { ...body, encounter_id: overview?.here_for.encounter?.id });
+      if (r.draft) { setDraft(r.draft); setDraftEnc(r.encounter_id); }
+      const destination = body.destination === "note" ? "Note: Plan" : body.destination === "both" ? "Treatment plan and Note: Plan" : "Treatment plan";
+      setToast({ stem: "intent", ids: r.plan_id ? [r.plan_id] : [], text: `${destination}: ${body.text}${r.draft?.updates_count ? " (pending draft review)" : ""}`, correction: !!r.plan_id, draftEncounter: r.draft ? r.encounter_id : undefined });
+      await refresh().catch(fail);
+    } catch (e) { fail(e); throw e; }
+    finally { setBusy(null); }
+  };
+  const signAssessment = async (problemId: string, text: string, kind: "assessment" | "representation", evidence: string[]) => {
+    setBusy("assessment"); setError(null);
+    try { const result = await api.signAssessment(PID, problemId, text, kind, evidence); await refresh(); return result; }
+    catch (e) { fail(e); throw e; }
+    finally { setBusy(null); }
+  };
   const openProblem = (id: string) => {
     setProblem(id);
     setTab("care");
@@ -260,7 +296,7 @@ export default function App() {
   const runCompose = (pid: string) => run("compose", () => api.compose(PID, pid, "referral", "nephrology", mode, window_));
   const runReset = () => {
     if (!window.confirm("Reset the demo? Unsigns everything and clears the review queue (saved model responses are kept).")) return;
-    return run("reset", async () => { await api.reset(PID); setSummary(null); setNoteId(null); goTab("overview"); });
+    return run("reset", async () => { await api.reset(PID); setSummary(null); setNoteId(null); setDraft(null); setDraftEnc(null); setDraftTexts({}); try { sessionStorage.removeItem(`draft-texts:${PID}`); } catch { /* Storage may be unavailable. */ } goTab("overview"); });
   };
 
   const next = useMemo(() => nextAction(overview, notes, queues, summary), [overview, notes, queues, summary]);
@@ -339,14 +375,22 @@ export default function App() {
 
       <main className="canvas">
         {error && <div className="err">{error}</div>}
+        {view !== "draft" && draft && (draft.updates_count ?? 0) > 0 && <div className="draft-update-banner" role="status">
+          <span><b>Visit note: updates available</b> · {draft.updates_count} section{draft.updates_count === 1 ? "" : "s"}</span>
+          <button className="btn small" onClick={() => draftEnc && openDraft(draftEnc, false)}>Open draft</button>
+        </div>}
+        <div className="chart-correction-tools">
+          {(summary.corrections?.length ?? 0) > 0 && <span className="meta">{summary.corrections!.length} signed correction{summary.corrections!.length === 1 ? "" : "s"}</span>}
+          <button className="btn small" onClick={() => setCorrecting({})}>Correct chart</button>
+        </div>
         {view === "overview" && (overview ? (
           <Overview data={overview} problems={summary.problems} highlight={highlight} onHover={hover} onOpen={openProblem} />
         ) : <div className="empty">Computing the overview…</div>)}
         {view === "timeline" && (tlTab ? <TimelineTab data={tlTab} highlight={highlight} onHover={hover} /> : <div className="empty">Loading the timeline…</div>)}
-        {view === "chart" && (chart ? <ChartTab data={chart} onOpenProblem={openProblem} /> : <div className="empty">Loading the chart…</div>)}
+        {view === "chart" && (chart ? <ChartTab data={chart} onOpenProblem={openProblem} onCorrect={(id) => setCorrecting({ id })} /> : <div className="empty">Loading the chart…</div>)}
         {view === "care" && (care ? <CareTab data={care} highlight={highlight} onHover={hover} onOpen={openProblem} onIntent={addIntent} busy={busy} /> : <div className="empty">Loading care…</div>)}
         {view === "notes" && <NotesTab notes={notes} pid={PID} patients={patients} scope={notesScope} onScope={setNotesScope} queues={queues} visitNotes={visitNotes} onOpenVisitNote={(eid) => openDraft(eid, false)} onOpen={openNote} onRead={(n) => { openNote(n.id); if (n.file && (mode === "live" || n.has_replay)) runExtract(n, mode); }} busy={busy} />}
-        {view === "draft" && (draft ? <DraftNote batch={draft} labels={labels} problems={summary.problems} busy={busy} onSign={signDraft} onRecompile={() => draftEnc && openDraft(draftEnc, true)} onOpenProblem={openProblem} onOpenNote={openChartNote} onHover={hover} /> : <div className="empty">Compiling the visit note…</div>)}
+        {view === "draft" && (draft && draftEnc ? <DraftNote key={draft.stem} batch={draft} texts={draftTexts[draftEnc] ?? {}} onTexts={(texts) => editDraft(draftEnc, texts)} onDraftChanged={async (b) => { setDraft(b); await refresh(); }} labels={labels} problems={summary.problems} busy={busy} onSign={signDraft} onOpenProblem={openProblem} onOpenNote={openChartNote} onHover={hover} onCorrect={(id) => setCorrecting({ id })} /> : <div className="empty">Compiling the visit note…</div>)}
         {view === "problem" && (
           <>
             <div className="sheet">
@@ -371,6 +415,8 @@ export default function App() {
                   windows={WINDOWS}
                   actions={{ reason: () => runReason(selected.id), orders: () => runOrders(selected.id), compose: () => runCompose(selected.id), readNote: () => overview?.here_for.note && openNote(overview.here_for.note.id) }}
                   onIntent={(b) => addIntent(selected.id, b)}
+                  onAssessment={(text, kind, evidence) => signAssessment(selected.id, text, kind, evidence)}
+                  onCorrect={(id) => setCorrecting({ id })}
                   trail={trail}
                   coding={coding}
                   record={problemRecord}
@@ -392,6 +438,7 @@ export default function App() {
             onReview={review}
             onRead={(m) => runExtract(openNoteFile, m)}
             onSign={signNote}
+            onCorrect={(id) => setCorrecting({ id })}
             onOpenProblem={openProblem}
             record={record}
             busy={busy}
@@ -405,10 +452,20 @@ export default function App() {
       </main>
 
       {about && <About onClose={() => setAbout(false)} />}
+      {correcting && <CorrectionDrawer pid={PID} initialId={correcting.id} onClose={() => setCorrecting(null)} onSaved={async () => {
+        await refresh();
+        if (draftEnc) setDraft(await api.getDraft(PID, draftEnc));
+        if (reading) setReading(await api.note(PID, reading.id));
+        if (readingDoc) {
+          const current = await api.patient(PID);
+          setReadingDoc(current.documents.find((d) => d.id === readingDoc.id) ?? null);
+        }
+      }} />}
       {toast && (
         <div className="toast" role="status">
           <span>{toast.text}</span>
-          {toast.ids.length > 0 && <button onClick={undo}>Undo</button>}
+          {toast.draftEncounter && <button onClick={() => { openDraft(toast.draftEncounter!, false); setToast(null); }}>Open draft</button>}
+          {toast.ids.length > 0 && <button onClick={toast.correction ? () => { setCorrecting({ id: toast.ids[0] }); setToast(null); } : undo}>{toast.correction ? "Correct" : "Undo"}</button>}
           <span className="bar" />
         </div>
       )}
@@ -420,6 +477,7 @@ export default function App() {
               {readingDoc.kind} to {readingDoc.audience} · {readingDoc.status === "accepted" ? "signed" : "proposed, unsigned"} · {readingDoc.provenance.model} · {readingDoc.created_at.slice(0, 16).replace("T", " ")}
             </div>
             <div className="letter">
+              <Amendments items={readingDoc.amendments} />
               <p>Re: {pt.name}, DOB {pt.dob} · {summary.problems.find((p) => p.id === readingDoc.problem_id)?.name}</p>
               {readingDoc.sections.map((s, i) => (
                 <div key={i}>
@@ -449,6 +507,7 @@ export default function App() {
             <div className="row">
               <span className="spacer" />
               <button className="btn ghost" onClick={() => setReadingDoc(null)}>Close</button>
+              {readingDoc.status === "accepted" && <button className="btn" onClick={() => setCorrecting({ id: readingDoc.id })}>Amend note</button>}
               {readingDoc.status === "proposed" && readingDoc.queue && (
                 <button className="btn primary" onClick={() => { const q = readingDoc.queue!; setReadingDoc(null); review(q, { accept: [readingDoc.id] }); }}>
                   Sign referral
@@ -464,9 +523,11 @@ export default function App() {
             <h3>Note {reading.id.replace("note_", "")} · {reading.author}</h3>
             <div className="meta">{reading.time.slice(0, 16).replace("T", " ")} · {reading.file ?? "chart note (imported)"}</div>
             <pre>{reading.text.trim()}</pre>
+            <Amendments items={reading.amendments} />
             <div className="row">
               <span className="spacer" />
               <button className="btn ghost" onClick={() => setReading(null)}>Close</button>
+              {(reading.status === "signed" || reading.review) && <button className="btn" onClick={() => setCorrecting({ id: reading.id })}>Amend note</button>}
               {reading.file && <button className="btn" onClick={() => { setReading(null); openNote(reading.id); }}>Open the note</button>}
             </div>
           </div>

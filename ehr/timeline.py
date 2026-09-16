@@ -166,6 +166,9 @@ def patient_timeline(patient: dict, *, proposed_dir: Path = PROPOSED_DIR, today:
         add("reasoning", at, "cause", f"{names.get(l['from'], l['from'])} is a suspected cause of {names.get(l['to'], l['to'])}",
             detail=_source(l, notes), by=(l.get("review") or {}).get("by"), ids=[l["id"], l["from"], l["to"]], tag="signed" if l.get("status") == "accepted" else l.get("status"))
     for ev in record_events(patient, proposed_dir):
+        if ev["kind"] in ("chart.corrected", "note.amended"):
+            add("documents" if ev["kind"] == "note.amended" else "changes", ev["at"], ev["kind"], ev["text"],
+                detail=ev.get("quote") or "", by=ev.get("by"), ids=ev.get("ids") or [], tag="signed correction")
         if ev["kind"] == "proposal.rejected":
             add("reasoning", ev["at"], "rejected", ev["text"], detail=ev.get("quote") or "", by=ev.get("by"), ids=ev.get("ids") or [], tag="rejected")
 

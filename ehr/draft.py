@@ -53,6 +53,26 @@ def _first_sentence(text: str) -> str:
     return head + "."
 
 
+SHORT = {"Systolic blood pressure": "SBP", "Diastolic blood pressure": "DBP", "Hemoglobin A1c": "A1c", "Urine albumin/creatinine ratio": "urine ACR",
+         "Body weight": "weight", "Heart rate": "HR", "Glucose": "glucose", "Potassium": "potassium", "Creatinine (whole blood)": "creatinine", "Creatinine": "creatinine"}
+
+
+def _measure_phrases(obs: list[dict], dated: bool = False) -> list[str]:
+    """Results as a clinician writes them: blood pressures paired ('BP 154/94'), names shortened, units kept."""
+    out, used = [], set()
+    sbp = [o for o in obs if o["code"]["value"] == "8480-6"]
+    dbp = [o for o in obs if o["code"]["value"] == "8462-4"]
+    for s_, d_ in zip(sbp, dbp):
+        out.append(f"BP {_nice(s_['value'])}/{_nice(d_['value'])}"); used |= {s_["id"], d_["id"]}
+    for o in obs:
+        if o["id"] in used:
+            continue
+        name = SHORT.get(o["name"], o["name"])
+        unit = f" {o['unit']}" if o.get("unit") and o["unit"] not in ("mm[Hg]",) else ""
+        out.append(f"{name} {_nice(o['value'])}{unit}")
+    return out
+
+
 def _in_encounter(x: dict, enc_id: str, enc_day: str, note_id: str | None) -> bool:
     """An item belongs to the visit if its signature says so, or (older stamps) if it came from the visit's note."""
     r = x.get("review") or {}
@@ -60,6 +80,17 @@ def _in_encounter(x: dict, enc_id: str, enc_day: str, note_id: str | None) -> bo
         return r["encounter_id"] == enc_id
     prov = x.get("provenance") or {}
     return bool(note_id) and prov.get("note_id") == note_id
+
+
+def _course_events(name: str, segs: list[dict], day: str) -> list[str]:
+    events = []
+    for i, seg in enumerate(segs):
+        prev = segs[i - 1] if i else None
+        if seg.get("start") == day:
+            events.append(f"{name} {prev.get('dose') or '?'} → {seg.get('dose') or '?'}" if prev and prev.get("end") == day else f"{name} {seg.get('dose') or ''} started".replace("  ", " "))
+        if seg.get("end") == day and not (i + 1 < len(segs) and segs[i + 1].get("start") == day):
+            events.append(f"{name} {seg.get('dose') or ''} stopped".replace("  ", " "))
+    return events
 
 
 def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSED_DIR, today: date | None = None) -> dict:
@@ -84,9 +115,18 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
             sections.append({"heading": heading, "text": text, "cites": list(dict.fromkeys(c for c in cites if c)), "source": source,
                              **({"problem_id": problem_id} if problem_id else {})})
 
-    # 1. Subjective: the transcript, verbatim.
+    # 1. The transcript, verbatim: history and exam as the first section; the dictated assessment and plan folded,
+    # since the sections compiled from the record restate them and a provider should not read their A/P twice.
     if note:
-        add("Subjective", note["text"], [note["id"]], "transcript")
+        text = note["text"]
+        m = re.search(r"^\s*(A/P|A&P|Assessment(?: and Plan| & Plan)?|A)\s*:", text, re.M | re.I)
+        if m:
+            add("Subjective", text[: m.start()], [note["id"]], "transcript")
+            sections[-1]["heading"] = "History and exam, as dictated"
+            add("Assessment and plan, as dictated", text[m.start():], [note["id"]], "transcript")
+            sections[-1]["collapsed"] = True
+        else:
+            add("As dictated", text, [note["id"]], "transcript")
 
     # 2. Objective: results recorded at the visit, and results reviewed at it.
     recorded = [o for o in _accepted(patient["observations"]) if o["effective_time"][:10] == enc_day]
@@ -94,9 +134,9 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
     reviewed = [o for o in _accepted(patient["observations"]) if o["id"] in reviewed_ids and o["effective_time"][:10] != enc_day]
     parts = []
     if recorded:
-        parts.append("Recorded at this visit: " + "; ".join(f"{o['name']} {_nice(o['value'])}{(' ' + o['unit']) if o.get('unit') else ''}" for o in recorded) + ".")
+        parts.append("At this visit: " + ", ".join(_measure_phrases(recorded)) + ".")
     if reviewed:
-        parts.append("Reviewed: " + "; ".join(f"{o['name']} {_nice(o['value'])}{(' ' + o['unit']) if o.get('unit') else ''} ({_dmy(o['effective_time'])})" for o in reviewed) + ".")
+        parts.append("Reviewed: " + ", ".join(f"{p} ({_dmy(o['effective_time'])})" for p, o in zip(_measure_phrases(reviewed, dated=True), reviewed)) + ".")
     add("Objective", " ".join(parts), [o["id"] for o in recorded + reviewed], "compiled")
 
     # 3. Problems addressed: anything the visit's signatures touched.
@@ -126,21 +166,27 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
         if i.get("status") == "accepted" and mine(i):
             touch(i["problem_id"]); touched.get(i["problem_id"], {}).setdefault("insights", []).append(i)
     for pl in patient.get("plans", []):
-        if mine(pl):
+        if mine(pl) and pl.get("destination") != "treatment_plan":
             touch(pl["problem_id"]); touched.get(pl["problem_id"], {}).setdefault("plans", []).append(pl)
+    for item in patient.get("note_plan_items", []):
+        if item.get("encounter_id") == encounter_id:
+            touch(item["problem_id"]); touched.get(item["problem_id"], {}).setdefault("plans", []).append(item)
+    treatment_only = [pl for pl in patient.get("plans", []) if pl.get("destination") == "treatment_plan"]
+    treatment_only_ids = {pl["id"] for pl in treatment_only}
     for o in patient.get("orders", []):
-        if mine(o):
+        if mine(o) and o.get("destination") != "treatment_plan" and (o.get("provenance") or {}).get("from_plan") not in treatment_only_ids:
             touch(o["problem_id"]); touched.get(o["problem_id"], {}).setdefault("orders", []).append(o)
     # courses changed on the visit day, attached to the problems they are linked to
     for m in _accepted(patient["medications"]):
-        events = []
-        segs = m.get("segments") or []
-        for i, seg in enumerate(segs):
-            prev = segs[i - 1] if i else None
-            if seg.get("start") == enc_day:
-                events.append(f"{m['name']} {prev.get('dose') or '?'} → {seg.get('dose') or '?'}" if prev and prev.get("end") == enc_day else f"{m['name']} {seg.get('dose') or ''} started".replace("  ", " "))
-            if seg.get("end") == enc_day and not (i + 1 < len(segs) and segs[i + 1].get("start") == enc_day):
-                events.append(f"{m['name']} {seg.get('dose') or ''} stopped".replace("  ", " "))
+        events = _course_events(m["name"], m.get("segments") or [], enc_day)
+        # Exclude treatment-only effects without hiding unrelated changes to the same course.
+        excluded = set()
+        for pl in treatment_only:
+            effect = pl.get("medication_effect") or {}
+            if effect.get("med_id") == m["id"] and mine(pl):
+                excluded.update(set(_course_events(m["name"], effect["after"], enc_day))
+                                - set(_course_events(m["name"], effect["before"], enc_day)))
+        events = [event for event in events if event not in excluded]
         if not events:
             continue
         linked = {l["to"] for l in _accepted(patient["links"]) if l["from"] == m["id"] and l["type"] in ("treats", "suspected_cause")}
@@ -179,8 +225,16 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
             lines.append(f"{names.get(l['from'], l['from'])} was proposed as a cause and rejected:{why}".rstrip(":") + ("" if why else "."))
             cites.append(l["id"])
         for i in t["insights"]:
+            if i.get("kind") in ("assessment", "representation"):
+                continue
             lines.append(_first_sentence(i["statement"]))
             cites += [i["id"]] + list(i.get("evidence") or [])
+        authored = [i for i in t["insights"] if i.get("kind") in ("assessment", "representation")]
+        if authored:
+            # Explicit clinician assessment takes precedence over a generated representation.
+            assessment = max(enumerate(authored), key=lambda pair: (pair[1].get("kind") == "assessment", pair[1].get("review", {}).get("at", ""), pair[0]))[1]
+            lines = [assessment["statement"]]
+            cites = [pid, assessment["id"], *assessment.get("evidence", [])]
         if lines:
             add(f"Assessment · {pname}", " ".join(lines), cites, "compiled", pid)
         plan_lines, pcites = [], [pid]
@@ -190,12 +244,20 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
                 pcites.append(mid); continue
             plan_lines.append(e + "."); pcites.append(mid)
         for pl in t["plans"]:
-            plan_lines.append(f"{pl['kind'].replace('_', ' ').capitalize()}: {pl['text']}."); pcites.append(pl["id"])
+            line = pl["text"].strip().rstrip(".")
+            plan_lines.append(line[:1].upper() + line[1:] + "."); pcites.append(pl["id"])
+        ordered = []
         for o in t["orders"]:
+            pcites.append(o["id"])
             if (o.get("provenance") or {}).get("from_plan"):
-                pcites.append(o["id"]); continue  # the plan item already says it
-            plan_lines.append(f"Order: {o['name']}" + (f", {o['detail']}" if o.get("detail") else "") + "."); pcites.append(o["id"])
+                continue  # the plan item already says it
+            ordered.append(o["name"] + (f" ({o['detail'].rstrip('.')})" if o.get("detail") else ""))
+        if ordered:
+            plan_lines.append("Ordered: " + "; ".join(ordered) + ".")
+        executed = {(o.get("provenance") or {}).get("from_insight") for o in t["orders"]}
         for i in t["insights"]:
+            if i["id"] in executed:
+                continue  # the order drafted from this insight already says it
             if i.get("suggested_action"):
                 a = i["suggested_action"].removeprefix("Consider ").rstrip(".")
                 plan_lines.append(a[:1].upper() + a[1:] + " (signed insight)."); pcites.append(i["id"])
@@ -221,35 +283,41 @@ def stem_for(encounter_id: str) -> str:
 
 
 def run_draft(patient_id: str, encounter_id: str, *, data_dir: Path = DATA_DIR) -> dict:
-    """Compile and queue the draft. Re-running replaces an unsigned draft; a signed one is left alone."""
+    """Create a draft once. Existing drafts expose updates without replacing their text."""
     data_dir = Path(data_dir)
     proposed_dir = data_dir.parent / "proposed"
     patient = load_patient(patient_id, data_dir)
     qp = proposed_dir / patient_id / f"{stem_for(encounter_id)}.json"
     if qp.exists():
-        old = json.loads(qp.read_text())
-        if any(d.get("status") == "accepted" for d in old["proposed"].get("documents", [])):
-            old["stem"] = qp.stem
-            return old
+        from ehr.draft_updates import read_draft
+        return read_draft(patient_id, encounter_id, data_dir)
     batch = draft_note(patient, encounter_id, proposed_dir=proposed_dir)
+    from ehr.draft_updates import keyed, read_draft
+    batch["proposed"]["documents"][0]["sections"] = keyed(batch["proposed"]["documents"][0]["sections"])
+    batch["source_sections"] = batch["proposed"]["documents"][0]["sections"]
     qp.parent.mkdir(parents=True, exist_ok=True)
     qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
-    batch["stem"] = qp.stem
-    return batch
+    return read_draft(patient_id, encounter_id, data_dir)
 
 
 def sign_draft(patient_id: str, encounter_id: str, sections: list[dict] | None, *, by: str = DEFAULT_REVIEWER,
-               data_dir: Path = DATA_DIR) -> dict:
+               data_dir: Path = DATA_DIR, expected_revision: str | None = None) -> dict:
     """Take the clinician's edited text, keep every citation, and sign the note into the chart's documents."""
     data_dir = Path(data_dir)
     qp, batch = load_queue(patient_id, stem_for(encounter_id), data_dir.parent / "proposed")
     doc = batch["proposed"]["documents"][0]
-    if sections:
-        for i, sec in enumerate(sections):
-            if i < len(doc["sections"]) and isinstance(sec.get("text"), str):
-                if sec["text"].strip() != doc["sections"][i]["text"].strip():
-                    doc["sections"][i]["text"] = sec["text"].strip()
-                    doc["sections"][i]["edited"] = True
+    if doc.get("status") != "proposed":
+        raise ValueError("A signed visit note cannot be overwritten. Add an amendment instead.")
+    from ehr.draft_updates import edited_sections, fingerprint, preview_updates
+    if expected_revision is not None and expected_revision != fingerprint(batch):
+        raise ValueError("This draft changed elsewhere. Reopen it before signing.")
+    if preview_updates(patient_id, encounter_id, sections, data_dir)["changes"]:
+        raise ValueError("Updates are available from the chart. Review and incorporate them before signing.")
+    doc["sections"] = edited_sections(doc["sections"], sections)
+    for section in doc["sections"]:
+        if not section["text"].strip():
+            section["cites"] = []
+    doc["provenance"]["evidence"] = list(dict.fromkeys(c for s in doc["sections"] for c in s["cites"]))
     patient = load_patient(patient_id, data_dir)
     done = accept_item(patient, batch, doc["id"], review=review_record("accepted", by, encounter_id=encounter_id))
     save_patient(patient, data_dir)

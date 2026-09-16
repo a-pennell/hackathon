@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 
@@ -77,6 +78,13 @@ def accept_item(patient: dict, batch: dict, item_id: str, _seen: set | None = No
     kind, it = _find(batch, item_id)
     if it is None:
         raise KeyError(f"{item_id} is not in this queue")
+    if any(x["item"]["id"] == item_id for x in patient.get("archived_items", [])):
+        raise ValueError("This entry was corrected and cannot be signed again.")
+    from ehr.corrections import refs
+    if refs(it) & {x["item"]["id"] for x in patient.get("archived_items", [])}:
+        raise ValueError("This proposal refers to a corrected entry. Generate a new proposal from the current chart.")
+    if it["status"] not in ("proposed", "accepted", "rejected"):
+        raise ValueError("This entry is no longer available for signing.")
     if it["status"] == "rejected":
         raise ValueError(f"{item_id} was rejected; un-reject it first")
     done = []
@@ -106,9 +114,11 @@ def accept_item(patient: dict, batch: dict, item_id: str, _seen: set | None = No
         target.append(chart_item)
     done.append(f"{kind[:-1]} {item_id}")
     if kind == "orders" and it.get("kind") == "medication_change" and it.get("med_id"):
-        done.append(accept_medication_change(patient, {"med_id": it["med_id"], "change": it["change"],
+        change = {"med_id": it["med_id"], "change": it["change"],
                                                        "effective": chart_item["ordered_at"][:10], "dose": it.get("dose"),
-                                                       "route": None, "frequency": None, "status": "proposed"}, chart_item["review"]))
+                                                       "route": None, "frequency": None, "status": "proposed"}
+        done.append(accept_medication_change(patient, change, chart_item["review"]))
+        it["medication_effect"] = chart_item["medication_effect"] = change["medication_effect"]
     return done
 
 
@@ -116,6 +126,8 @@ def reject_item(batch: dict, item_id: str, review: dict | None = None) -> str:
     kind, it = _find(batch, item_id)
     if it is None:
         raise KeyError(f"{item_id} is not in this queue")
+    if it["status"] != "proposed":
+        raise ValueError("Only a pending proposal can be rejected. Correct signed entries instead.")
     it["status"] = "rejected"
     it["review"] = review or review_record("rejected")
     return f"{kind[:-1]} {item_id} rejected"
@@ -126,14 +138,17 @@ def accept_medication_change(patient: dict, change: dict, review: dict | None = 
     med = next(m for m in patient["medications"] if m["id"] == change["med_id"])
     last = med["segments"][-1]
     eff = change["effective"]
+    change["medication_effect"] = {"med_id": med["id"], "before": deepcopy(med["segments"])}
     change["review"] = review or review_record("accepted")
     if change["change"] == "stop":
         change["status"] = "accepted"
         if last.get("end") and last["end"] <= eff:
             # The course already ended (a note recorded the stop); an order to stop it confirms
             # that date rather than moving it to the day the order was signed.
+            change["medication_effect"]["after"] = deepcopy(med["segments"])
             return f"{med['id']} already stopped {last['end']}; order confirms"
         last["end"] = eff
+        change["medication_effect"]["after"] = deepcopy(med["segments"])
         return f"{med['id']} stopped {eff}"
     last["end"] = eff
     med["segments"].append({"start": eff, "end": None,
@@ -141,6 +156,7 @@ def accept_medication_change(patient: dict, change: dict, review: dict | None = 
                             "route": change.get("route") or last["route"],
                             "frequency": change.get("frequency") or last["frequency"]})
     change["status"] = "accepted"
+    change["medication_effect"]["after"] = deepcopy(med["segments"])
     return f"{med['id']} new segment from {eff}"
 
 
@@ -222,7 +238,7 @@ def ledger_for_problem(patient: dict, problem_id: str, proposed_dir: Path = PROP
                 out.append({"id": it["id"], "kind": k[:-1], "what": _summary_of(k, it), "queue": b["stem"],
                             "source": (it.get("provenance") or {}).get("source"), "confidence": (it.get("provenance") or {}).get("confidence"),
                             "quote": (it.get("provenance") or {}).get("quote"),
-                            "decision": rv["decision"] if rv else "pending", "reason_code": rv.get("reason_code") if rv else None,
+                            "decision": "corrected" if it.get("correction_id") else rv["decision"] if rv else "pending", "reason_code": rv.get("reason_code") if rv else None,
                             "reason": rv.get("reason") if rv else None, "by": rv["by"] if rv else None,
                             "at": rv["at"] if rv else (b.get("extracted_at") or b.get("reasoned_at") or b.get("composed_at") or "")})
         for ch in b.get("medication_changes", []):
@@ -231,7 +247,7 @@ def ledger_for_problem(patient: dict, problem_id: str, proposed_dir: Path = PROP
                 out.append({"id": ch["med_id"], "kind": "medication_change", "what": f"{ch['change'].replace('_', ' ')} {ch['med_id']} effective {ch['effective']}",
                             "queue": b["stem"], "source": ch["provenance"].get("source"), "confidence": ch["provenance"].get("confidence"),
                             "quote": ch["provenance"].get("quote"),
-                            "decision": rv["decision"] if rv else "pending", "reason_code": rv.get("reason_code") if rv else None,
+                            "decision": "corrected" if ch.get("correction_id") else rv["decision"] if rv else "pending", "reason_code": rv.get("reason_code") if rv else None,
                             "reason": rv.get("reason") if rv else None, "by": rv["by"] if rv else None,
                             "at": rv["at"] if rv else (b.get("extracted_at") or "")})
     out.sort(key=lambda x: x["at"] or "")
@@ -255,34 +271,22 @@ def list_queues(patient_id: str, proposed_dir: Path = PROPOSED_DIR) -> list[dict
 
 
 def undo_review(patient_id: str, stem: str, ids: list[str], data_dir: Path = DATA_DIR) -> list[str]:
-    """Reverse a signature or rejection: the item returns to proposed and its chart copy is removed.
-    Links that were auto-signed with an endpoint are not reversed unless named. A medication-change
-    order's course edit is not reversed (the order itself is)."""
+    """Return rejected proposals to review. Signed entries require a correction."""
     data_dir = Path(data_dir)
     qp, batch = load_queue(patient_id, stem, data_dir.parent / "proposed")
-    patient = load_patient(patient_id, data_dir)
     done = []
+    for iid in ids:
+        _, entry = _find(batch, iid)
+        if entry and entry["status"] != "rejected":
+            raise ValueError("Signed entries require a recorded correction. Open Correct chart.")
     for iid in ids:
         kind, it = _find(batch, iid)
         if it is None or it["status"] == "proposed":
             continue
-        was = it["status"]
         it["status"] = "proposed"
         it.pop("review", None)
-        if was == "accepted":
-            lst = patient.get(kind, [])
-            patient[kind] = [x for x in lst if x["id"] != iid]
-            # a link on the chart that now points at an un-signed item is dangling: pull it back too
-            if kind != "links":
-                for l in list(patient.get("links", [])):
-                    if l["from"] == iid or l["to"] == iid:
-                        patient["links"].remove(l)
-                        k2, l2 = _find(batch, l["id"])
-                        if l2:
-                            l2["status"] = "proposed"; l2.pop("review", None); done.append(f"link {l['id']} unsigned")
-        done.append(f"{kind[:-1]} {iid} {'unsigned' if was == 'accepted' else 'un-rejected'}")
+        done.append(f"{kind[:-1]} {iid} un-rejected")
     if done:
-        save_patient(patient, data_dir)
         qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
     return done
 
@@ -380,6 +384,10 @@ def sign_note(patient_id: str, note_id: str, *, by: str = DEFAULT_REVIEWER, data
     ("received" | "signed") and a `review` record. Items the clinician rejected before signing
     stay rejected; links into rejected items are skipped, as in accept_all."""
     data_dir = Path(data_dir)
+    existing = load_patient(patient_id, data_dir)
+    signed = next((n for n in existing.get("notes", []) if n["id"] == note_id and n.get("status") == "signed"), None)
+    if signed:
+        raise ValueError("This note is already signed. Add an amendment instead.")
     done = apply_review(patient_id, note_id, accept_all=True, accept_changes=True, by=by, data_dir=data_dir)
     patient = load_patient(patient_id, data_dir)
     note = next((n for n in patient.get("notes", []) if n["id"] == note_id), None)

@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from copy import deepcopy
 from pathlib import Path
 
 from ehr.extract import PROPOSED_DIR
@@ -45,6 +46,9 @@ def _names(patient: dict, queues: list[dict]) -> dict[str, str]:
 
 def record_events(patient: dict, proposed_dir: Path = PROPOSED_DIR, *, note_id: str | None = None, since: str | None = None,
                   problem_id: str | None = None) -> list[dict]:
+    patient = deepcopy(patient)
+    for archived in patient.get("archived_items", []):
+        patient.setdefault(archived["kind"], []).append(archived["item"])
     queues = list_queues(patient["patient"]["id"], proposed_dir)
     names = _names(patient, queues)
     ev: list[dict] = []
@@ -123,6 +127,12 @@ def record_events(patient: dict, proposed_dir: Path = PROPOSED_DIR, *, note_id: 
                     reason += f": “{rv['reason']}”" if rv.get("reason") else ""
                     add("proposal.rejected", rv["at"], it["id"], f"Rejected {k[:-1]}: {what}{reason}", by=rv["by"],
                         source=(it.get("provenance") or {}).get("source"), note=b.get("note_id"))
+
+    for c in patient.get("corrections", []):
+        add("note.amended" if c["action"] == "amend" else "chart.corrected", c["at"], c["item_id"],
+            f"{c['action'].replace('_', ' ').capitalize()}: {c['label']} - {c['reason']}", by=c["by"], source="clinician",
+            note=c.get("note_id"), quote=c.get("text") or None,
+            ids=[c.get("problem_id"), *[r["id"] for r in c.get("related", [])]])
 
     if problem_id:
         focus = focus_ids(patient, problem_id)

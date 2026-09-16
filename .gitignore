@@ -12,3 +12,8 @@ frontend/node_modules/
 
 # server-start snapshot used by the demo reset endpoint
 data/patients/.pristine/
+
+# audit artifacts from browser sessions
+.playwright-mcp/
+audit-*.png
+audit-*.yml

@@ -29,7 +29,7 @@ def test_visit_note_compiles_from_the_encounter_and_signs_into_documents(tmp_pat
     batch = run_draft("pt_002", "enc_c002", data_dir=d)
     doc = batch["proposed"]["documents"][0]
     heads = [s["heading"] for s in doc["sections"]]
-    assert heads[0] == "Subjective" and doc["sections"][0]["source"] == "transcript" and doc["sections"][0]["cites"] == ["note_demo_102"]
+    assert heads[0] == "History and exam, as dictated" and doc["sections"][0]["source"] == "transcript" and doc["sections"][0]["cites"] == ["note_demo_102"]
     assert "Assessment · Essential hypertension" in heads and "Plan · Essential hypertension" in heads
     htn = next(s for s in doc["sections"] if s["heading"] == "Assessment · Essential hypertension")
     assert "suspected cause" in htn["text"] and "lnk_demo_102_18" in htn["cites"]
@@ -49,6 +49,10 @@ def test_visit_note_compiles_from_the_encounter_and_signs_into_documents(tmp_pat
     assert signed["status"] == "accepted" and signed["review"]["encounter_id"] == "enc_c002"
     # a signed draft is not recompiled over
     assert run_draft("pt_002", "enc_c002", data_dir=d)["proposed"]["documents"][0]["status"] == "accepted"
+    import pytest
+    with pytest.raises(ValueError, match="amendment"):
+        sign_draft("pt_002", "enc_c002", [{"heading": "Changed", "text": "Overwrite"}], data_dir=d)
+    assert next(x for x in json.loads((d / "pt_002.json").read_text())["documents"] if x["id"] == out["document_id"])["sections"] == signed["sections"]
 
 
 def test_clinician_intent_is_signed_at_once_and_reaches_the_visit_note(tmp_path):

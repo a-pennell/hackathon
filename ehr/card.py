@@ -364,7 +364,7 @@ def _plan(patient: dict, problem: dict, proposed_dir: Path) -> list[dict]:
             src = pl["provenance"].get("source")
             detail = "your decision, this visit" if src == "clinician" else f"from note {pl['provenance'].get('note_id', '').replace('note_', '')}"
             out.append({"id": pl["id"], "plan_kind": pl["kind"], "text": pl["text"], "detail": detail,
-                        "status": "signed", "ids": [pl["id"]] + ([pl["provenance"]["note_id"]] if pl["provenance"].get("note_id") else [])})
+                        "destination": pl.get("destination"), "status": "signed", "ids": [pl["id"]] + ([pl["provenance"]["note_id"]] if pl["provenance"].get("note_id") else [])})
     for e in ledger_for_problem(patient, problem["id"], proposed_dir):
         if e["kind"] == "medication_change" and e["decision"] == "accepted":
             med = next((m for m in patient["medications"] if m["id"] == e["id"]), None)

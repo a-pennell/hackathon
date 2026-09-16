@@ -6,7 +6,7 @@ type Props = { data: CareData; highlight: Set<string>; onHover: (ids: string[] |
 
 type Kind = "all" | "plans" | "orders" | "referrals" | "follow_ups" | "measures";
 const KINDS: { key: Kind; label: string }[] = [
-  { key: "all", label: "All" }, { key: "plans", label: "Plans" }, { key: "orders", label: "Orders & requests" },
+  { key: "all", label: "All" }, { key: "plans", label: "Treatment plans" }, { key: "orders", label: "Orders & requests" },
   { key: "referrals", label: "Referrals" }, { key: "follow_ups", label: "Follow-ups" }, { key: "measures", label: "Measures" },
 ];
 const dmy = (iso: string) => {
@@ -63,11 +63,11 @@ export default function CareTab({ data, highlight, onHover, onOpen, onIntent, bu
               {c.one_liner && <p className="one-liner serif">{c.one_liner}</p>}
               <div className="ccard-body">
                 <div className="module">
-                  <p className="mod-label">Plan <span className="cnt">{c.plan.length}</span></p>
+                  <p className="mod-label">Treatment plan <span className="cnt">{c.plan.length}</span></p>
                   {c.plan.length === 0 && <p className="quiet">Nothing signed yet.</p>}
                   {c.plan.slice(0, 5).map((p) => (
                     <div key={p.id} className={`planrow ${hi([p.id])}`} onMouseEnter={(e) => { e.stopPropagation(); onHover([p.id]); }}>
-                      <span className="k">{p.kind.replace("_", " ")}</span><span>{p.text}</span><span className="meta">{p.source}</span>
+                      <span className="k">{p.kind.replace("_", " ")}</span><span>{p.text}{p.destination && <small className="intent-route">{p.destination === "both" ? "+ Note: Plan" : "Treatment only"}</small>}</span><span className="meta">{p.source}</span>
                     </div>
                   ))}
                   {c.plan.length > 5 && <p className="meta">+{c.plan.length - 5} more in the workspace</p>}

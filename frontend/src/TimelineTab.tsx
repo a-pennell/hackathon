@@ -44,7 +44,7 @@ export default function TimelineTab({ data, highlight, onHover }: Props) {
             return (
               <div key={i} className={`tl-row ${head ? "day" : ""} ${x.ids.some((id) => highlight.has(id)) ? "hi" : ""}`} onMouseEnter={() => onHover(x.ids)} onMouseLeave={() => onHover(null)}>
                 <span className="when">{head ? dmy(x.day) : ""}</span>
-                <span className={`tag ${LANE_CLASS[x.lane]}`}>{x.kind}</span>
+                <span className={`tag ${LANE_CLASS[x.lane]}`}>{x.kind === "chart.corrected" ? "correction" : x.kind === "note.amended" ? "amendment" : x.kind}</span>
                 <span className="grow">
                   {x.text}
                   {x.detail && <span className={`detail ${x.lane === "results" ? "mono" : ""}`}>{x.detail}</span>}

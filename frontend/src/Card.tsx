@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import IntentForm, { type IntentBody } from "./IntentForm";
 import { labelOf } from "./labels";
 import type { ReviewBody } from "./api";
@@ -28,6 +28,8 @@ type Props = {
   windows: string[];
   actions: { reason: () => void; orders: () => void; compose: () => void; readNote: () => void };
   onIntent: (body: IntentBody) => Promise<void>;
+  onAssessment: (text: string, kind: "assessment" | "representation", evidence: string[]) => Promise<Insight>;
+  onCorrect: (id: string) => void;
   trail: TrailEntry[];
   coding: CodingT | null;
   record: RecordEvent[];
@@ -51,7 +53,7 @@ const EV_WORD: Record<string, string> = {
   "order.placed": "order", "document.signed": "document", "proposal.rejected": "rejected",
 };
 
-export default function Card({ card, tl, queues, chartInsights, chartDocuments, labels, highlight, onHover, onReview, onReadDocument, onOpenNote, busy, window_, setWindow, windows, actions, trail, coding, record, problems, onIntent }: Props) {
+export default function Card({ card, tl, queues, chartInsights, chartDocuments, labels, highlight, onHover, onReview, onReadDocument, onOpenNote, busy, window_, setWindow, windows, actions, trail, coding, record, problems, onIntent, onAssessment, onCorrect }: Props) {
   const name = (id: string) => labelOf(labels, id);
   const focusIds = useMemo(() => new Set([card.problem_id, ...card.members.map((m) => m.id), ...(tl?.series.map((s) => `LOINC:${s.code}`) ?? [])]), [card.problem_id, card.members, tl]);
   // Courses linked to this problem (treats or suspected cause); a change on one of these is consequential here.
@@ -90,6 +92,20 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
 
   const [rep, setRep] = useState<{ status: "proposed" | "accepted" | "rejected"; text: string; editing: boolean }>({ status: "proposed", text: card.representation.text, editing: false });
   const [assessment, setAssessment] = useState<{ text: string; editing: boolean; at: string | null }>({ text: "", editing: false, at: null });
+  const savedRep = [...chartInsights].reverse().find((i) => i.problem_id === card.problem_id && i.kind === "representation");
+  const savedAssessment = [...chartInsights].reverse().find((i) => i.problem_id === card.problem_id && i.kind === "assessment");
+  useEffect(() => {
+    setRep((old) => old.editing ? old : savedRep ? { status: "accepted", text: savedRep.statement, editing: false } : { ...old, status: old.status === "accepted" ? "proposed" : old.status, text: card.representation.text });
+    setAssessment((old) => old.editing ? old : { text: savedAssessment?.statement ?? "", editing: false, at: savedAssessment?.review?.at ?? null });
+  }, [savedRep, savedAssessment, card.representation.text]);
+  const acceptRepresentation = async () => {
+    try { await onAssessment(rep.text, "representation", card.representation.cites); setRep({ status: "accepted", text: rep.text, editing: false }); }
+    catch { /* The app displays the request error and preserves the editor. */ }
+  };
+  const signAuthored = async () => {
+    try { const result = await onAssessment(assessment.text, "assessment", []); setAssessment({ text: result.statement, editing: false, at: result.review?.at ?? null }); }
+    catch { /* The app displays the request error and preserves the editor. */ }
+  };
   const [stratum, setStratum] = useState<"line" | "assessment" | "history">("assessment");
   const [showTrajectory, setShowTrajectory] = useState(true);
   const [showOther, setShowOther] = useState(false);
@@ -98,7 +114,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
   const [reviewing, setReviewing] = useState<Reviewable | null>(null);
   const [openConsider, setOpenConsider] = useState<Set<string>>(new Set());
 
-  const signedInsights = chartInsights.filter((i) => i.problem_id === card.problem_id);
+  const signedInsights = chartInsights.filter((i) => i.problem_id === card.problem_id && !i.kind);
   const signedDocs = chartDocuments.filter((d) => d.problem_id === card.problem_id);
   const otherCount = slots.other.length + slots.routine.length + slots.changes.filter((x) => !x.here).length;
   const signAllOther = () => {
@@ -117,8 +133,8 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
 
   return (
     <div className="pwork">
-      <aside className="spine" aria-label="Evidence spine">
-        <span className="eyebrow">Evidence spine</span>
+      <aside className="spine" aria-label="Record for this problem">
+        <span className="eyebrow">Record for this problem</span>
         <h2>Record events linked to this problem</h2>
         <p className="note">Every line is a dated, signed fact. The card reads them; it never stores them.</p>
         <div className="thread">
@@ -147,10 +163,10 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
         {consequential.filter((c) => !dismissed.has(c.key)).map((c) => (
           <div key={c.key} className="banner" role="status">
             <div className="grow">
-              <span className="flag">Machine proposal · {c.kind} · unsigned</span>
+              <span className="flag">Proposed by the reading · {c.kind} · unsigned</span>
               <h3>{c.title}</h3>
               {c.text && <p className="serif">“{c.text}”</p>}
-              <p className="why">Consequential changes are reviewed one at a time. Review before anything changes.</p>
+              <p className="why">A decision like this is reviewed on its own. Nothing changes until you sign.</p>
             </div>
             <div className="bactions">
               <button className="btn primary" onClick={() => setReviewing(c.item)}>Review</button>
@@ -160,8 +176,8 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
         ))}
 
         <header className="phead">
-          <span className="pid">{card.kind} · {card.problem.id} · since {card.problem.onset_date?.slice(0, 4) ?? "?"} · {card.decisions} decisions on the record</span>
-          <h1>{card.problem.name}</h1>
+          <span className="pid">{card.kind} · since {card.problem.onset_date?.slice(0, 4) ?? "?"} · {card.decisions} decisions on the record</span>
+          <h1 title={card.problem.id}>{card.problem.name}</h1>
           <div className="chips">
             <span className="tag ep" title={card.epistemic.why}>{card.epistemic.value}</span>
             <span className="tag">certainty <b>{CERTAINTY[card.epistemic.value] ?? "moderate"}</b></span>
@@ -184,7 +200,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
         )}
 
         <section className="stack">
-          <span className="eyebrow">Summary stack</span>
+          <span className="eyebrow">Summary</span>
           <div className="stackbar" role="tablist" aria-label="Summary depth">
             <button className="lvl" role="tab" aria-selected={stratum === "line"} onClick={() => setStratum("line")}>one line</button>
             <button className="lvl" role="tab" aria-selected={stratum === "assessment"} onClick={() => setStratum("assessment")}>assessment</button>
@@ -194,11 +210,11 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
           {stratum === "assessment" && (
             rep.editing ? (
               <div className="pencil-box">
-                <textarea value={rep.text} onChange={(e) => setRep({ ...rep, text: e.target.value })} rows={4} />
-                <div className="row"><span className="spacer" /><button className="btn small ghost" onClick={() => setRep({ ...rep, editing: false, text: card.representation.text })}>Cancel</button><button className="btn small primary" onClick={() => setRep({ status: "accepted", text: rep.text, editing: false })}>Accept as edited</button></div>
+                <textarea aria-label="Problem representation" disabled={!!busy} value={rep.text} onChange={(e) => setRep({ ...rep, text: e.target.value })} rows={4} />
+                <div className="row"><span className="spacer" /><button className="btn small ghost" disabled={!!busy} onClick={() => setRep({ ...rep, editing: false, text: savedRep?.statement ?? card.representation.text })}>Cancel</button><button className="btn small primary" disabled={!!busy || !rep.text.trim()} onClick={acceptRepresentation}>Accept as edited</button></div>
               </div>
             ) : rep.status === "accepted" ? (
-              <div className="ink-box"><p className="machine-text">{rep.text}</p><span className="stamp">representation accepted by {REVIEWER} · not written in this demo</span></div>
+              <div className="ink-box"><p className="machine-text">{rep.text}</p><span className="stamp">representation signed by {savedRep?.review?.by ?? REVIEWER}</span> <button className="link small" disabled={!!busy} onClick={() => setRep({ ...rep, editing: true })}>Update representation</button></div>
             ) : rep.status === "rejected" ? (
               <div className="quiet">Representation rejected. <button className="link" onClick={() => setRep({ status: "proposed", text: card.representation.text, editing: false })}>Show the proposal again</button></div>
             ) : (
@@ -213,7 +229,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
                   <span className="spacer" />
                   <button className="btn small ghost" onClick={() => setRep({ ...rep, status: "rejected" })}>Reject</button>
                   <button className="btn small" onClick={() => setRep({ ...rep, editing: true })}>Edit</button>
-                  <button className="btn small primary" onClick={() => setRep({ ...rep, status: "accepted" })}>Accept</button>
+                  <button className="btn small primary" disabled={!!busy || !rep.text.trim()} onClick={acceptRepresentation}>Accept</button>
                 </div>
               </div>
             )
@@ -228,19 +244,19 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
 
         <section className="authored">
           <div className="authored-head">
-            <span className="eyebrow">Clinician-authored assessment</span>
+            <span className="eyebrow">Your assessment</span>
             <span className="spacer" />
             {!assessment.editing && <button className="btn small" onClick={() => setAssessment({ ...assessment, editing: true })}>{assessment.text ? "Update" : "Write"} assessment</button>}
           </div>
           {assessment.editing ? (
             <>
-              <textarea autoFocus value={assessment.text} rows={4} placeholder="What you think is happening, with as much hedging as it deserves." onChange={(e) => setAssessment({ ...assessment, text: e.target.value })} />
-              <div className="row"><span className="spacer" /><button className="btn small ghost" onClick={() => setAssessment({ ...assessment, editing: false })}>Cancel</button><button className="btn small primary" onClick={() => setAssessment({ text: assessment.text, editing: false, at: new Date().toISOString().slice(0, 16).replace("T", " ") })}>Sign</button></div>
+              <textarea autoFocus aria-label="Clinician assessment" disabled={!!busy} value={assessment.text} rows={4} placeholder="What you think is happening, with as much hedging as it deserves." onChange={(e) => setAssessment({ ...assessment, text: e.target.value })} />
+              <div className="row"><span className="spacer" /><button className="btn small ghost" disabled={!!busy} onClick={() => setAssessment({ ...assessment, text: savedAssessment?.statement ?? "", editing: false })}>Cancel</button><button className="btn small primary" disabled={!!busy || !assessment.text.trim()} onClick={signAuthored}>Sign assessment</button></div>
             </>
           ) : assessment.text ? (
             <>
               <p className="body">{assessment.text}</p>
-              <span className="sig">{REVIEWER} · signed {assessment.at} · not written in this demo</span>
+              <span className="sig">{savedAssessment?.review?.by ?? REVIEWER} · signed {assessment.at?.slice(0, 16).replace("T", " ")}</span>
             </>
           ) : (
             <p className="quiet">No assessment on this problem. The system never writes one; it is asked for when a problem is raised, its reading changes, or a course closes.</p>
@@ -249,7 +265,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
 
         <div className="cards2">
           <section className="scard watch">
-            <span className="eyebrow">Surveillance</span>
+            <span className="eyebrow">What we are watching</span>
             <h4>What would change this problem’s status</h4>
             {card.surveillance.rows.map((r) => (
               <div key={r.code} className={`kv ${r.ids.some((id) => highlight.has(id)) ? "hi" : ""}`} onMouseEnter={() => onHover(r.ids)} onMouseLeave={() => onHover(null)}>
@@ -268,7 +284,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
             <div className="kv"><span className="k">Next review</span><span className="v">{dmy(card.surveillance.next_review)}</span></div>
           </section>
           <section className="scard">
-            <span className="eyebrow">Linked in the graph</span>
+            <span className="eyebrow">Related on the chart</span>
             <h4>Courses, causes, documents, related entries</h4>
             {card.linked.length === 0 && card.members.length === 0 && <p className="quiet">Nothing linked yet.</p>}
             {card.linked.map((l) => (
@@ -316,6 +332,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
 
         <section className="full" id="slot-insights">
           <h3>Insights <span className="cnt">{signedInsights.length} signed{slots.insights.length ? ` · ${slots.insights.length} proposed` : ""}</span>
+            <span className="hint">signing one puts its first sentence in the visit note’s assessment and its action in the plan</span>
             <span className="spacer" />
             <button className="btn small" disabled={!!busy} onClick={actions.reason} title="Trend summaries and medication events go to the model; insights come back for your signature">What’s changed?</button>
           </h3>
@@ -328,21 +345,30 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
               </div>
               <button className="link" onClick={() => setOpenConsider((s) => { const n = new Set(s); n.has(i.id) ? n.delete(i.id) : n.add(i.id); return n; })}>{openConsider.has(i.id) ? "▾" : "▸"} suggestion</button>
               {openConsider.has(i.id) && <div className="action">{i.suggested_action}</div>}
-              <div className="stamp">{i.provenance.model} · signed by {i.review?.by ?? REVIEWER} · {i.review?.at.slice(0, 10)}</div>
+              <div className="stamp">signed by {i.review?.by ?? REVIEWER} · {i.review?.at.slice(0, 10)}</div>
+              <button className="link small" onClick={() => onCorrect(i.id)}>Correct insight</button>
+              <details className="system-details compact">
+                <summary>Source details</summary>
+                <div className="sd-grid">
+                  <span>Model</span><span>{i.provenance.model?.split("/").pop() ?? "reasoning"}</span>
+                  <span>Evidence</span><span>{i.evidence.map(name).join(", ")}</span>
+                  <span>ID</span><span>{i.id}</span>
+                </div>
+              </details>
             </div>
           ))}
           {slots.insights.map(({ g, b }) => <GroupCard key={g.key} g={g} b={b} {...cardProps} />)}
         </section>
 
         <section className="full" id="slot-plan">
-          <h3>Plan <span className="cnt">{card.plan.length} signed{slots.plan.length + slots.changes.filter((x) => x.here).length ? ` · ${slots.plan.length + slots.changes.filter((x) => x.here).length} proposed` : ""}</span>
+          <h3>Treatment plan <span className="cnt">{card.plan.length} signed{slots.plan.length + slots.changes.filter((x) => x.here).length ? ` · ${slots.plan.length + slots.changes.filter((x) => x.here).length} proposed` : ""}</span>
             <span className="spacer" />
             <button className="btn small" disabled={!!busy || signedInsights.length === 0} onClick={actions.orders} title="Turn the signed insights' actions into orders to sign">Draft orders</button>
             <button className="btn small" disabled={!!busy} onClick={actions.compose} title="A referral letter rendered from the chart, the signed insights and your decisions">Draft referral</button>
           </h3>
           <div className="plan">
             {card.plan.map((p) => (
-              <div key={p.id} {...ev(p)} title={p.detail}><span className="k">{p.plan_kind.replace("_", " ")}</span><span>{p.text}</span><span className="tag ok">signed</span></div>
+              <div key={p.id} {...ev(p)} title={p.detail}><span className="k">{p.plan_kind.replace("_", " ")}</span><span>{p.text}{p.destination && <small className="intent-route">{p.destination === "both" ? "+ Note: Plan" : "Treatment only"}</small>}</span><span><span className="tag ok">signed</span> <button className="link small" onClick={() => onCorrect(p.id)}>Change</button></span></div>
             ))}
             {card.plan.length === 0 && <div className="quiet">Nothing signed on this problem yet.</div>}
           </div>
