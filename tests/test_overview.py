@@ -27,6 +27,7 @@ def test_since_is_the_last_routine_visit_at_least_two_weeks_before_the_newest(re
     p = with_visits(reason_patient)
     s = _since(p, TODAY)
     assert s["date"] == "2026-05-14" and s["encounter_id"] == "enc_1"          # the telemedicine call five days earlier does not count
+    assert s["baseline"] == "2026-02-13"                                        # no routine visit before it: trends start 90 days earlier
     p["encounters"] = p["encounters"][2:]
     assert _since(p, TODAY)["date"] == "2026-06-02"                              # nothing earlier: 90 days
 

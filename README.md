@@ -11,16 +11,18 @@ human accepts it.
 |---|---|
 | `scripts/gen_synthea.sh`, `find_golden.py`, `import_patient.py` | Synthea generation, golden-patient ranking, FHIR -> our JSON |
 | `data/golden/` | the golden patient's raw Synthea bundle (committed) |
-| `data/patients/pt_001.json` | the chart: patient, problems, observations, medications, encounters, notes, links, insights |
+| `data/patients/pt_002.json` | the demo chart: Jeane Lueilwitz, diabetes and hypertension, curated by `scripts/curate_pt_002.py` |
+| `data/patients/pt_001.json` | the first golden chart (Willie Klocko, CKD + CHF + T2DM), still runnable with `?patient=pt_001` |
 | `data/notes/` | hand-written demo notes (curated, don't overwrite) |
 | `data/proposed/<pt>/` | review queues: `<note_id>.json` from extraction, `reason_<problem_id>.json` from reasoning |
 | `ehr/trend.py` | `trend(patient_id, loinc_code, window)` -> TrendSummary (§9) |
 | `ehr/extract.py` | note -> proposed observations / problems / medications / links (§3, §4, §7) |
 | `ehr/reason.py` | TrendSummaries + chart context -> proposed Insights (§10) |
-| `ehr/review.py` | accept / reject queue items into the chart, recording who, when and why |
+| `ehr/review.py` | accept / reject queue items into the chart, recording who, when and why; `sign_note` attests a note and everything it proposed |
 | `ehr/compose.py` | chart state + signed insights + review decisions -> a generated referral letter with citations |
 | `ehr/brief.py` | pre-visit brief per problem: computed on open (no model), or Claude-written over the same evidence |
 | `ehr/orders.py` | signed insights -> proposed orders (labs, medication changes, referrals); signing a medication change edits the course |
+| `ehr/record.py` | the record as events, read off provenance and review stamps: what a note, a signature or a model run wrote. Computed on demand |
 | `ehr/overview.py` | the patient overview: what changed since the last routine visit, ranked by clinical meaning; active concerns by what they need; open loops. Computed on demand |
 | `ehr/card.py` | the problem card: representation, supporting and doesn't-fit evidence, plan, expected trajectory and what changed, computed from the chart on demand (never stored) |
 | `ehr/billing.py` | visit coding computed from what was signed today: diagnosis codes (demo ICD-10 map) and the E/M level by medical decision making, every element justified by ids |
@@ -39,83 +41,74 @@ Open http://localhost:8000. The built frontend is committed in `frontend/dist`; 
 `frontend/src`, rebuild with `cd frontend && npm install && npm run build` (Node 22). For live
 frontend reloads use `npm run dev` (port 5173, proxies `/api` to 8000).
 
-The header switches between three views of the same chart. **Overview** (the default) is the
-orientation screen from `docs/design/clinical-reasoning-ehr.md`: who this is, why they are here,
-what changed since the last routine visit ranked by clinical meaning, the active concerns by what
-they need, and the open loops; each row opens its problem's card. **Desk** is the original
-three-pane chart desk: the problem list (left, newest monitored problem first), the problem-scoped
-timeline (centre: monitored lab series with reference bands, medication courses as bands on the
-same axis, encounters as ticks), and the review queue (right). **Card** is the
-problem card from the same design: one screen for one concern, with a
-proposed representation, the clinician's assessment, supporting and doesn't-fit evidence,
-insights, plan, expected trajectory and what changed, the timeline mounted as its trajectory
-section, and every proposal from a note sitting in the slot it would fill instead of in an inbox.
-Overview and Card carry their own explanations above and below them; they are demos of the
-components, so what you accept or write on the card is not written to the chart. Everything AI-proposed is drawn in *pencil*
-(dashed, amber) until a clinician signs it; signed items become ink.
+The header switches between three views of the same chart, each carrying its own explanation
+above and below it (they are demos of the components; what you accept or write on the card is
+not written to the chart). **Overview** (the default) is the orientation screen from
+`docs/design/clinical-reasoning-ehr.md`: who this is, why they are here and whether a note is
+waiting, what changed since the last routine visit ranked by clinical meaning, the active concerns
+by what they need, and the open loops. **Note** is the note as a thing on the record: the text
+with every passage the reading used marked in it, the proposals it made grouped by problem, one
+**Sign note** action that attests the note and everything not rejected, and the record of what
+that reading and that signature wrote. **Card** is the problem card: one screen for one concern,
+with a proposed representation, the clinician's assessment, supporting and doesn't-fit evidence,
+insights, plan (orders and the note's plan items), the expected trajectory drawn as a corridor,
+and every remaining proposal in the slot it would fill. Everything AI-proposed is drawn in
+*pencil* (dashed, amber) until a clinician signs it; signed items become ink.
+
+The chart opens on `pt_002`; `http://localhost:8000/?patient=pt_001` opens the first golden
+patient, whose recorded demo (CKD, naproxen, metformin) still plays through the same views.
 
 ## Demo runbook
 
-Every Claude call in the demo (extraction, reasoning, brief, orders, referral) has been run live once
-(`claude-opus-5`) and the responses are saved as
-`data/proposed/pt_001/*.raw.json`, so the demo replays them offline and byte-for-byte. Live mode
-needs `ANTHROPIC_API_KEY` exported in the shell that starts the server.
+Every Claude call in the demo (extraction, reasoning, orders, referral, brief) is run live once
+(`claude-opus-5`) and the responses are saved as `data/proposed/<patient>/*.raw.json`, so the demo
+replays them offline and byte-for-byte. Live mode needs `ANTHROPIC_API_KEY` exported in the shell
+that starts the server. The header has a **Claude: live / saved** switch.
 
-In the UI, from a fresh chart. The header has a **Claude: live / saved** switch: *saved* replays
-the recorded responses (no network), *live* calls the API. It also has a view switch,
-**Overview · Card · Desk**: the demo runs on the first two; Desk is the original three-pane
-chart desk and is still there for comparison. Every screen carries its own explanation above
-and below it.
+The patient is Jeane Lueilwitz, 55, type 2 diabetes and hypertension on metformin and
+hydrochlorothiazide. Over twelve months her A1c drifts 6.4 → 7.1 → 7.9 and her blood pressure
+climbs 128/80 → 142/88 → 154/94, with new albuminuria. The note that arrives reveals why: she has
+been skipping metformin for stomach upset, and taking ibuprofen daily for her back since May.
 
-1. **Overview** opens cold: who this is, "here for: office visit, 11 Sep" with the note still
-   waiting, what changed since the last routine visit (ranked, not listed), the active concerns
-   by what they need, and the open loops. Kidney disease is one concern with three related
-   entries, marked *worsening*; the creatinine crossing is already in the list.
-2. **Read it** on the note → **Read (saved)**. Back on the Overview the list re-ranks: the
-   proposed restaging leads, then the creatinine change, then the discordant assays. The kidney
-   row now says **Review 10 changes**; click it.
-3. **The card.** The proposals sit where they belong: the stage-4 problem under the title, the
-   naproxen course and the results under *Supporting* in pencil, findings for other problems
-   folded at the bottom. Reject "Chronic kidney disease stage 4" with a reason; sign the naproxen
-   course and the results; **Sign all** the fold. Every decision shows a 10-second **Undo**.
-   Accept the proposed representation, or edit it first; write an assessment if you like (both
-   stay on the page in this demo).
-4. **What's changed?** Four insights land under *Insights*, statement and evidence first,
-   suggestion folded: restage CKD; naproxen as contributor; **stop metformin at eGFR 15.6**;
-   the two creatinine assays disagree. Hover the chips; sign. *Doesn't fit* already showed the
-   assay discordance and, until you sign the stop, metformin active at eGFR 15.6.
-5. **Draft orders**: the signed actions appear under *Plan* in pencil; sign them. The card now
-   proposes an **Expected** line (creatinine falling within two weeks of stopping naproxen, by
-   date) and what to **Reassess if** it does not, and the trajectory below draws it as a
-   corridor from the stop toward the target, with the axis extended to the due date.
-6. **Draft referral**: a letter rendered from the chart, the signed insights and your decisions,
-   every section carrying tap-through citations. **Read** it, then **Sign referral**. The
-   decision trail and **Visit coding** sit behind doors at the foot of the card.
-7. Back to **Overview**: the referral and the two labs sit under *Pending* until their answers
-   land on the chart. **Reset demo** restores the chart to its server-start state and clears the
-   queues. (Start the server from a clean chart, since that is the state it snapshots.)
+1. **Overview** opens cold: "here for: office visit, 15 Sep" with the note waiting, both concerns
+   marked *worsening* with the blood pressure and glucose moves since January, nothing pending.
+2. **Read it** → **Read (saved)**. The **Note** view shows the text with every passage the
+   reading used marked, and the proposals grouped by problem: the results, the ibuprofen course
+   as a suspected cause of the blood pressure, the metformin switch, lisinopril, the plan items,
+   and a new concern, low back pain. Reject anything you disagree with, with a reason.
+3. **Sign note**. One signature attests the note and commits everything not rejected; the
+   **record** under the note lists what it wrote: results recorded, courses opened and changed,
+   links asserted, plan items set, your rejections with their reasons, the signature.
+4. Back on **Overview**: the medication changes lead the ranked list; open the hypertension row.
+5. **The card.** Representation (proposed), your assessment, supporting evidence with the ibuprofen
+   course as a suspected cause, the plan items from the note under *Plan*, and once ibuprofen is
+   stopped an **Expected** line: systolic falling within two weeks, drawn as a corridor on the
+   trajectory. **What's changed?** brings the insights; sign them. **Draft orders** turns the
+   signed actions into orders; sign them.
+6. **Reset demo** restores the chart to its server-start state and clears the queues.
+   (Start the server from a clean chart, since that is the state it snapshots.)
 
 Same flow from the shell:
 
 ```bash
-python3 -m ehr.extract data/notes/note_demo_002.json --replay data/proposed/pt_001/note_demo_002.raw.json
-python3 -m ehr.review pt_001 note_demo_002 --accept-all --accept-changes
-python3 -m ehr.reason pt_001 --problem prob_0057 --replay data/proposed/pt_001/reason_prob_0057.raw.json
-python3 -m ehr.review pt_001 reason_prob_0057 --list
-python3 -m ehr.review pt_001 note_demo_002 --reject prob_demo_002_01 --reason-code needs_confirmation --reason "repeat serum creatinine first"
-python3 -m ehr.review pt_001 reason_prob_0057 --accept-all
-python3 -m ehr.orders pt_001 --problem prob_0057 --replay data/proposed/pt_001/orders_prob_0057.raw.json
-python3 -m ehr.compose pt_001 --problem prob_0057 --kind referral --audience nephrology   # or --replay <raw.json>
+python3 -m ehr.extract data/notes/note_demo_102.json --patient pt_002 --replay data/proposed/pt_002/note_demo_102.raw.json
+python3 -m ehr.review pt_002 note_demo_102 --list
+python3 -m ehr.record pt_002 --note note_demo_102
+python3 -m ehr.reason pt_002 --problem prob_0007 --replay data/proposed/pt_002/reason_prob_0007.raw.json
+python3 -m ehr.overview pt_002
+python3 -m ehr.card pt_002 --problem prob_0007
 ```
 
 Drop `--replay` to call Claude live (each call is roughly 10-15k tokens). Every live run writes a
-timestamped copy (`note_demo_002.20260912T084512.raw.json`, never overwritten) and updates the
+timestamped copy (`note_demo_102.20260915T091200.raw.json`, never overwritten) and updates the
 `<stem>.raw.json` pointer that replay uses. To roll back a bad live run, copy an older timestamped
 file over the pointer. Reset from the shell:
-`git checkout data/patients/pt_001.json && rm data/proposed/pt_001/note_demo_002.json data/proposed/pt_001/reason_prob_0057.json data/proposed/pt_001/orders_prob_0057.json`.
+`git checkout data/patients/pt_002.json && rm data/proposed/pt_002/*[^w].json` (everything but
+the recordings).
 
-The decision moment: creatinine (LOINC `38483-4`) rises from 1.6 to 5.7 over the year, eGFR falls
-to 15.6, the note reveals daily naproxen since last October, and metformin 500 mg is still on board.
+The first golden patient's runbook (Willie Klocko, creatinine 1.6 → 5.7, naproxen since October,
+metformin at eGFR 15.6) still works at `?patient=pt_001` with its recordings under
+`data/proposed/pt_001/`.
 
 ## Where this goes next
 
@@ -140,7 +133,15 @@ Two shapes the build needs that the schema doc does not define. Both are additiv
    referral | imaging, name, detail, code, med_id, change, dose, audience, status, provenance: {source:
    "ordering", model, from_insight, evidence, confidence}, created_at, ordered_at}`; signed orders live under
    a new top-level `orders` list. Orders derive only from signed insights.
-4. **Visit coding** (`ehr/billing.py`) is computed on demand and never stored, like a TrendSummary: the
+4. **Plan item** (`ehr/extract.py` plans, `ehr/review.py`): `plan_` prefix, `{patient_id, problem_id, kind: diagnostic |
+   therapeutic | monitoring | referral | education | follow_up, text, status, provenance (note_id + quote), created_at}`;
+   signed plan items live under a new top-level `plans` list. What the note's assessment and plan says will be done,
+   one item each, tied to the problem it addresses.
+5. **Note status** (`ehr/review.py::sign_note`): a note gains `status: "received" | "signed"` and a `review` record
+   when the clinician signs it; signing commits every proposal from that note that was not rejected.
+6. **Curated provenance** (`scripts/curate_pt_002.py`): `provenance.source: "curated"` marks values written for the
+   demo story, distinct from `fhir_import`.
+7. **Visit coding** (`ehr/billing.py`) is computed on demand and never stored, like a TrendSummary: the
    E/M level follows the 2021 MDM rule (level met by two of three elements) over what was signed that
    day, and the ICD-10 codes come from a small demo table. Nothing is ever generated to justify a code.
 

@@ -169,6 +169,7 @@ export type QueueBatch = {
     insights?: Insight[];
     documents?: Document[];
     orders?: Order[];
+    plans?: Plan[];
   };
   ordered_at?: string;
   kind?: string;
@@ -190,7 +191,26 @@ export type NoteFile = {
   text: string;
   has_replay: boolean;
   has_queue: boolean;
+  status?: "received" | "signed";
+  review?: Review;
 };
+
+/* A plan item (ehr/extract.py plans): what the note says will be done, tied to a problem. */
+export type Plan = {
+  id: string;
+  patient_id: string;
+  problem_id: string;
+  kind: "diagnostic" | "therapeutic" | "monitoring" | "referral" | "education" | "follow_up";
+  text: string;
+  status: string;
+  provenance: Provenance;
+  created_at: string;
+  review?: Review;
+  queue?: string;
+};
+
+/* One line of the record (ehr/record.py): derived from provenance and review stamps. */
+export type RecordEvent = { kind: string; at: string; subject: string; text: string; by: string | null; source: string | null; note_id: string | null; quote: string | null; ids: string[] };
 
 export type PatientSummary = {
   patient: Patient;
@@ -199,6 +219,7 @@ export type PatientSummary = {
   insights: Insight[];
   documents: Document[];
   orders: Order[];
+  plans: Plan[];
 };
 
 export type BriefLine = { kind: string; text: string; ids: string[]; code?: string };

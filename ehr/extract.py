@@ -41,6 +41,7 @@ LINK_TYPES = {"relevant_to", "treats", "evidence_for", "suspected_cause", "monit
 CODE_GROUPS = {"2160-0": "creatinine", "38483-4": "creatinine", "2339-0": "glucose", "2345-7": "glucose"}
 DEDUPE_DAYS = 45      # a restated historical value ("3.69 in May") matches a charted value this close in time
 DEDUPE_TOLERANCE = 0.02  # ...and this close in value (2%)
+PLAN_KINDS = ("diagnostic", "therapeutic", "monitoring", "referral", "education", "follow_up")
 
 # ----------------------------------------------------------------------------- prompt
 
@@ -72,13 +73,18 @@ Rules
 - `suspected_causes`: only when the note itself raises the causal link (e.g. NSAID use and
   kidney function). `cause_ref` is a medication or problem id (existing or new_N); `effect_ref`
   is a problem id or "LOINC:<code>".
+- `plans`: each thing the assessment/plan section says will be done, one item each, linked to
+  the problem it addresses: a medication decision, a test, monitoring, a referral, education, or
+  a follow-up. `text` is the action in a few words as the note states it (no advice of your own);
+  `kind` is one of diagnostic, therapeutic, monitoring, referral, education, follow_up. A
+  medication decision is BOTH a plan item and a `medications` entry.
 - `confidence` is your 0-1 estimate that a clinician will accept the item as written.
 """
 
 OUTPUT_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["observations", "findings", "problems", "medications", "suspected_causes"],
+    "required": ["observations", "findings", "problems", "medications", "suspected_causes", "plans"],
     "properties": {
         "observations": {"type": "array", "items": {
             "type": "object", "additionalProperties": False,
@@ -129,6 +135,16 @@ OUTPUT_SCHEMA = {
                 "existing_med_id": {"type": ["string", "null"]},
                 "change": {"type": "string", "enum": ["new", "confirm", "stop", "dose_change", "frequency_change"]},
                 "treats_problem_refs": {"type": "array", "items": {"type": "string"}},
+                "confidence": {"type": "number"},
+            }}},
+        "plans": {"type": "array", "items": {
+            "type": "object", "additionalProperties": False,
+            "required": ["quote", "kind", "text", "problem_refs", "confidence"],
+            "properties": {
+                "quote": {"type": "string"},
+                "kind": {"type": "string", "enum": ["diagnostic", "therapeutic", "monitoring", "referral", "education", "follow_up"]},
+                "text": {"type": "string"},
+                "problem_refs": {"type": "array", "items": {"type": "string"}},
                 "confidence": {"type": "number"},
             }}},
         "suspected_causes": {"type": "array", "items": {
@@ -244,13 +260,13 @@ class Validator:
                 self.obs_by_group.setdefault(g, []).append((o["effective_time"][:10], float(o["value"]), o["id"]))
         self.new_med_by_name: dict[str, dict] = {}
         self.existing_links = {(l["from"], l["to"], l["type"]) for l in patient.get("links", [])}
-        self.out = {"problems": [], "observations": [], "medications": [], "links": []}
+        self.out = {"problems": [], "observations": [], "medications": [], "links": [], "plans": []}
         self.confirmed_medications: list[dict] = []
         self.medication_changes: list[dict] = []
         self.review_hints: dict[str, str] = {}
         self.rejected: list[dict] = []
         self.ref_map: dict[str, str] = {}  # new_N -> proposed id
-        self.counters = {"prob": 0, "obs": 0, "med": 0, "lnk": 0}
+        self.counters = {"prob": 0, "obs": 0, "med": 0, "lnk": 0, "plan": 0}
 
     # -- helpers
     def new_id(self, prefix: str) -> str:
@@ -466,12 +482,37 @@ class Validator:
             if lid:
                 self.review_hints[lid] = it.get("rationale", "")
 
+    def plans(self, items: list[dict]):
+        """Plan items: what the note says will be done, each tied to the problem it addresses.
+        FLAGGED schema addition (not in docs/patient-model-schema.md): a Plan entity, `plan_` prefix."""
+        for it in items:
+            q = self.quote_of("plan", it)
+            if q is None:
+                continue
+            kind = it.get("kind")
+            if kind not in PLAN_KINDS:
+                self.reject("plan", it, f"unknown plan kind {kind!r}")
+                continue
+            targets = [t for t in (self.resolve_problem(r) for r in it.get("problem_refs") or []) if t]
+            if not targets:
+                self.reject("plan", it, "no resolvable problem for the plan item")
+                continue
+            pid = self.new_id("plan")
+            self.out["plans"].append({
+                "id": pid, "patient_id": self.patient["patient"]["id"], "problem_id": targets[0],
+                "kind": kind, "text": (it.get("text") or "").strip() or q,
+                "status": "proposed", "provenance": self.provenance(q, it.get("confidence")), "created_at": self.now,
+            })
+            for extra in targets[1:]:
+                self.add_link(pid, extra, "relevant_to", q, it.get("confidence"))
+
     def run(self, raw: dict) -> dict:
         self.problems(raw.get("problems") or [])
         self.observations(raw.get("observations") or [])
         self.findings(raw.get("findings") or [])
         self.medications(raw.get("medications") or [])
         self.suspected_causes(raw.get("suspected_causes") or [])
+        self.plans(raw.get("plans") or [])
         return {
             "patient_id": self.patient["patient"]["id"], "note_id": self.note["id"],
             "model": f"{EXTRACTOR_VERSION}/{self.model}", "extracted_at": self.now,

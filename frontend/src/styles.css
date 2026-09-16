@@ -447,3 +447,38 @@ svg.tl .corridor-label { font-family: var(--mono); font-size: 10px; fill: var(--
 svg.tl .corridor-label.missed { fill: var(--flag); }
 svg.tl .pt.mismatch { fill: none; stroke: var(--flag); stroke-width: 2; r: 6; }
 svg.tl .today { stroke: var(--graphite); stroke-dasharray: 2 3; }
+
+/* ------------------------------------------------------------- note view */
+.noteview { background: var(--paper-2); border: 1px solid var(--rule-strong); box-shadow: 0 1px 0 var(--rule-soft); }
+.noteview .ntitle { display: flex; align-items: center; gap: calc(var(--u) * 3); padding: calc(var(--u) * 3) calc(var(--u) * 5); border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.noteview .ntitle h1 { font-family: var(--serif); font-weight: 400; font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+.noteview .ntitle .spacer { flex: 1; }
+.ngrid { display: grid; grid-template-columns: 1.15fr 1fr; }
+.ngrid > section { padding: calc(var(--u) * 3) calc(var(--u) * 5) calc(var(--u) * 4); min-width: 0; }
+.ngrid > section + section { border-left: 1px solid var(--rule); }
+@media (max-width: 960px) { .ngrid { grid-template-columns: 1fr; } .ngrid > section + section { border-left: none; border-top: 1px solid var(--rule); } }
+.noteview h3 { font-family: var(--sans); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--graphite); margin: 0 0 calc(var(--u) * 2); display: flex; gap: calc(var(--u) * 2); align-items: baseline; }
+.noteview h3 .cnt { font-family: var(--mono); font-weight: 400; letter-spacing: 0; text-transform: none; }
+.note-body { white-space: pre-wrap; font-family: var(--serif); font-size: 14px; line-height: 1.65; color: var(--ink); background: var(--paper); padding: calc(var(--u) * 4); border: 1px solid var(--rule); border-radius: var(--r-sm); margin: 0; }
+.note-body mark.q { background: var(--pending-wash); color: inherit; border-bottom: 1px dashed var(--pending); padding: 0 1px; border-radius: 2px; cursor: default; }
+.note-body mark.q.accepted { background: rgba(47, 107, 79, 0.12); border-bottom: 1px solid var(--accepted); }
+.note-body mark.q.rejected { background: var(--paper-inset); border-bottom: 1px solid var(--graphite); color: var(--graphite); text-decoration: line-through; }
+.note-body mark.q.hi, .note-body mark.q:hover { background: var(--select-wash); border-bottom-color: var(--select); outline: 2px solid var(--select-wash); }
+.nprops .pgroup { margin-top: calc(var(--u) * 3); }
+.nprops .pgroup-head { display: flex; align-items: baseline; gap: calc(var(--u) * 2); font-family: var(--serif); font-size: 14px; color: var(--ink); padding-bottom: var(--u); border-bottom: 1px solid var(--rule); }
+.nprops .pgroup-head .cnt { font-family: var(--mono); font-size: 11px; color: var(--graphite); }
+.nprops .pgroup-head .link, .noteview .link { color: var(--select); text-decoration: underline; text-underline-offset: 2px; font-family: inherit; font-size: inherit; }
+.nprops .card, .nprops .strip { margin-left: 0; margin-right: 0; }
+.noteview .quiet { font-size: 12.5px; color: var(--graphite); font-style: italic; padding: calc(var(--u) * 2) 0; }
+.nrecord { padding: calc(var(--u) * 3) calc(var(--u) * 5) calc(var(--u) * 4); border-top: 1px solid var(--rule); }
+.rev { display: flex; align-items: baseline; gap: calc(var(--u) * 3); padding: calc(var(--u) * 1.5) 2px; border-top: 1px solid var(--rule-soft); border-radius: var(--r-sm); font-size: 13px; }
+.rev:first-of-type { border-top: none; }
+.rev.hi, .rev:hover { background: var(--select-wash); }
+.rev .when { font-family: var(--mono); font-size: 11px; color: var(--graphite); width: 112px; flex: none; }
+.rev .tag { width: 72px; text-align: center; flex: none; }
+.rev .grow { flex: 1; min-width: 0; }
+.rev .quote { font-family: var(--serif); font-style: italic; color: var(--ink-2); font-size: 12.5px; margin-top: 1px; }
+.rev .why { font-size: 11px; color: var(--graphite); }
+.rev.note-signed { background: rgba(47, 107, 79, 0.06); }
+.card .plan-kind { font-family: var(--mono); font-size: 10.5px; color: var(--graphite); margin-right: 4px; }
+.card .what .t { color: var(--graphite); font-size: 11.5px; }

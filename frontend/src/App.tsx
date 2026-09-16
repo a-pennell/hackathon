@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "./api";
-import Inbox from "./Inbox";
 import ProblemList from "./ProblemList";
 import Timeline from "./Timeline";
-import Brief from "./Brief";
 import Trail from "./Trail";
 import Coding from "./Coding";
 import Card from "./Card";
 import Overview from "./Overview";
-import type { Brief as BriefT, Card as CardT, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientSummary, QueueBatch, Timeline as TL, TrailEntry } from "./types";
+import NoteView from "./NoteView";
+import type { Card as CardT, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry } from "./types";
 
-const PID = "pt_001";
+const PID = new URLSearchParams(window.location.search).get("patient") ?? "pt_002";
 const WINDOWS = ["3m", "6m", "1y", "2y", "5y", "all"];
 
 function age(dob: string) {
@@ -23,16 +22,18 @@ export default function App() {
   const [problem, setProblem] = useState<string | null>(null);
   const [window_, setWindow] = useState("1y");
   const [tl, setTl] = useState<TL | null>(null);
-  const [brief, setBrief] = useState<BriefT | null>(null);
   const [card, setCard] = useState<CardT | null>(null);
   const [overview, setOverview] = useState<OverviewT | null>(null);
-  const [view, setView] = useState<"overview" | "card" | "desk">(() => {
+  const [view, setView] = useState<"overview" | "note" | "card">(() => {
     try {
-      return (localStorage.getItem("view") as "overview" | "card" | "desk") || "overview";
+      const v = localStorage.getItem("view") as "overview" | "note" | "card" | null;
+      return v && v !== "note" ? v : "overview";
     } catch {
       return "overview";
     }
   });
+  const [noteId, setNoteId] = useState<string | null>(null);
+  const [record, setRecord] = useState<RecordEvent[]>([]);
   const [trail, setTrail] = useState<TrailEntry[]>([]);
   const [coding, setCoding] = useState<CodingT | null>(null);
   const [queues, setQueues] = useState<QueueBatch[]>([]);
@@ -60,7 +61,7 @@ export default function App() {
     setQueues(q.batches);
     setQueueLabels(q.labels);
     setNotes(n.filter((x) => x.patient_id === PID));
-    setProblem((p) => p ?? s.problems.find((x) => x.name.startsWith("Chronic kidney disease stage 3"))?.id ?? s.problems.find((x) => (x.monitored_codes?.length ?? 0) > 0)?.id ?? null);
+    setProblem((p) => p ?? o?.concerns[0]?.id ?? s.problems.find((x) => (x.monitored_codes?.length ?? 0) > 0)?.id ?? null);
   }, []);
 
   useEffect(() => {
@@ -71,7 +72,6 @@ export default function App() {
     if (!problem) return;
     let live = true;
     api.timeline(PID, problem, window_).then((d) => live && setTl(d)).catch((e) => setError(String(e.message ?? e)));
-    api.brief(PID, problem).then((b) => live && setBrief(b)).catch(() => live && setBrief(null));
     api.card(PID, problem, window_).then((c) => live && setCard(c)).catch(() => live && setCard(null));
     api.trail(PID, problem).then((t) => live && setTrail(t)).catch(() => live && setTrail([]));
     api.coding(PID).then((c) => live && setCoding(c)).catch(() => live && setCoding(null));
@@ -80,23 +80,11 @@ export default function App() {
     };
   }, [problem, window_, queues, summary]);
 
-  const askBrief = async (mode: "live" | "replay") => {
-    if (!problem) return;
-    setBusy("brief");
-    setError(null);
-    try {
-      setBrief(await api.briefLive(PID, problem, mode));
-    } catch (e) {
-      setError(String((e as Error).message ?? e));
-    } finally {
-      setBusy(null);
-    }
-  };
-
   // id -> human label, for chips and link rows
   const labels = useMemo(() => {
     const m: Record<string, string> = { ...queueLabels };
     if (summary) for (const p of summary.problems) m[p.id] = p.name;
+    if (summary) for (const pl of summary.plans ?? []) m[pl.id] = `plan: ${pl.text}`;
     if (tl) {
       for (const med of [...tl.medications, ...tl.proposed.medications]) m[med.id] = med.name;
       for (const s of tl.series) {
@@ -112,6 +100,7 @@ export default function App() {
       for (const med of b.proposed.medications ?? []) m[med.id] = med.name;
       for (const o of b.proposed.observations ?? []) m[o.id] = `${o.name} ${o.value} ${o.unit ?? ""}`;
       for (const o of b.proposed.orders ?? []) m[o.id] = `order: ${o.name}`;
+      for (const pl of b.proposed.plans ?? []) m[pl.id] = `plan: ${pl.text}`;
       if (b.note_id) m[b.note_id] = `note ${b.note_id.replace("note_", "")}`;
     }
     return m;
@@ -162,7 +151,7 @@ export default function App() {
     }
   };
 
-  const setViewPersist = (v: "overview" | "card" | "desk") => {
+  const setViewPersist = (v: "overview" | "note" | "card") => {
     setView(v);
     try {
       localStorage.setItem("view", v);
@@ -177,6 +166,35 @@ export default function App() {
       localStorage.setItem("claudeMode", m);
     } catch {
       /* private mode: fine */
+    }
+  };
+
+  const openNote = (id: string) => {
+    setNoteId(id);
+    setViewPersist("note");
+  };
+
+  useEffect(() => {
+    if (!noteId) return;
+    let live = true;
+    api.record(PID, noteId).then((r) => live && setRecord(r)).catch(() => live && setRecord([]));
+    return () => {
+      live = false;
+    };
+  }, [noteId, queues, summary]);
+
+  const signNote = async () => {
+    if (!noteId) return;
+    setBusy("sign");
+    setError(null);
+    try {
+      const r = await api.signNote(PID, noteId);
+      await refresh();
+      setToast({ stem: noteId, ids: [], text: `Note signed by ${r.by}` });
+    } catch (e) {
+      setError(String((e as Error).message ?? e));
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -274,7 +292,7 @@ export default function App() {
   const selected = summary.problems.find((p) => p.id === problem);
 
   return (
-    <div className={`desk ${view !== "desk" ? "cardview" : ""}`} onClick={() => menu && setMenu(null)}>
+    <div className="desk cardview" onClick={() => menu && setMenu(null)}>
       <header className="head">
         <div className="who">
           {pt.name}
@@ -284,11 +302,11 @@ export default function App() {
         </div>
         <span className="seg view" title="Desk: list, sheet and inbox. Card: the problem card, with proposals in their slots">
           <button className={view === "overview" ? "on" : ""} onClick={() => setViewPersist("overview")}>Overview</button>
+          <button className={view === "note" ? "on" : ""} disabled={!noteId} onClick={() => setViewPersist("note")}>Note</button>
           <button className={view === "card" ? "on" : ""} onClick={() => setViewPersist("card")}>Card</button>
-          <button className={view === "desk" ? "on" : ""} onClick={() => setViewPersist("desk")}>Desk</button>
         </span>
         <span className="spacer" />
-        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "reason" ? "Looking at what changed…" : busy === "compose" ? "Drafting the referral…" : busy === "orders" ? "Drafting orders…" : busy === "brief" ? "Writing the brief…" : busy === "reset" ? "Resetting…" : "Saving…"}</span>}
+        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "sign" ? "Signing the note…" : busy === "reason" ? "Looking at what changed…" : busy === "compose" ? "Drafting the referral…" : busy === "orders" ? "Drafting orders…" : busy === "brief" ? "Writing the brief…" : busy === "reset" ? "Resetting…" : "Saving…"}</span>}
         <span className="mode" title="Live asks Claude now; saved uses the recorded response, no network">
           Claude
           <span className="seg">
@@ -303,10 +321,10 @@ export default function App() {
           {menu === "note" && (
             <div className="menu">
               {notes.map((n) => (
-                <button key={n.id} onClick={() => { setMenu(null); setReading(n); }}>
+                <button key={n.id} onClick={() => { setMenu(null); openNote(n.id); }}>
                   <div className="t">
                     {n.id} · {n.time.slice(0, 10)} · {n.author}
-                    {n.has_queue ? " · read" : ""}
+                    {n.status === "signed" ? " · signed" : n.has_queue ? " · read" : ""}
                   </div>
                   <div className="x">{n.excerpt.replace(/\s+/g, " ").slice(0, 90)}…</div>
                 </button>
@@ -346,11 +364,33 @@ export default function App() {
             highlight={highlight}
             onHover={hover}
             onOpen={(id) => { setProblem(id); setViewPersist("card"); }}
-            onReadNote={(id) => { const n = notes.find((x) => x.id === id); if (n) setReading(n); }}
+            onReadNote={openNote}
             busy={busy}
           />
         )}
         {view === "overview" && !overview && <div className="empty">Computing the overview…</div>}
+        {view === "note" && noteId && (() => {
+          const n = notes.find((x) => x.id === noteId);
+          if (!n) return <div className="empty">That note is not on file.</div>;
+          return (
+            <NoteView
+              key={n.id}
+              note={n}
+              batch={queues.find((b) => b.note_id === n.id) ?? null}
+              problems={summary.problems}
+              labels={labels}
+              highlight={highlight}
+              onHover={hover}
+              onReview={review}
+              onRead={(m) => runExtract(n, m)}
+              onSign={signNote}
+              onOpenProblem={(id) => { setProblem(id); setViewPersist("card"); }}
+              record={record}
+              busy={busy}
+              mode={mode}
+            />
+          );
+        })()}
         {view === "card" && selected && card && card.problem_id === selected.id && (
           <Card
             key={card.problem_id}
@@ -376,30 +416,13 @@ export default function App() {
           />
         )}
         {view === "card" && selected && !card && <div className="empty">Computing the card…</div>}
-        {view === "desk" && selected && (
-          <div className="sheet-head">
-            <h1>{selected.name}</h1>
-            <span className="since">
-              since {selected.onset_date} · {tl?.series.length ?? 0} monitored series · {tl?.medications.length ?? 0} medications on board
-            </span>
-          </div>
-        )}
-        {view === "desk" && selected && <Brief brief={brief} highlight={highlight} onHover={hover} onAskClaude={() => askBrief(mode)} busy={!!busy} mode={mode} />}
-        {view === "desk" && (tl && tl.series.length > 0 ? (
-          <Timeline data={tl} highlight={highlight} onHover={(id) => hover(id ? [id] : null)} onOpenNote={openChartNote} />
-        ) : (
-          <div className="empty">{selected ? `No monitored lab series is linked to ${selected.name} in this window.` : "Pick a problem."}</div>
-        ))}
-        {view === "desk" && selected && <Trail entries={trail} labels={labels} highlight={highlight} onHover={hover} />}
-        {view === "desk" && selected && coding && coding.signed_today > 0 && <Coding coding={coding} highlight={highlight} onHover={hover} />}
       </main>
 
-      {view === "desk" && <Inbox queues={queues} problemId={problem} focusIds={focusIds} chartMedIds={new Set((tl?.medications ?? []).map((m) => m.id))} chartInsights={summary.insights} chartDocuments={summary.documents ?? []} labels={labels} highlight={highlight} onHover={hover} onReview={review} onReadDocument={setReadingDoc} busy={busy} />}
 
       {toast && (
         <div className="toast" role="status">
           <span>{toast.text}</span>
-          <button onClick={undo}>Undo</button>
+          {toast.ids.length > 0 && <button onClick={undo}>Undo</button>}
           <span className="bar" />
         </div>
       )}

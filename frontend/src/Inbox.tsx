@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ReviewBody } from "./api";
-import type { Document, Insight, Link, Medication, Observation, Order, Problem, QueueBatch, Review } from "./types";
+import type { Document, Insight, Link, Medication, Observation, Order, Plan, Problem, QueueBatch, Review } from "./types";
 import { REASON_CODES } from "./types";
 
 type Props = {
@@ -18,8 +18,8 @@ type Props = {
   busy: string | null;
 };
 
-type Kind = "problem" | "result" | "medication" | "link" | "insight" | "document" | "order" | "finding";
-type AnyItem = Problem | Observation | Medication | Link | Insight | Document | Order;
+type Kind = "problem" | "result" | "medication" | "link" | "insight" | "document" | "order" | "finding" | "plan";
+type AnyItem = Problem | Observation | Medication | Link | Insight | Document | Order | Plan;
 type Status = "proposed" | "accepted" | "rejected";
 
 /** One reviewable thing: a subject (proposed item, or a chart item / note the links hang off) plus its links. */
@@ -164,6 +164,9 @@ export function buildGroups(b: QueueBatch, name: (id: string) => string, chartMe
   for (const o of b.proposed.orders ?? []) {
     const target = o.kind === "medication_change" ? ` · ${o.change === "stop" ? "stop" : "change dose of"} ${name(o.med_id!)}${o.dose ? " → " + o.dose : ""}` : o.kind === "referral" ? ` · to ${o.audience}` : o.code ? ` · ${o.code.system} ${o.code.value}` : "";
     add("order", o, o.id, <><b>{o.name}</b>{target}<div className="hint" style={{ marginTop: 2 }}>{o.detail}</div></>, [], { hoverIds: o.provenance.evidence ?? [] });
+  }
+  for (const p of b.proposed.plans ?? []) {
+    add("plan", p, p.id, <><span className="plan-kind">{p.kind.replace("_", " ")}</span> {p.text} <span className="t">· {name(p.problem_id)}</span></>, own(p.id), { hoverIds: [p.id, p.problem_id] });
   }
   // remaining links: findings from the note (one group per quote) and results already on the chart (one group per result)
   const rest = links.filter((l) => !claimed.has(l.id));
@@ -321,7 +324,7 @@ export function GroupCard({
   const decideIds = [...(g.subject && g.subject.status === "proposed" ? [g.subject.id] : []), ...g.links.filter((l) => l.status === "proposed").map((l) => l.id)];
   const badge = signed ? "signed" : st === "rejected" ? "rejected"
     : g.kind === "document" ? `${(g.subject as Document).kind} · ${(g.subject as Document).audience}`
-    : g.kind === "order" ? `order · ${(g.subject as Order).kind.replace("_", " ")}` : g.kind;
+    : g.kind === "order" ? `order · ${(g.subject as Order).kind.replace("_", " ")}` : g.kind === "plan" ? "plan" : g.kind;
 
   return (
     <div

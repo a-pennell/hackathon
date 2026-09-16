@@ -31,7 +31,7 @@ from pathlib import Path
 from ehr.extract import PROPOSED_DIR, queue_path, save_patient
 from ehr.trend import DATA_DIR, load_patient
 
-KINDS = ("problems", "observations", "medications", "links", "insights", "documents", "orders")
+KINDS = ("problems", "observations", "medications", "links", "insights", "documents", "orders", "plans")
 REASON_CODES = ("already_known", "not_relevant", "disagree", "needs_confirmation", "other")
 DEFAULT_REVIEWER = "Dr. Chen"
 
@@ -147,6 +147,7 @@ def list_queue(batch: dict) -> str:
                 "insights": lambda x: f"{x['statement']}\n{'':14}action: {x['suggested_action']}\n{'':14}evidence: {x['evidence']}",
                 "documents": lambda x: f"{x['kind']} to {x['audience']}: {x['title']} ({len(x['sections'])} sections)",
                 "orders": lambda x: f"order {x['kind']}: {x['name']} - {x['detail']}",
+                "plans": lambda x: f"plan {x['kind']}: {x['text']}",
             }[kind](it)
             rv = it.get("review")
             if rv and (rv.get("reason") or rv.get("reason_code")):
@@ -179,6 +180,8 @@ def _summary_of(kind: str, it: dict) -> str:
         return f"{it.get('kind', 'document')} to {it.get('audience', '')}: {it.get('title', '')}"
     if kind == "orders":
         return f"order ({it.get('kind')}): {it.get('name', '')}"
+    if kind == "plans":
+        return f"plan ({it.get('kind')}): {it.get('text', '')}"
     return it.get("title") or it["id"]
 
 
@@ -355,3 +358,21 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv[1:]))
+
+
+def sign_note(patient_id: str, note_id: str, *, by: str = DEFAULT_REVIEWER, data_dir: Path = DATA_DIR) -> dict:
+    """Attest a note: sign everything it proposed that is still waiting, then stamp the note.
+
+    FLAGGED schema addition (not in docs/patient-model-schema.md): Note gains `status`
+    ("received" | "signed") and a `review` record. Items the clinician rejected before signing
+    stay rejected; links into rejected items are skipped, as in accept_all."""
+    data_dir = Path(data_dir)
+    done = apply_review(patient_id, note_id, accept_all=True, accept_changes=True, by=by, data_dir=data_dir)
+    patient = load_patient(patient_id, data_dir)
+    note = next((n for n in patient.get("notes", []) if n["id"] == note_id), None)
+    if note is None:
+        raise KeyError(f"{note_id} is not on this chart")
+    note["status"] = "signed"
+    note["review"] = review_record("accepted", by)
+    save_patient(patient, data_dir)
+    return {"note_id": note_id, "signed_at": note["review"]["at"], "by": by, "done": done}

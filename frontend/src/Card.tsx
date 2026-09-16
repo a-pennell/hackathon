@@ -53,7 +53,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
         const supersedes = g.kind === "problem" && (b.review_hints?.[g.subjectId] ?? "").includes(card.problem_id);
         const touches = supersedes || focusIds.has(g.subjectId) || g.hoverIds.some((id) => focusIds.has(id)) ||
           (g.subject && "problem_id" in g.subject && focusIds.has((g.subject as Insight).problem_id)) || false;
-        const slot: Slot = g.routine ? "routine" : !touches ? "other" : g.kind === "problem" ? "header" : g.kind === "insight" ? "insights" : g.kind === "order" ? "plan" : g.kind === "document" ? "documents" : "supporting";
+        const slot: Slot = g.routine ? "routine" : !touches ? "other" : g.kind === "problem" ? "header" : g.kind === "insight" ? "insights" : g.kind === "order" || g.kind === "plan" ? "plan" : g.kind === "document" ? "documents" : "supporting";
         out[slot].push({ g, b });
       }
       for (const c of b.medication_changes ?? []) if (c.status === "proposed") changes.push({ c, b, here: chartMedIds.has(c.med_id) });

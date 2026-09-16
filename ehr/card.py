@@ -98,10 +98,16 @@ def _lead(trends: list[dict]) -> dict | None:
 
 
 def _worsening(t: dict) -> bool | None:
-    if t.get("direction") not in ("rising", "falling"):
-        return None
+    """True when the series sits outside its range on the harmful side and has moved further that way
+    since the baseline, whatever the size of the move; False when it is coming back; None when it
+    never left its range or has not moved."""
     wr = _worse_when_rising(t)
-    return None if wr is None else (t["direction"] == "rising") == wr
+    if wr is None or not t.get("latest") or not t.get("baseline"):
+        return None
+    lat, base = t["latest"]["value"], t["baseline"]["value"]
+    if lat == base:
+        return None
+    return (lat > base) == wr
 
 
 def _qualifiers(patient: dict, problem: dict, lead: dict | None, today: date, expectation: dict | None, trends: list[dict] = ()) -> list[dict]:
@@ -195,10 +201,15 @@ def _supporting(patient: dict, problem: dict, ctx: dict) -> list[dict]:
     out = []
     for t in sorted(ctx["trends"], key=lambda t: (0 if t.get("ref_range_crossing") else 1, -abs(t["delta_pct"] or 0))):
         ev = t.get("evidence_ids", {})
-        if t["direction"] in ("rising", "falling") and ev.get("latest"):
-            out.append({"id": ev["latest"], "ids": [i for i in (ev.get("baseline"), ev.get("latest")) if i], "kind": "result",
+        moved = t["direction"] in ("rising", "falling")
+        worse = _worsening(t)
+        if (moved or worse is not None) and ev.get("latest") and t["n_points"] > 1:
+            pct = t["delta_pct"] or 0
+            word = t["direction"] if moved else ("up" if pct > 0 else "down")
+            detail = f"{word} {abs(pct):.0f}% since {_dmy(t['baseline']['time'])}" + (", above range" if worse and _worse_when_rising(t) else ", below range" if worse else "")
+            out.append({"id": ev["latest"], "ids": [i for i in (ev.get("baseline"), ev.get("latest")) if i], "kind": "result", "latest_time": t["latest"]["time"],
                         "text": f"{t['name']} {_nice(t['baseline']['value'])} → {_nice(t['latest']['value'])}",
-                        "detail": f"{t['direction']} {abs(t['delta_pct'] or 0):.0f}% since {_dmy(t['baseline']['time'])}", "source": "measured", "valence": "for"})
+                        "detail": detail, "source": "measured", "valence": "for"})
     for l in _accepted(patient["links"]):
         if l["type"] == "suspected_cause" and l["to"] in _targets(patient, problem):
             med = next((m for m in patient["medications"] if m["id"] == l["from"]), None)
@@ -346,6 +357,10 @@ def _plan(patient: dict, problem: dict, proposed_dir: Path) -> list[dict]:
             text = f"{o['name']} · {o['audience']}"
         out.append({"id": o["id"], "plan_kind": PLAN_KIND.get(o["kind"], o["kind"]), "text": text, "detail": o.get("detail", ""),
                     "status": "signed", "ids": [o["id"]] + list(o["provenance"].get("evidence", []))[:4]})
+    for pl in patient.get("plans", []):
+        if pl["problem_id"] == problem["id"]:
+            out.append({"id": pl["id"], "plan_kind": pl["kind"], "text": pl["text"], "detail": f"from note {pl['provenance'].get('note_id', '').replace('note_', '')}",
+                        "status": "signed", "ids": [pl["id"]] + ([pl["provenance"]["note_id"]] if pl["provenance"].get("note_id") else [])})
     for e in ledger_for_problem(patient, problem["id"], proposed_dir):
         if e["kind"] == "medication_change" and e["decision"] == "accepted":
             med = next((m for m in patient["medications"] if m["id"] == e["id"]), None)

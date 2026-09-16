@@ -27,7 +27,8 @@ from ehr.card import problem_card  # noqa: E402
 from ehr.overview import patient_overview  # noqa: E402
 from ehr.orders import run_orders  # noqa: E402
 from ehr.compose import run_compose  # noqa: E402
-from ehr.review import REASON_CODES, apply_review, ledger_for_problem, list_queues, undo_review  # noqa: E402
+from ehr.review import REASON_CODES, apply_review, ledger_for_problem, list_queues, sign_note, undo_review  # noqa: E402
+from ehr.record import record_events  # noqa: E402
 from ehr.trend import DATA_DIR, load_patient, trend_from_patient  # noqa: E402
 
 NOTES_DIR = ROOT / "data" / "notes"
@@ -81,6 +82,7 @@ def patient_summary(pid: str):
         "insights": d["insights"],
         "documents": d.get("documents", []),
         "orders": d.get("orders", []),
+        "plans": d.get("plans", []),
     }
 
 
@@ -92,13 +94,19 @@ def overview(pid: str, since: str | None = None):
     # The note that arrived with the newest visit, if a demo note file carries it, and whether it has been read.
     enc = (o["here_for"] or {}).get("encounter")
     note = None
-    if enc:
-        for p in sorted(NOTES_DIR.glob("*.json")):
-            n, e = load_note_file(p)
-            if e and e.get("id") == enc["id"]:
-                note = {"id": n["id"], "file": str(p.relative_to(ROOT)), "author": n["author"], "time": n["time"],
-                        "has_queue": (PROPOSED_DIR / pid / f"{n['id']}.json").exists(),
-                        "has_replay": (PROPOSED_DIR / pid / f"{n['id']}.raw.json").exists()}
+    newest_file = None
+    for p in sorted(NOTES_DIR.glob("*.json")):
+        n, e = load_note_file(p)
+        if n["patient_id"] != pid or not e:
+            continue
+        if newest_file is None or e["time"] > newest_file[1]["time"]:
+            newest_file = (n, e, p)
+    if newest_file and (not enc or newest_file[1]["time"][:10] >= enc["time"][:10]):
+        n, e, p = newest_file
+        o["here_for"]["encounter"] = {k: e[k] for k in ("id", "time", "type", "summary")}
+        note = {"id": n["id"], "file": str(p.relative_to(ROOT)), "author": n["author"], "time": n["time"],
+                "has_queue": (PROPOSED_DIR / pid / f"{n['id']}.json").exists(),
+                "has_replay": (PROPOSED_DIR / pid / f"{n['id']}.raw.json").exists()}
     o["here_for"]["note"] = note
     return o
 
@@ -271,6 +279,8 @@ def queue(pid: str):
         if e["id"] in wanted: labels[e["id"]] = f"visit {e['time'][:10]} · {e['type']}"
     for i in d.get("insights", []):
         if i["id"] in wanted: labels[i["id"]] = f"insight: {i['statement'][:60]}"
+    for pl in d.get("plans", []):
+        if pl["id"] in wanted: labels[pl["id"]] = f"plan: {pl['text'][:60]}"
     return {"batches": batches, "labels": labels}
 
 
@@ -312,6 +322,28 @@ def undo(pid: str, stem: str, body: UndoBody):
         raise HTTPException(404, f"no queue {stem}")
 
 
+class SignBody(BaseModel):
+    by: str = "Dr. Chen"
+
+
+@app.post("/api/patients/{pid}/notes/{note_id}/sign")
+def sign(pid: str, note_id: str, body: SignBody):
+    """Attest the note: sign what it proposed and still waits, then stamp the note itself."""
+    try:
+        return sign_note(pid, note_id, by=body.by, data_dir=DATA_DIR)
+    except FileNotFoundError:
+        raise HTTPException(404, f"no queue for {note_id}; read the note first")
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+
+
+@app.get("/api/patients/{pid}/record")
+def record(pid: str, note_id: str | None = None, since: str | None = None):
+    """The record as a list of events, derived from provenance and review stamps. Never stored."""
+    d = _patient(pid)
+    return record_events(d, PROPOSED_DIR, note_id=note_id, since=since)
+
+
 @app.get("/api/patients/{pid}/notes/{note_id}")
 def chart_note(pid: str, note_id: str):
     d = _patient(pid)
@@ -328,14 +360,23 @@ def chart_note(pid: str, note_id: str):
 @app.get("/api/notes")
 def notes():
     out = []
+    charts: dict[str, dict] = {}
     for p in sorted(NOTES_DIR.glob("*.json")):
         note, enc = load_note_file(p)
         raw = PROPOSED_DIR / note["patient_id"] / f"{note['id']}.raw.json"
         queued = PROPOSED_DIR / note["patient_id"] / f"{note['id']}.json"
+        if note["patient_id"] not in charts:
+            try:
+                charts[note["patient_id"]] = load_patient(note["patient_id"], DATA_DIR)
+            except FileNotFoundError:
+                charts[note["patient_id"]] = {"notes": []}
+        on_chart = next((n for n in charts[note["patient_id"]].get("notes", []) if n["id"] == note["id"]), None)
         out.append({"file": str(p.relative_to(ROOT)), "id": note["id"], "patient_id": note["patient_id"],
                     "time": note["time"], "author": note["author"], "encounter": enc,
                     "excerpt": note["text"].strip()[:200], "text": note["text"],
-                    "has_replay": raw.exists(), "has_queue": queued.exists()})
+                    "has_replay": raw.exists(), "has_queue": queued.exists(),
+                    "status": (on_chart or {}).get("status", "signed" if (on_chart or {}).get("review") else "received"),
+                    "review": (on_chart or {}).get("review")})
     return out
 
 
@@ -442,8 +483,8 @@ PRISTINE = DATA_DIR / ".pristine"   # snapshot of every chart at server start; g
 
 def _is_clean(chart: dict) -> bool:
     """A chart with nothing AI-signed on it: the state the demo starts from."""
-    return not chart.get("documents") and not chart.get("orders") and all(
-        x["provenance"]["source"] == "fhir_import"
+    return not chart.get("documents") and not chart.get("orders") and not chart.get("plans") and all(
+        x["provenance"]["source"] in ("fhir_import", "curated")
         for k in ("problems", "observations", "medications", "links", "insights") for x in chart.get(k, []))
 
 

@@ -55,10 +55,16 @@ def _since(patient: dict, today: date) -> dict:
         return {"date": (today - timedelta(days=90)).isoformat(), "why": "no visits on the chart; last 90 days"}
     newest = encs[-1]
     cutoff = (date.fromisoformat(newest["time"][:10]) - timedelta(days=MIN_GAP_DAYS)).isoformat()
-    for e in reversed(encs[:-1]):
-        if e["time"][:10] <= cutoff and any(w in e["type"].lower() for w in ROUTINE):
-            return {"date": e["time"][:10], "why": f"your last routine visit before {_dmy(newest['time'])} ({e['type']})", "encounter_id": e["id"]}
-    return {"date": (today - timedelta(days=90)).isoformat(), "why": "no earlier routine visit; last 90 days"}
+    routine = [e for e in encs[:-1] if e["time"][:10] <= cutoff and any(w in e["type"].lower() for w in ROUTINE)]
+    if routine:
+        last = routine[-1]
+        # Results drawn at that visit are what changed since it; the value the clinician saw there is
+        # the one from the visit before, so trends are computed from that earlier visit.
+        before = [e for e in routine[:-1] if e["time"][:10] <= (date.fromisoformat(last["time"][:10]) - timedelta(days=MIN_GAP_DAYS)).isoformat()]
+        baseline = before[-1]["time"][:10] if before else (date.fromisoformat(last["time"][:10]) - timedelta(days=90)).isoformat()
+        return {"date": last["time"][:10], "baseline": baseline, "why": f"your last routine visit before {_dmy(newest['time'])} ({last['type']})", "encounter_id": last["id"]}
+    since = (today - timedelta(days=90)).isoformat()
+    return {"date": since, "baseline": (today - timedelta(days=180)).isoformat(), "why": "no earlier routine visit; last 90 days"}
 
 
 def clusters(patient: dict) -> list[dict]:
@@ -146,14 +152,14 @@ def _changes_for(patient: dict, cluster: dict, card: dict | None, since: str, to
     if card:
         lead = next((x for x in card["supporting"] if x["kind"] == "result"), None)
         crossed = any(q["label"] == "worsening" for q in card["qualifiers"])
-        if lead:
+        if lead and (lead.get("latest_time") or "") >= since:
             pct = 0.0
             try:
                 pct = float(lead["detail"].split("%")[0].split()[-1])
             except (ValueError, IndexError):
                 pass
             if crossed or pct >= MOVED_PCT:
-                line(4, "trend", lead["text"], lead["detail"] + (" · outside its range" if crossed else ""), lead["ids"], "worsening" if crossed else None)
+                line(4, "trend", lead["text"], lead["detail"] + (" · outside its range" if crossed and "range" not in lead["detail"] else ""), lead["ids"], "worsening" if crossed else None)
         for x in card["doesnt_fit"]:
             dated = [obs_dates[i] for i in x["ids"] if i in obs_dates]
             if x["kind"] in ("discordance", "counter_trend") and dated and since <= max(dated) <= today:
@@ -193,11 +199,11 @@ def _pending_loops(patient: dict, queues: list[dict]) -> list[dict]:
 
 def patient_overview(patient: dict, *, since: str | None = None, proposed_dir: Path = PROPOSED_DIR, today: date | None = None) -> dict:
     today = today or date.today()
-    since_info = {"date": since, "why": "as requested"} if since else _since(patient, today)
-    win = {"start": since_info["date"], "end": today.isoformat()}
+    since_info = {"date": since, "baseline": (date.fromisoformat(since) - timedelta(days=90)).isoformat(), "why": "as requested"} if since else _since(patient, today)
+    win = {"start": since_info["baseline"], "end": today.isoformat()}
     queues = list_queues(patient["patient"]["id"], proposed_dir)
     obs_dates = {o["id"]: o["effective_time"][:10] for o in patient["observations"]}
-    med_events = _med_events(patient, win["start"], win["end"])
+    med_events = _med_events(patient, since_info["date"], win["end"])
 
     concerns, changes, seen_meds = [], [], set()
     for cl in clusters(patient):
