@@ -58,6 +58,7 @@ STORY = {
 }
 LAST_VISIT = "2026-08-02"
 DROP_DATES = {("4548-4", "2023-02-19")}          # a duplicate A1c a week after the first
+PRIOR_NOTES = ["data/notes/note_demo_101.json"]   # signed before the demo starts; note_demo_102 is the one that arrives
 NEW_ENCOUNTERS = [{"id": "enc_c001", "time": "2026-01-25T09:30:00-05:00", "type": "encounter for check up", "summary": "Follow-up, diabetes and hypertension"}]
 EXTRA_MONITORS = [("LOINC:14959-1", "prob_0009"), ("LOINC:6298-4", "prob_0007"), ("LOINC:38483-4", "prob_0007")]
 
@@ -100,6 +101,12 @@ def main() -> int:
         if e["id"] not in have:
             chart["encounters"].append({**e, "patient_id": pid})
     chart["encounters"].sort(key=lambda e: e["time"])
+    # Dr. Chen's January note is on the chart, signed: the reader's last look, which the overview's "since" uses.
+    for f in PRIOR_NOTES:
+        note = json.loads((ROOT / f).read_text())["note"]
+        if not any(n["id"] == note["id"] for n in chart["notes"]):
+            chart["notes"].append({**note, "status": "signed", "review": {"by": note["author"], "at": note["time"], "decision": "accepted", "reason_code": None, "reason": None}})
+    chart["notes"].sort(key=lambda n: n["time"])
 
     have_links = {(l["from"], l["to"]) for l in chart["links"]}
     k = 0

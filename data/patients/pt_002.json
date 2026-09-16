@@ -3674,6 +3674,22 @@
       "text": "\n2025-07-27\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 54 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), laceration of foot (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), laceration - injury (disorder), gingivitis (disorder), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; ibuprofen 200 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\nPatient is presenting with medication review due (situation), stress (finding). \n\n\n## Plan\nPatient was given the following immunizations: influenza, split virus, trivalent, pf. \nThe following procedures were conducted:\n- medication reconciliation (procedure)\n- assessment of health and social care needs (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- lipid panel with direct ldl - serum or plasma\n- patient health questionnaire 2 item (phq-2) [reported]\nThe patient was prescribed the following medications:\n- hydrochlorothiazide 25 mg oral tablet\n- 24 hr metformin hydrochloride 500 mg extended release oral tablet\n"
     },
     {
+      "id": "note_demo_101",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_c001",
+      "time": "2026-01-25T10:05:00-05:00",
+      "author": "Dr. Chen",
+      "text": "Jeane Lueilwitz, 54F. Routine follow-up for diabetes and hypertension.\n\nS: Feels well overall. Some stomach upset with metformin after dinner, so she sometimes skips the evening dose. Low back pain after long shifts, takes Advil when it's bad. Home BP readings \"in the 140s\" when she remembers to check. No chest pain, headache or visual change.\n\nO: BP 142/88, HR 76, wt 84.2 kg. Lungs clear. No edema. Labs today: A1c 7.1, up from 6.4 in July. Fasting glucose 142.\n\nA/P:\n1. Type 2 diabetes, control slipping. Reviewed diet; discussed taking metformin with food. Recheck A1c in 6 months.\n2. Hypertension, above goal today. Continue HCTZ 25 mg; asked for a home BP log.\n3. Low back pain, mechanical. Stretching handout; acetaminophen first line.\n\nRTC 6 months.",
+      "status": "signed",
+      "review": {
+        "by": "Dr. Chen",
+        "at": "2026-01-25T10:05:00-05:00",
+        "decision": "accepted",
+        "reason_code": null,
+        "reason": null
+      }
+    },
+    {
       "id": "note_0045",
       "patient_id": "pt_002",
       "encounter_id": "enc_0045",

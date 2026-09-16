@@ -517,11 +517,11 @@ PRISTINE = DATA_DIR / ".pristine"   # snapshot of every chart at server start; g
 
 
 def _is_clean(chart: dict) -> bool:
-    """A chart with nothing AI-signed on it and no note signed: the state the demo starts from."""
+    """A chart with nothing AI-signed on it: the state the demo starts from. A note signed before the demo
+    (Jeane's January note) is curated and fine; a note signed during it brings accepted nlp items with it."""
     return not chart.get("documents") and not chart.get("orders") and not chart.get("plans") and all(
         x["provenance"]["source"] in ("fhir_import", "curated")
-        for k in ("problems", "observations", "medications", "links", "insights") for x in chart.get(k, [])
-    ) and not any(n.get("status") or n.get("review") for n in chart.get("notes", []))
+        for k in ("problems", "observations", "medications", "links", "insights") for x in chart.get(k, []))
 
 
 def _mid_demo(pid: str) -> bool:

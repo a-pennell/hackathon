@@ -48,8 +48,10 @@ from the chart: read the note, review it, sign it, ask what changed on the conce
 sign the insights, draft and sign the orders, and finally "nothing owed", which opens the notes.
 The visit chip in the header ("office visit · 15 Sep · note in progress") opens them too.
 
-- **Overview** is orientation: what changed since the last routine visit, ranked by clinical
-  meaning; the active concerns by what they need; the open loops.
+- **Overview** is orientation: what changed since you last looked, ranked by clinical meaning;
+  the active concerns by what they need; the open loops. "Since" is the signed-in clinician's
+  last visit with a note of their own, not a global last visit: a visit by someone else in
+  between is news to them, not a baseline.
 - **Care** is what we are doing: one card per concern with its plan, its measures and its open
   loops, chips that pivot the same objects by kind (plans, orders and requests, referrals,
   follow-ups, measures), and a due strip for monitored measures past their interval. Opening a
@@ -112,6 +114,27 @@ been skipping metformin for stomach upset, and taking ibuprofen daily for her ba
    signed actions into orders; sign them.
 6. **Reset demo** restores the chart to its server-start state and clears the queues.
    (Start the server from a clean chart, since that is the state it snapshots.)
+
+### The three-minute script
+
+Twenty-nine proposals, six insights and nine orders is more than three minutes holds. Two beats
+carry the demo; everything else is signed quickly. Start on `?patient=pt_002` from a clean chart,
+Claude on **saved**.
+
+| When | Do | Say |
+|---|---|---|
+| 0:00 | Overview | "Jeane, 55, diabetes and hypertension. Since Dr. Chen last saw her in January: systolic 142 to 154, glucose 142 to 168. Both concerns worsening. Nothing pending. A note from this morning is waiting." |
+| 0:20 | **Read the note** | "The system reads it. Every passage it used is marked. The clinical diff lists what it proposes, in diff notation: two new problems, three courses, two suspected causes, nine plan items. Nothing has touched the chart." |
+| 0:45 | **Review** the first item, ibuprofen | "The consequential items come first, one at a time, and the causal one leads: ibuprofen, 400 mg, since May, stopped today, as a suspected cause of the hypertension. Observation and attribution are separately signable. What changes if I sign is spelled out. This is beat one." **Sign.** |
+| 1:15 | **Review** the metformin item | "The second cause it proposes is wrong: metformin as a cause of the diabetes. The note says adherence is the driver. **Reject**, disagree, one line: *non-adherence is the cause, not the drug*. The rejection is on the record with its reason. Beat two." |
+| 1:40 | Review and sign the other five, fast | "Albuminuria raised, back pain raised, acetaminophen, lisinopril, the metformin switch." |
+| 2:00 | **Sign note** | "One signature commits the rest and attests the note. The record under it lists what it wrote: courses opened, links asserted, plan items set, my rejection with its reason." |
+| 2:15 | **Ask what changed on hypertension** | "The reasoning runs over the trends and the course events. Three insights, the second names the ibuprofen and expects a fall. The card shows the expectation as a corridor on the trajectory." |
+| 2:40 | **Sign 3 insights** · **Draft orders** · **Sign 5 orders** | "Signed actions become orders. Button says the next thing owed each time." |
+| 2:55 | Header | "Nothing owed on Jeane. Two unsigned notes on other patients: the button says so. Reset demo." |
+
+If time is short, skip 1:40 and let **Sign note** wait: the button reads "Sign note · 5 to review
+first", which makes the point that consequential items gate the signature.
 
 Same flow from the shell:
 

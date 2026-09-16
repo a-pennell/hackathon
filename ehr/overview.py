@@ -35,7 +35,7 @@ from ehr.card import problem_card
 from ehr.focus import clusters
 from ehr.extract import PROPOSED_DIR
 from ehr.reason import _accepted, monitored_codes
-from ehr.review import list_queues
+from ehr.review import DEFAULT_REVIEWER, list_queues
 from ehr.trend import DATA_DIR, load_patient
 
 ROUTINE = ("check up", "office visit", "follow", "general exam", "encounter for problem")
@@ -50,20 +50,35 @@ def _dmy(iso: str) -> str:
     return f"{d.day} {d.strftime('%b')}"
 
 
-def _since(patient: dict, today: date) -> dict:
+def _since(patient: dict, today: date, reader: str = DEFAULT_REVIEWER) -> dict:
     encs = sorted((e for e in patient["encounters"] if e["time"][:10] <= today.isoformat()), key=lambda e: e["time"])
     if not encs:
         return {"date": (today - timedelta(days=90)).isoformat(), "why": "no visits on the chart; last 90 days"}
     newest = encs[-1]
     cutoff = (date.fromisoformat(newest["time"][:10]) - timedelta(days=MIN_GAP_DAYS)).isoformat()
     routine = [e for e in encs[:-1] if e["time"][:10] <= cutoff and any(w in e["type"].lower() for w in ROUTINE)]
+    # "Since" is this reader's last look, not a global last visit: the last earlier encounter with a note by the
+    # signed-in clinician is where they last looked. A visit by someone else in between (a Synthea general
+    # examination) is news to them, not a baseline.
+    notes_by_enc = {n.get("encounter_id"): n for n in patient.get("notes", []) if n.get("encounter_id")}
+    author = reader
+    mine = [e for e in encs[:-1] if e["time"][:10] <= cutoff and (notes_by_enc.get(e["id"]) or {}).get("author") == author]
+    if mine:
+        last = mine[-1]
+        routine = [e for e in routine if e["time"][:10] <= last["time"][:10]] or [last]
+        if routine[-1]["id"] != last["id"]:
+            routine.append(last)
     if routine:
         last = routine[-1]
         # Results drawn at that visit are what changed since it; the value the clinician saw there is
         # the one from the visit before, so trends are computed from that earlier visit.
         before = [e for e in routine[:-1] if e["time"][:10] <= (date.fromisoformat(last["time"][:10]) - timedelta(days=MIN_GAP_DAYS)).isoformat()]
         baseline = before[-1]["time"][:10] if before else (date.fromisoformat(last["time"][:10]) - timedelta(days=90)).isoformat()
-        return {"date": last["time"][:10], "baseline": baseline, "why": f"your last routine visit before {_dmy(newest['time'])} ({last['type']})", "encounter_id": last["id"]}
+        if mine:
+            baseline = last["time"][:10]  # the reader's own note discussed that visit's results; the move starts there
+        why = (f"your last visit with this patient before {_dmy(newest['time'])} ({last['type']}, {author})" if mine
+               else f"your last routine visit before {_dmy(newest['time'])} ({last['type']})")
+        return {"date": last["time"][:10], "baseline": baseline, "why": why, "encounter_id": last["id"]}
     since = (today - timedelta(days=90)).isoformat()
     return {"date": since, "baseline": (today - timedelta(days=180)).isoformat(), "why": "no earlier routine visit; last 90 days"}
 
