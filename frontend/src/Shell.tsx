@@ -35,7 +35,7 @@ const dmy = (iso: string) => {
 };
 const hm = (iso: string) => iso.slice(11, 16);
 const dmyFull = (iso: string) => { const d = new Date(iso.slice(0, 10) + "T00:00:00"); return `${d.getDate()} ${d.toLocaleString("en", { month: "short" })} ${d.getFullYear()}`; };
-const BUSY: Record<string, string> = { extract: "Reading the note…", sign: "Signing the note…", reason: "Looking at what changed…", compose: "Drafting the referral…", orders: "Drafting orders…", draft: "Compiling the visit note…", reset: "Resetting…" };
+const BUSY: Record<string, string> = { extract: "Reading the note…", sign: "Signing the note…", reason: "Looking at what changed…", compose: "Drafting the referral…", orders: "Drafting orders…", draft: "Compiling the visit note…", intent: "Signing your decision…", reset: "Resetting…" };
 
 export default function Shell({ patients, pid, summary, overview, view, tab, onTab, next, onNext, busy, mode, onMode, onReset, onAbout, pendingCount, onPending, crumb }: Props) {
   const [demo, setDemo] = useState(false);

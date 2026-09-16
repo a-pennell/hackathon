@@ -24,7 +24,7 @@ from ehr.trend import DATA_DIR, load_patient
 
 LANES = ("sessions", "results", "documents", "changes", "reasoning")
 LANE_RANK = {l: i for i, l in enumerate(LANES)}
-SOURCE_WORD = {"fhir_import": "imported", "curated": "curated", "nlp_extraction": "from a note", "reasoning": "reasoned", "rules": "by rule", "orders": "from an insight"}
+SOURCE_WORD = {"fhir_import": "imported", "curated": "curated", "nlp_extraction": "from a note", "reasoning": "reasoned", "rules": "by rule", "orders": "from an insight", "clinician": "your decision"}
 
 
 def _nice(v) -> str:

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { CareData } from "./types";
+import IntentForm, { type IntentBody } from "./IntentForm";
 
-type Props = { data: CareData; highlight: Set<string>; onHover: (ids: string[] | null) => void; onOpen: (problemId: string) => void };
+type Props = { data: CareData; highlight: Set<string>; onHover: (ids: string[] | null) => void; onOpen: (problemId: string) => void; onIntent: (problemId: string, body: IntentBody) => Promise<void>; busy: string | null };
 
 type Kind = "all" | "plans" | "orders" | "referrals" | "follow_ups" | "measures";
 const KINDS: { key: Kind; label: string }[] = [
@@ -15,7 +16,7 @@ const dmy = (iso: string) => {
 
 /** Care: what we are doing. Problem cards with their plan, measures and open loops in place; the chips pivot the
  *  same objects to one kind across all problems. Opening a card goes to the problem workspace. */
-export default function CareTab({ data, highlight, onHover, onOpen }: Props) {
+export default function CareTab({ data, highlight, onHover, onOpen, onIntent, busy }: Props) {
   const [kind, setKind] = useState<Kind>("all");
   const [showResolved, setShowResolved] = useState(false);
   const active = data.cards.filter((c) => c.status === "active");
@@ -70,6 +71,7 @@ export default function CareTab({ data, highlight, onHover, onOpen }: Props) {
                     </div>
                   ))}
                   {c.plan.length > 5 && <p className="meta">+{c.plan.length - 5} more in the workspace</p>}
+                  <div className="add-intent"><IntentForm busy={busy} compact onSubmit={(b) => onIntent(c.id, b)} /></div>
                 </div>
                 <div className="module">
                   <p className="mod-label">Measures <span className="cnt">since {dmy(data.since.date)}</span></p>

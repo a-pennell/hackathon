@@ -349,8 +349,8 @@ def _expectation(patient: dict, problem: dict, ctx: dict, today: date) -> dict |
 def _plan(patient: dict, problem: dict, proposed_dir: Path) -> list[dict]:
     out = []
     for o in patient.get("orders", []):
-        if o["problem_id"] != problem["id"]:
-            continue
+        if o["problem_id"] != problem["id"] or o.get("provenance", {}).get("from_plan"):
+            continue  # a clinician's diagnostic or referral intent is listed as its plan item; the order is its execution
         text = o["name"]
         if o["kind"] == "medication_change" and o.get("med_id"):
             med = next((m for m in patient["medications"] if m["id"] == o["med_id"]), None)
@@ -361,7 +361,9 @@ def _plan(patient: dict, problem: dict, proposed_dir: Path) -> list[dict]:
                     "status": "signed", "ids": [o["id"]] + list(o["provenance"].get("evidence", []))[:4]})
     for pl in patient.get("plans", []):
         if pl["problem_id"] == problem["id"]:
-            out.append({"id": pl["id"], "plan_kind": pl["kind"], "text": pl["text"], "detail": f"from note {pl['provenance'].get('note_id', '').replace('note_', '')}",
+            src = pl["provenance"].get("source")
+            detail = "your decision, this visit" if src == "clinician" else f"from note {pl['provenance'].get('note_id', '').replace('note_', '')}"
+            out.append({"id": pl["id"], "plan_kind": pl["kind"], "text": pl["text"], "detail": detail,
                         "status": "signed", "ids": [pl["id"]] + ([pl["provenance"]["note_id"]] if pl["provenance"].get("note_id") else [])})
     for e in ledger_for_problem(patient, problem["id"], proposed_dir):
         if e["kind"] == "medication_change" and e["decision"] == "accepted":

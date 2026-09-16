@@ -80,10 +80,13 @@ def care_view(patient: dict, *, proposed_dir: Path = PROPOSED_DIR, today: date |
         plan = []
         for pl in patient.get("plans", []):
             if pl["problem_id"] in ids:
-                plan.append({"id": pl["id"], "kind": pl["kind"], "text": pl["text"], "status": "signed", "source": "note", "at": (pl.get("review") or {}).get("at") or pl["created_at"]})
+                src = "you" if pl["provenance"].get("source") == "clinician" else "note"
+                plan.append({"id": pl["id"], "kind": pl["kind"], "text": pl["text"], "status": "signed", "source": src, "at": (pl.get("review") or {}).get("at") or pl["created_at"]})
         for o in patient.get("orders", []):
             if o["problem_id"] in ids:
                 text = o["name"] + (f" · {o['audience']}" if o.get("audience") else "")
+                if o.get("provenance", {}).get("from_plan"):
+                    continue  # a clinician's diagnostic or referral intent is already in the plan; the order is its execution
                 plan.append({"id": o["id"], "kind": PLAN_KIND_OF_ORDER.get(o["kind"], o["kind"]), "text": text, "status": "signed", "source": "order", "at": o.get("ordered_at") or o["created_at"]})
         plan.sort(key=lambda x: ({"therapeutic": 0, "diagnostic": 1, "monitoring": 2, "referral": 3, "education": 4, "follow_up": 5}.get(x["kind"], 9), x["text"]))
         measures = []

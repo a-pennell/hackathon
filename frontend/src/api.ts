@@ -46,6 +46,8 @@ export const api = {
     req<{ done: string[] }>(`/api/patients/${pid}/queue/${stem}/undo`, { method: "POST", body: JSON.stringify({ ids }) }),
   signNote: (pid: string, note_id: string) => req<{ note_id: string; signed_at: string; by: string; done: string[] }>(`/api/patients/${pid}/notes/${note_id}/sign`, { method: "POST", body: JSON.stringify({}) }),
   timelineTab: (pid: string) => req<TimelineData>(`/api/patients/${pid}/timeline`),
+  addIntent: (pid: string, prob: string, body: { kind: string; text: string; course_id?: string; change?: string; dose?: string }) =>
+    req<{ plan_id: string; done: string[] }>(`/api/patients/${pid}/problems/${prob}/intents`, { method: "POST", body: JSON.stringify(body) }),
   getDraft: (pid: string, eid: string) => req<QueueBatch>(`/api/patients/${pid}/encounters/${eid}/draft`),
   compileDraft: (pid: string, eid: string) => req<QueueBatch>(`/api/patients/${pid}/encounters/${eid}/draft`, { method: "POST" }),
   signDraft: (pid: string, eid: string, sections: { heading: string; text: string }[]) =>

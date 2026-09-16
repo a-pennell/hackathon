@@ -820,3 +820,16 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .draft .cite { font-family: var(--mono); font-size: 10.5px; line-height: 16px; padding: 0 6px; border: 1px solid var(--rule); border-radius: 3px; color: var(--graphite); background: transparent; }
 .draft .cite:hover { border-color: var(--select); color: var(--select); }
 .ov.notes .note-row.visit .name { font-family: var(--serif); }
+
+
+/* ------------------------------------------------------------ clinician intents */
+.add-intent { margin-top: calc(var(--u) * 2); }
+.intent { border: 1px solid var(--rule-strong); border-radius: var(--r-md); background: var(--paper); padding: calc(var(--u) * 3); display: grid; gap: calc(var(--u) * 2); max-width: 640px; }
+.intent .kinds { display: flex; gap: 4px; flex-wrap: wrap; }
+.intent .code { font: 11.5px var(--sans); padding: 2px 9px; border: 1px solid var(--rule-strong); border-radius: 999px; background: transparent; color: var(--ink-2); }
+.intent .code.on { background: var(--select-wash); border-color: var(--select); color: var(--select); }
+.intent input, .intent select { font: 13px var(--sans); padding: calc(var(--u) * 1.5) calc(var(--u) * 2.5); border: 1px solid var(--rule-strong); border-radius: var(--r-sm); background: var(--paper-2); color: var(--ink); }
+.intent input:focus, .intent select:focus { outline: 2px solid var(--select); outline-offset: 1px; border-color: var(--select); }
+.intent .course-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.intent .row { display: flex; align-items: center; gap: calc(var(--u) * 2); }
+.intent .hint { font-size: 11px; color: var(--graphite); }

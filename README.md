@@ -118,14 +118,19 @@ been skipping metformin for stomach upset, and taking ibuprofen daily for her ba
    stopped an **Expected** line: systolic falling within two weeks, drawn as a corridor on the
    trajectory. **What's changed?** brings the insights; sign them. **Draft orders** turns the
    signed actions into orders; sign them.
-6. **Draft the visit note.** Once the transcript is signed and the concerns are settled, the button
+6. **Add to plan**, on a Care card or in the workspace's plan slot: your own decision on a problem,
+   one typed line (treat, test, monitor, refer, follow up, educate). It is signed as you add it and
+   stamped with the visit; a test or referral also places the order, and a treat line can stop or
+   re-dose a course on the chart, on the visit day. It shows on the card as "your decision, this
+   visit", on the Timeline's changes lane, and in the visit note's plan (`ehr/intent.py`).
+7. **Draft the visit note.** Once the transcript is signed and the concerns are settled, the button
    compiles the visit note from what you did: the transcript verbatim, the results recorded and
    reviewed, and per problem addressed an assessment and a plan rendered from the causes asserted,
    the rejections with their reasons, the signed insights, the plan items, the course changes and
    the orders. Every section carries the ids it came from. Edit the prose, **sign the visit note**;
    it lands on the record as a document of the visit, under Notes and on the Timeline. The chart
    writes the note; nothing reaches the chart before the signature (`ehr/draft.py`).
-7. **Reset demo** restores the chart to its server-start state and clears the queues.
+8. **Reset demo** restores the chart to its server-start state and clears the queues.
    (Start the server from a clean chart, since that is the state it snapshots.)
 
 ### The three-minute script
@@ -144,6 +149,7 @@ Claude on **saved**.
 | 2:00 | **Sign note** | "One signature commits the rest and attests the note. The record under it lists what it wrote: courses opened, links asserted, plan items set, my rejection with its reason." |
 | 2:15 | **Ask what changed on hypertension** | "The reasoning runs over the trends and the course events. Three insights, the second names the ibuprofen and expects a fall. The card shows the expectation as a corridor on the trajectory." |
 | 2:40 | **Sign 3 insights** · **Draft orders** · **Sign 5 orders** | "Signed actions become orders. Button says the next thing owed each time." |
+| 2:45 | **+ Add to plan** on the hypertension card | "My own line: home BP log, review in two weeks. Signed as I add it." |
 | 2:50 | **Draft the visit note** | "The chart writes the note. The transcript is the first section, verbatim. Every other section is compiled from what I just did, and every sentence cites the record: the cause I asserted, the one I rejected and why, the insights, the plan, the orders. I edit one line." **Sign the visit note.** |
 | 2:58 | Header | "Two unsigned notes on other patients: the button says so. Reset demo." |
 
@@ -159,6 +165,7 @@ python3 -m ehr.record pt_002 --note note_demo_102
 python3 -m ehr.reason pt_002 --problem prob_0007 --replay data/proposed/pt_002/reason_prob_0007.raw.json
 python3 -m ehr.overview pt_002
 python3 -m ehr.card pt_002 --problem prob_0007
+python3 -m ehr.intent pt_002 --problem prob_0007 --kind monitoring --text "Home BP log, review in two weeks"
 python3 -m ehr.draft pt_002 --encounter enc_c002          # the visit note, compiled; --sign to sign it as it stands
 ```
 
@@ -213,6 +220,9 @@ Two shapes the build needs that the schema doc does not define. Both are additiv
 8. **Visit note as a Document** (`ehr/draft.py`): `kind: "encounter_note"`, `encounter_id`,
    `problems_addressed[]`, `problem_id: null`; sections carry `source` (`transcript` | `compiled`) and
    `edited`. Queued as `visitnote_<encounter_id>`, signed into `documents` like the referral letter.
+9. **Clinician provenance** (`ehr/intent.py`): `provenance.source: "clinician"` with `by`, on plan items, orders
+   (`from_plan` names the intent) and medication changes the clinician makes directly. Signed as made; the
+   review record carries the encounter.
 
 ## Things the team should know
 

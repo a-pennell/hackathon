@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import IntentForm, { type IntentBody } from "./IntentForm";
 import { labelOf } from "./labels";
 import type { ReviewBody } from "./api";
 import { buildGroups, decideIdsOf, GroupCard, type Group } from "./Inbox";
@@ -26,6 +27,7 @@ type Props = {
   setWindow: (w: string) => void;
   windows: string[];
   actions: { reason: () => void; orders: () => void; compose: () => void; readNote: () => void };
+  onIntent: (body: IntentBody) => Promise<void>;
   trail: TrailEntry[];
   coding: CodingT | null;
   record: RecordEvent[];
@@ -49,7 +51,7 @@ const EV_WORD: Record<string, string> = {
   "order.placed": "order", "document.signed": "document", "proposal.rejected": "rejected",
 };
 
-export default function Card({ card, tl, queues, chartInsights, chartDocuments, labels, highlight, onHover, onReview, onReadDocument, onOpenNote, busy, window_, setWindow, windows, actions, trail, coding, record, problems }: Props) {
+export default function Card({ card, tl, queues, chartInsights, chartDocuments, labels, highlight, onHover, onReview, onReadDocument, onOpenNote, busy, window_, setWindow, windows, actions, trail, coding, record, problems, onIntent }: Props) {
   const name = (id: string) => labelOf(labels, id);
   const focusIds = useMemo(() => new Set([card.problem_id, ...card.members.map((m) => m.id), ...(tl?.series.map((s) => `LOINC:${s.code}`) ?? [])]), [card.problem_id, card.members, tl]);
   // Courses linked to this problem (treats or suspected cause); a change on one of these is consequential here.
@@ -344,6 +346,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
             ))}
             {card.plan.length === 0 && <div className="quiet">Nothing signed on this problem yet.</div>}
           </div>
+          <div className="add-intent"><IntentForm busy={busy} courses={tl?.medications ?? []} onSubmit={onIntent} /></div>
           {slots.plan.map(({ g, b }) => <GroupCard key={g.key} g={g} b={b} {...cardProps} />)}
           {slots.changes.filter((x) => x.here).map(({ c, b }, i) => (
             <div key={i} className="card pencil">

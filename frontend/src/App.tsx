@@ -112,6 +112,7 @@ export default function App() {
     const m: Record<string, string> = { ...queueLabels };
     if (summary) for (const p of summary.problems) m[p.id] = p.name;
     if (summary) for (const pl of summary.plans ?? []) m[pl.id] = `plan: ${pl.text}`;
+    if (summary) for (const o of summary.orders ?? []) m[o.id] = `order: ${o.name}`;
     if (tl) {
       for (const med of [...tl.medications, ...tl.proposed.medications]) m[med.id] = med.name;
       for (const s of tl.series) {
@@ -229,6 +230,10 @@ export default function App() {
     setDraft(await api.getDraft(PID, draftEnc));
     setToast({ stem: `visitnote_${draftEnc}`, ids: [], text: `Visit note signed by ${r.by}` });
   });
+  const addIntent = (problemId: string, body: import("./IntentForm").IntentBody) => run("intent", async () => {
+    const r = await api.addIntent(PID, problemId, body);
+    setToast({ stem: "intent", ids: [r.plan_id], text: `Signed and added: ${body.text}` });
+  });
   const openProblem = (id: string) => {
     setProblem(id);
     setTab("care");
@@ -339,7 +344,7 @@ export default function App() {
         ) : <div className="empty">Computing the overview…</div>)}
         {view === "timeline" && (tlTab ? <TimelineTab data={tlTab} highlight={highlight} onHover={hover} /> : <div className="empty">Loading the timeline…</div>)}
         {view === "chart" && (chart ? <ChartTab data={chart} onOpenProblem={openProblem} /> : <div className="empty">Loading the chart…</div>)}
-        {view === "care" && (care ? <CareTab data={care} highlight={highlight} onHover={hover} onOpen={openProblem} /> : <div className="empty">Loading care…</div>)}
+        {view === "care" && (care ? <CareTab data={care} highlight={highlight} onHover={hover} onOpen={openProblem} onIntent={addIntent} busy={busy} /> : <div className="empty">Loading care…</div>)}
         {view === "notes" && <NotesTab notes={notes} pid={PID} patients={patients} scope={notesScope} onScope={setNotesScope} queues={queues} visitNotes={visitNotes} onOpenVisitNote={(eid) => openDraft(eid, false)} onOpen={openNote} onRead={(n) => { openNote(n.id); if (n.file && (mode === "live" || n.has_replay)) runExtract(n, mode); }} busy={busy} />}
         {view === "draft" && (draft ? <DraftNote batch={draft} labels={labels} problems={summary.problems} busy={busy} onSign={signDraft} onRecompile={() => draftEnc && openDraft(draftEnc, true)} onOpenProblem={openProblem} onOpenNote={openChartNote} onHover={hover} /> : <div className="empty">Compiling the visit note…</div>)}
         {view === "problem" && (
@@ -365,6 +370,7 @@ export default function App() {
                   setWindow={setWindow}
                   windows={WINDOWS}
                   actions={{ reason: () => runReason(selected.id), orders: () => runOrders(selected.id), compose: () => runCompose(selected.id), readNote: () => overview?.here_for.note && openNote(overview.here_for.note.id) }}
+                  onIntent={(b) => addIntent(selected.id, b)}
                   trail={trail}
                   coding={coding}
                   record={problemRecord}

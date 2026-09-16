@@ -192,10 +192,13 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
         for pl in t["plans"]:
             plan_lines.append(f"{pl['kind'].replace('_', ' ').capitalize()}: {pl['text']}."); pcites.append(pl["id"])
         for o in t["orders"]:
+            if (o.get("provenance") or {}).get("from_plan"):
+                pcites.append(o["id"]); continue  # the plan item already says it
             plan_lines.append(f"Order: {o['name']}" + (f", {o['detail']}" if o.get("detail") else "") + "."); pcites.append(o["id"])
         for i in t["insights"]:
             if i.get("suggested_action"):
-                plan_lines.append(i["suggested_action"].removeprefix("Consider ").capitalize().rstrip(".") + " (signed insight)."); pcites.append(i["id"])
+                a = i["suggested_action"].removeprefix("Consider ").rstrip(".")
+                plan_lines.append(a[:1].upper() + a[1:] + " (signed insight)."); pcites.append(i["id"])
         if plan_lines:
             add(f"Plan · {pname}", " ".join(plan_lines), pcites, "compiled", pid)
 

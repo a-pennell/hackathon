@@ -49,3 +49,22 @@ def test_visit_note_compiles_from_the_encounter_and_signs_into_documents(tmp_pat
     assert signed["status"] == "accepted" and signed["review"]["encounter_id"] == "enc_c002"
     # a signed draft is not recompiled over
     assert run_draft("pt_002", "enc_c002", data_dir=d)["proposed"]["documents"][0]["status"] == "accepted"
+
+
+def test_clinician_intent_is_signed_at_once_and_reaches_the_visit_note(tmp_path):
+    from ehr.intent import run_intent
+    d = _visit(tmp_path)
+    out = run_intent("pt_002", "prob_0007", "monitoring", "Home BP log, review in two weeks", data_dir=d)
+    ref = run_intent("pt_002", "prob_0007", "referral", "Nutrition counselling", data_dir=d)
+    stop = run_intent("pt_002", "prob_0007", "therapeutic", "Stop hydrochlorothiazide", course_id="med_hydrochlorothiazide", change="stop", data_dir=d)
+    chart = json.loads((d / "pt_002.json").read_text())
+    plan = next(p for p in chart["plans"] if p["id"] == out["plan_id"])
+    assert plan["status"] == "accepted" and plan["provenance"]["source"] == "clinician" and plan["review"]["encounter_id"] == "enc_c002"
+    assert any(o["kind"] == "referral" and o["provenance"].get("from_plan") == ref["plan_id"] for o in chart["orders"])
+    hctz = next(m for m in chart["medications"] if m["id"] == "med_hydrochlorothiazide")
+    assert hctz["segments"][-1]["end"] == "2026-09-15" and stop["effective"] == "2026-09-15"  # the visit day, not today
+    doc = run_draft("pt_002", "enc_c002", data_dir=d)["proposed"]["documents"][0]
+    htn_plan = next(s for s in doc["sections"] if s["heading"] == "Plan · Essential hypertension")
+    assert "Home BP log, review in two weeks" in htn_plan["text"] and "Nutrition counselling" in htn_plan["text"]
+    assert "Hydrochlorothiazide 25 mg stopped" in htn_plan["text"] or "hydrochlorothiazide" in htn_plan["text"].lower()
+    assert out["plan_id"] in htn_plan["cites"] and "med_hydrochlorothiazide" in htn_plan["cites"]
