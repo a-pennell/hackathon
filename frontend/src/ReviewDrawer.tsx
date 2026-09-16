@@ -43,7 +43,7 @@ export default function ReviewDrawer({ item, labels, problems, onReview, onClose
   const subject = g?.subject ?? null;
   const links = g?.links ?? [];
   const prov = (subject?.provenance ?? links[0]?.provenance ?? c?.provenance) as { quote?: string; confidence?: number; model?: string; note_id?: string } | undefined;
-  const hint = g?.subject ? b.review_hints?.[g.subject.id] : c?.hint;
+  const hint = g?.subject ? b.review_hints?.[g.subject.id] : g ? b.review_hints?.[g.links[0]?.id ?? ""] : c?.hint;  // a link-only group carries its rationale on the link
   const confidence = g?.confidence ?? c?.provenance.confidence ?? null;
 
   // Title and the three parts.

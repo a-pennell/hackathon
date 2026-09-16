@@ -9,11 +9,12 @@ export type NextAction = {
   hint: string;
   kind: "read" | "review" | "sign" | "reason" | "sign-insights" | "orders" | "sign-orders" | "done";
   noteId?: string;
+  notesScope?: "patient" | "mine";  // what the Notes tab shows when the button opens it
   problemId?: string;
 };
 
 /** Decisions waiting on a note, counted the way the Note view shows them: one per card, not one per link. */
-const waitingIn = (b: QueueBatch | undefined) =>
+export const waitingIn = (b: QueueBatch | undefined) =>
   b ? buildGroups(b, (id) => id, new Set()).filter((g) => g.status === "proposed" && !(g.subject && g.subject.status === "rejected")).length + (b.medication_changes ?? []).filter((c) => c.status === "proposed").length : 0;
 
 export function nextAction(overview: Overview | null, notes: NoteFile[], queues: QueueBatch[], summary: PatientSummary | null): NextAction {
@@ -42,5 +43,9 @@ export function nextAction(overview: Overview | null, notes: NoteFile[], queues:
     const signedOrders = (summary?.orders ?? []).filter((o) => o.problem_id === c.id).length;
     if (signedInsights > 0 && !orders && signedOrders === 0) return { label: `Draft orders for ${short}`, hint: "turn the signed actions into orders", kind: "orders", problemId: c.id };
   }
-  return { label: "Nothing owed", hint: "the visit is documented; results will reopen loops when they land", kind: "done" };
+  // Nothing owed here. The idle state is the clinician's documentation debt, not the patient's: unsigned notes on
+  // other patients come first, and only then "nothing owed".
+  const elsewhere = notes.filter((n) => n.patient_id !== summary?.patient.id && n.status !== "signed").length;
+  if (elsewhere > 0) return { label: `Unsigned notes · ${elsewhere}`, hint: "nothing is owed on this patient; these notes on other patients are still unsigned", kind: "done", notesScope: "mine" };
+  return { label: "Nothing owed", hint: "the visit is documented; results will reopen loops when they land. Opens the notes on file", kind: "done", notesScope: "patient" };
 }

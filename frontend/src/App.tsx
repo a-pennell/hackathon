@@ -9,6 +9,10 @@ import { ChartTab, TimelineTab } from "./ChartTab";
 import CareTab from "./CareTab";
 import { nextAction } from "./next";
 import { labelOf } from "./labels";
+import NotesTab from "./NotesTab";
+import { waitingIn } from "./next";
+
+const LINK_WORD: Record<string, string> = { relevant_to: "bears on", evidence_for: "is evidence for", treats: "treats", suspected_cause: "is a suspected cause of", monitors: "monitors" };
 import type { Card as CardT, CareData, ChartData, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientRow, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry } from "./types";
 
 const PID = new URLSearchParams(window.location.search).get("patient") ?? "pt_002";
@@ -35,6 +39,7 @@ export default function App() {
   const [queues, setQueues] = useState<QueueBatch[]>([]);
   const [queueLabels, setQueueLabels] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<NoteFile[]>([]);
+  const [notesScope, setNotesScope] = useState<"patient" | "mine">("patient");
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +61,7 @@ export default function App() {
     setOverview(o);
     setQueues(q.batches);
     setQueueLabels(q.labels);
-    setNotes(n.filter((x) => x.patient_id === PID));
+    setNotes(n);  // every patient's notes: the Notes tab and the idle call-to-action read across patients
     setPatients(ps);
     setProblem((p) => p ?? o?.concerns[0]?.id ?? s.problems.find((x) => (x.monitored_codes?.length ?? 0) > 0)?.id ?? null);
   }, []);
@@ -124,13 +129,15 @@ export default function App() {
       for (const pl of b.proposed.plans ?? []) m[pl.id] = `plan: ${pl.text}`;
       if (b.note_id) m[b.note_id] = `note ${b.note_id.replace("note_", "")}`;
     }
+    for (const n of notes) m[n.id] = `${n.author}'s note · ${n.time.slice(0, 10)}`;
+    // A link reads as the sentence it asserts, never as an id.
+    const nm = (id: string) => m[id] ?? labelOf(m, id);
+    for (const b of queues) for (const l of b.proposed.links ?? []) m[l.id] = `${nm(l.from)} ${LINK_WORD[l.type] ?? l.type} ${nm(l.to)}`;
     return m;
-  }, [summary, tl, queues, queueLabels]);
+  }, [summary, tl, queues, queueLabels, notes]);
 
-  const pendingCount = useMemo(
-    () => queues.reduce((n, b) => n + Object.values(b.proposed).flat().filter((it) => it && (it as { status: string }).status === "proposed").length + (b.medication_changes ?? []).filter((c) => c.status === "proposed").length, 0),
-    [queues],
-  );
+  // Counted the way the views show them: one per card, not one per link, so the chip and the call-to-action agree.
+  const pendingCount = useMemo(() => queues.reduce((n, b) => n + waitingIn(b), 0), [queues]);
 
   const fail = (e: unknown) => setError(String((e as Error).message ?? e));
 
@@ -236,9 +243,22 @@ export default function App() {
       case "sign": openNote(next.noteId!); return signNote();
       case "reason": openProblem(next.problemId!); return runReason(next.problemId!);
       case "orders": openProblem(next.problemId!); return runOrders(next.problemId!);
-      case "sign-insights":
-      case "sign-orders": return openProblem(next.problemId!);
-      default: return;
+      case "sign-insights": {
+        // Insights are batchable: the button signs every proposed one on the concern and shows the result.
+        openProblem(next.problemId!);
+        const b = queues.find((q) => q.stem === `reason_${next.problemId}`);
+        const ids = (b?.proposed.insights ?? []).filter((i) => i.status === "proposed").map((i) => i.id);
+        if (b && ids.length) await review(b.stem, { accept: ids });
+        return;
+      }
+      case "sign-orders": {
+        openProblem(next.problemId!);
+        const b = queues.find((q) => q.stem === `orders_${next.problemId}`);
+        const ids = (b?.proposed.orders ?? []).filter((o) => o.status === "proposed").map((o) => o.id);
+        if (b && ids.length) await review(b.stem, { accept: ids });
+        return;
+      }
+      default: setNotesScope(next.notesScope ?? "patient"); return goTab("notes");
     }
   };
 
@@ -288,6 +308,7 @@ export default function App() {
         {view === "timeline" && (chart ? <TimelineTab record={patientRecord} encounters={chart.encounters} /> : <div className="empty">Loading the timeline…</div>)}
         {view === "chart" && (chart ? <ChartTab data={chart} onOpenProblem={openProblem} /> : <div className="empty">Loading the chart…</div>)}
         {view === "care" && (care ? <CareTab data={care} highlight={highlight} onHover={hover} onOpen={openProblem} /> : <div className="empty">Loading care…</div>)}
+        {view === "notes" && <NotesTab notes={notes} pid={PID} patients={patients} scope={notesScope} onScope={setNotesScope} queues={queues} onOpen={openNote} onRead={(n) => { openNote(n.id); if (n.file && (mode === "live" || n.has_replay)) runExtract(n, mode); }} busy={busy} />}
         {view === "problem" && (
           <>
             <div className="sheet">
@@ -339,7 +360,7 @@ export default function App() {
             chart={chart}
             care={care}
             coding={coding}
-            lastNote={notes.filter((x) => x.time < openNoteFile.time).sort((x, y) => y.time.localeCompare(x.time))[0] ?? null}
+            lastNote={notes.filter((x) => x.patient_id === PID && x.time < openNoteFile.time).sort((x, y) => y.time.localeCompare(x.time))[0] ?? null}
           />
         ) : <div className="empty">That note is not on file.</div>)}
       </main>

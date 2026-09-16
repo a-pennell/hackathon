@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { NextAction } from "./next";
 import type { Overview, Patient, PatientSummary } from "./types";
 
-export type Tab = "overview" | "timeline" | "care" | "chart";
+export type Tab = "overview" | "timeline" | "care" | "chart" | "notes";
 export type View = Tab | "note" | "problem";
 
 type Props = {
@@ -93,14 +93,14 @@ export default function Shell({ patients, pid, summary, overview, view, tab, onT
         <span className="hchip allergy">No allergies on file</span>
         {flags > 0 ? <button className="hchip flags" onClick={onPending} title="Proposals waiting for a signature">⚑ {flags} waiting</button> : <span className="hchip soft">⚑ nothing waiting</span>}
         <span className="spacer" />
-        <span className={`hchip visit ${note && !note.has_queue ? "note-waiting" : ""}`} title={note ? (note.status === "signed" ? "the note is signed" : note.has_queue ? "the note has been read, not yet signed" : "the note has not been read") : ""}>
-          {visit}{note ? (note.status === "signed" ? " · note signed" : note.has_queue ? " · note read" : " · note waiting") : ""}
-        </span>
+        <button className={`hchip visit ${note && !note.has_queue ? "note-waiting" : ""}`} onClick={() => onTab("notes")} title={(note ? (note.status === "signed" ? "the note is signed" : note.has_queue ? "the note has been read, not yet signed" : "the note has not been read") : "no note today") + " · opens the notes on file"}>
+          {visit}{note ? (note.status === "signed" ? " · note signed" : note.has_queue ? " · note in progress" : " · note waiting") : ""}
+        </button>
         <span className="next">
           {busy ? (
             <span className="busy-inline">{BUSY[busy] ?? "Saving…"}</span>
           ) : (
-            <button className={`btn cta ${next.kind === "done" ? "quiet" : "primary"}`} disabled={next.kind === "done"} onClick={onNext} title={next.hint}>
+            <button className={`btn cta ${next.kind === "done" ? "quiet" : "primary"}`} onClick={onNext} title={next.hint}>
               {next.label}
             </button>
           )}
@@ -108,8 +108,8 @@ export default function Shell({ patients, pid, summary, overview, view, tab, onT
       </div>
 
       <div className="pt-tabs" role="tablist" aria-label="Patient sections">
-        {(["overview", "timeline", "care", "chart"] as Tab[]).map((t) => (
-          <button key={t} className="pt-tab" role="tab" aria-selected={view === t || (view === "problem" && t === "care")} onClick={() => onTab(t)}>
+        {(["overview", "timeline", "care", "chart", "notes"] as Tab[]).map((t) => (
+          <button key={t} className="pt-tab" role="tab" aria-selected={view === t || (view === "problem" && t === "care") || (view === "note" && t === "notes")} onClick={() => onTab(t)}>
             {t[0].toUpperCase() + t.slice(1)}
           </button>
         ))}

@@ -183,7 +183,7 @@ export function buildGroups(b: QueueBatch, name: (id: string) => string, chartMe
     } else if (from.startsWith("med_") && chartMedIds.has(from) && ls.every((l) => l.type === "treats")) {
       add("medication", null, from, <><b>{name(from)}</b> · already on the chart</>, ls, { routine: true });
     } else {
-      add(from.startsWith("obs_") ? "result" : from.startsWith("med_") ? "medication" : "link", null, from, <b>{name(from)}</b>, ls);
+      add(from.startsWith("obs_") ? "result" : from.startsWith("med_") ? "medication" : "link", null, from, from.startsWith("obs_") ? <><b>{name(from)}</b> · already on the chart</> : <b>{name(from)}</b>, ls);
     }
   }
   return groups;

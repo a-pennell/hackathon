@@ -46,7 +46,8 @@ OUTPUT_SCHEMA = {
 
 
 def _nice(v: float) -> str:
-    return (f"{v:.0f}" if abs(v) >= 100 else f"{v:.1f}" if abs(v) >= 10 else f"{v:.2f}").rstrip("0").rstrip(".")
+    s = f"{v:.0f}" if abs(v) >= 100 else f"{v:.1f}" if abs(v) >= 10 else f"{v:.2f}"
+    return s.rstrip("0").rstrip(".") if "." in s else s  # never strip the zeros of 150
 
 
 def _dmy(iso: str) -> str:

@@ -82,7 +82,13 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
   const openChanges = changes.filter((c) => c.status === "proposed");
   const signed = note.status === "signed";
   const waiting = open.length + openChanges.length;
-  const consequential = open.filter(isConsequential);
+  // A suspected cause is the claim with the longest shadow, so the course that carries one comes first, then any other
+  // cause asserted, then problems raised, then courses opened.
+  const rankOf = (g: Group) => {
+    const cause = g.links.some((l) => l.type === "suspected_cause");
+    return cause && g.kind === "medication" ? 0 : cause ? 1 : g.kind === "problem" ? 2 : 3;
+  };
+  const consequential = open.filter(isConsequential).sort((a, b) => rankOf(a) - rankOf(b));
   const batchable = open.filter((g) => !isConsequential(g));
   const gated = consequential.length + openChanges.length;
 
@@ -105,7 +111,8 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
       const status = g.subject && g.subject.status === "rejected" ? "rejected" : g.status;
       if (g.kind === "problem") rows.push({ sym: "+", cls: "add", text: `New problem: ${name(g.subjectId)}`, ids: g.hoverIds, status });
       else if (g.kind === "medication" && g.subject) rows.push({ sym: "+", cls: "add", text: `Course: ${name(g.subjectId)}`, ids: g.hoverIds, status });
-      else if (g.kind === "result") rows.push({ sym: "+", cls: "add", text: `Result: ${name(g.subjectId)}`, ids: g.hoverIds, status });
+      else if (g.kind === "result") rows.push(g.subject ? { sym: "+", cls: "add", text: `Result: ${name(g.subjectId)}`, ids: g.hoverIds, status }
+        : { sym: "=", cls: "same", text: `On the chart: ${name(g.subjectId)} · linked to ${g.links.map((l) => name(l.to)).join(", ")}`, ids: g.hoverIds, status });
       else if (g.kind === "plan") rows.push({ sym: "+", cls: "add", text: `Plan: ${name(g.subjectId).replace(/^plan: /, "")}`, ids: g.hoverIds, status });
       for (const l of g.links) {
         if (l.type === "suspected_cause") rows.push({ sym: "→", cls: "chg", text: `Link: ${name(l.from)} → suspected cause of ${name(l.to)}`, ids: [l.id, l.from, l.to], status: l.status });
@@ -180,7 +187,7 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
                 <div className="pgroup-head">Consequential · reviewed one at a time <span className="cnt">{consequential.length + openChanges.length}</span></div>
                 {consequential.map((g) => (
                   <div key={g.key} className="crow" onMouseEnter={() => onHover(g.hoverIds)} onMouseLeave={() => onHover(null)}>
-                    <span className="kind">{g.kind === "problem" ? "problem" : g.kind === "medication" ? "course" : "cause"}</span>
+                    <span className="kind">{g.kind === "problem" ? "problem" : g.kind === "medication" && g.subject ? "course" : "cause"}</span>
                     <span className="what">{g.title}</span>
                     <button className="btn small primary" disabled={!!busy} onClick={() => setReviewing({ g, b: batch! })}>Review</button>
                   </div>

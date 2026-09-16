@@ -42,10 +42,11 @@ Open http://localhost:8000. The built frontend is committed in `frontend/dist`; 
 frontend reloads use `npm run dev` (port 5173, proxies `/api` to 8000).
 
 The screen is framed like a record: session tabs for the open patients, the practice bar, a
-patient header with the visit and the note's status, and four patient tabs, **Overview ·
-Timeline · Care · Chart**. The header carries one button, the next thing owed, computed from the
-chart: read the note, review it, sign it, ask what changed on the concern that is moving, sign the
-insights, draft and sign the orders, and finally "nothing owed".
+patient header with the visit and the note's status, and five patient tabs, **Overview ·
+Timeline · Care · Chart · Notes**. The header carries one button, the next thing owed, computed
+from the chart: read the note, review it, sign it, ask what changed on the concern that is moving,
+sign the insights, draft and sign the orders, and finally "nothing owed", which opens the notes.
+The visit chip in the header ("office visit · 15 Sep · note in progress") opens them too.
 
 - **Overview** is orientation: what changed since the last routine visit, ranked by clinical
   meaning; the active concerns by what they need; the open loops.
@@ -58,7 +59,10 @@ insights, draft and sign the orders, and finally "nothing owed".
   surveillance card (each monitored series with its threshold and state, the expectation and
   what to reassess on, the next review), a linked card, supporting and doesn't-fit evidence,
   insights, plan, the trajectory with the expectation drawn as a corridor.
-- **The note** is the encounter canvas, reached from the header or the overview: the text with
+- **Notes** lists every note on file for the patient by state: in progress (read, with decisions
+  or a signature still owed, and how many), waiting to be read, signed (by whom, when). Each row's
+  button is the next thing owed on that note.
+- **The note** is the encounter canvas, reached from the header, the overview or Notes: the text with
   every passage the reading used marked, the clinical diff (each proposal in diff notation),
   consequential items first, each reviewed one at a time in a **drawer** (what the system saw,
   what it concluded, its confidence, each part separately signable; what changes on the chart if

@@ -434,6 +434,11 @@ svg.tl .order.med { fill: var(--select); }
 .ovrow.concern { cursor: pointer; }
 .ovrow .name { font-family: var(--serif); font-size: 14.5px; }
 .ov .quiet { font-size: 12.5px; color: var(--graphite); font-style: italic; padding: calc(var(--u) * 2) 0; }
+.ov.notes .ovgrid.one { grid-template-columns: 1fr; }
+.ov.notes .ovbar .scope { margin-left: auto; display: flex; gap: 6px; }
+.ov.notes a.btn { text-decoration: none; }
+.ov.notes .note-row .why { font-family: var(--serif); font-size: 12.5px; }
+.hchip.visit { cursor: pointer; }
 .ov .more { font-size: 11.5px; color: var(--graphite); padding-top: calc(var(--u) * 2); }
 .ov .more button { color: var(--select); text-decoration: underline; text-underline-offset: 2px; }
 
@@ -740,7 +745,7 @@ details.explain ul { border: 1px solid var(--rule); background: var(--paper-2); 
 .changeset .cs-head .cnt { color: var(--graphite); font-size: 10.5px; }
 .cs-row { display: grid; grid-template-columns: 14px 1fr auto; gap: 8px; padding: 2px 2px; border-radius: 3px; color: var(--ink-2); }
 .cs-row .sym { font-weight: 700; }
-.cs-row.add .sym { color: var(--accepted); } .cs-row.chg .sym { color: var(--select); } .cs-row.rm .sym { color: var(--flag); }
+.cs-row.add .sym { color: var(--accepted); } .cs-row.chg .sym { color: var(--select); } .cs-row.rm .sym { color: var(--flag); } .cs-row.same .sym { color: var(--graphite); }
 .cs-row.accepted { color: var(--graphite); } .cs-row.rejected { color: var(--pencil); text-decoration: line-through; }
 .cs-row .st { color: var(--graphite); font-size: 10px; }
 .cs-row.hi, .cs-row:hover { background: var(--select-wash); }
