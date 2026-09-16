@@ -1,0 +1,3811 @@
+{
+  "patient": {
+    "id": "pt_002",
+    "name": "Jeane Casandra Lueilwitz",
+    "dob": "1971-07-04",
+    "sex": "F"
+  },
+  "problems": [
+    {
+      "id": "prob_0007",
+      "patient_id": "pt_002",
+      "name": "Essential hypertension",
+      "code": {
+        "system": "SNOMED-CT",
+        "value": "59621000"
+      },
+      "status": "active",
+      "onset_date": "2022-07-10",
+      "resolved_date": null,
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "prob_0009",
+      "patient_id": "pt_002",
+      "name": "Diabetes mellitus type 2",
+      "code": {
+        "system": "SNOMED-CT",
+        "value": "44054006"
+      },
+      "status": "active",
+      "onset_date": "2022-07-10",
+      "resolved_date": null,
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "prob_0011",
+      "patient_id": "pt_002",
+      "name": "Hypertriglyceridemia",
+      "code": {
+        "system": "SNOMED-CT",
+        "value": "302870006"
+      },
+      "status": "active",
+      "onset_date": "2023-02-12",
+      "resolved_date": null,
+      "provenance": {
+        "source": "fhir_import"
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "obs_33fdae47",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 5.7,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2017-07-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_15f5000a",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 78.6,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2017-07-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_fb86b350",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 27.81,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2017-07-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_e45eca15_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 87.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2017-07-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_e45eca15_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 111.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2017-07-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_3e014f93",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 75.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2017-07-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_ca05540a",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 69.7,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2017-07-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_e65d1ca2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 17.96,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2017-07-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_55638133",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 0.87,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2017-07-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_5b584a49",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 137.62,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2017-07-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_f553a4ff",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 4.08,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2017-07-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_a8534219",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 5.9,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2019-07-28T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_cb7029a4",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 81.8,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2019-07-28T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_ff0bfba4",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 28.95,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2019-07-28T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_6d9805ce_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 88.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2019-07-28T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_6d9805ce_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 111.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2019-07-28T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_a8cd1724",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 74.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2019-07-28T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_a40fc360",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 93.39,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2019-07-28T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_6554a0a3",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 17.71,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2019-07-28T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_9e68a1b9",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 0.89,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2019-07-28T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_72c5c8a2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 139.51,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2019-07-28T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_9827b4d7",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 5.15,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2019-07-28T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_50bf7745",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 6.0,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2020-11-15T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_76d0e745",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 83.9,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2020-11-15T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_05d4642c",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 29.69,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2020-11-15T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_b0aba720_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 85.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2020-11-15T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_b0aba720_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 115.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2020-11-15T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_62a85b94",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 83.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2020-11-15T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_e4503b83",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 69.36,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2020-11-15T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_26cc4a52",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 14.27,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2020-11-15T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_aa9d5006",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 0.9,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2020-11-15T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_5b65fc17",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 140.37,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2020-11-15T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_1eb3604b",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 3.78,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2020-11-15T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_ccf26e1c",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 6.1,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2021-05-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_9a91c96b",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 84.7,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2021-05-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_4376aa66",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 29.99,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2021-05-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_eb289ed3_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 83.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2021-05-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_eb289ed3_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 113.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2021-05-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_280d2ea7",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 70.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2021-05-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_2ffb63f6",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 71.66,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2021-05-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_7ac3279e",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 19.71,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2021-05-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_6b67bad3",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 0.91,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2021-05-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_0542ef51",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 140.69,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2021-05-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_7e0ddef4",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 5.01,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2021-05-23T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_81c6c433",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 6.2,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2021-05-30T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_3bcc37c9",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 6.2,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2021-06-06T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_6da817fc",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 84.8,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2021-06-06T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_a721426c",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 30.01,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2021-06-06T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_77f391f5_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 80.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2021-06-06T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_77f391f5_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 115.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2021-06-06T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_19cfb26c",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 60.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2021-06-06T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_d327716b",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 70.05,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2021-06-06T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_580b208d",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 16.2,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2021-06-06T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_64933784",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 0.91,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2021-06-06T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_1af54ad0",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 136.83,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2021-06-06T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_553a4eef",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 4.15,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2021-06-06T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_f11dc855",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 6.3,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2021-07-04T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_65349031",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 84.9,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2021-07-04T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_b0c0c9f9",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 30.05,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2021-07-04T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_23ff6167_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 85.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2021-07-04T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_23ff6167_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 118.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2021-07-04T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_e933d0d3",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 93.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2021-07-04T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_615fb663",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 64.33,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2021-07-04T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_b7ad7d71",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 11.11,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2021-07-04T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_08fd74b5",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 1.18,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2021-07-04T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_fc3e5e1a",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 142.09,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2021-07-04T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_2a38df18",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 4.92,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2021-07-04T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_b4600777",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 7.5,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_6a8a2ad9",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 85.0,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_671b7eba",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 30.08,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_46fa7087_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 114.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_46fa7087_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 141.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_4c2927c2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 99.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_b1d573d3",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 96.66,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_8d3cb0f1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 12.87,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_5bda2f8c",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 0.89,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_41420df8",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 138.79,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_70e95d9c",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 4.26,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_745d49c8",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "14959-1"
+      },
+      "name": "Urine albumin/creatinine ratio",
+      "value": 11.82,
+      "unit": "mg/g",
+      "reference_range": null,
+      "effective_time": "2022-07-10T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_03aebbc2_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 101.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2022-08-09T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_03aebbc2_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 138.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2022-08-09T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_5c02ec81_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 105.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2022-10-08T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_5c02ec81_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 135.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2022-10-08T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_fff97374_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 107.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2022-12-07T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_fff97374_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 132.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2022-12-07T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_19362bb1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 6.8,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_38ed8931",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 85.0,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_cc2bfc33",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 30.08,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_6bdea233_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 103.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_6bdea233_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 138.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_fd955cd3",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 85.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_96ec6277",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 166.12,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_e5fd4d99",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 17.01,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_ec88ad4a",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 1.03,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_f19ec805",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 140.93,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_ede2dc20",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 5.03,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_e71bb4ae",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "14959-1"
+      },
+      "name": "Urine albumin/creatinine ratio",
+      "value": 7.79,
+      "unit": "mg/g",
+      "reference_range": null,
+      "effective_time": "2023-02-12T02:06:16-08:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_26f27006",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 6.3,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_4f83b1b9",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 85.0,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_d9c43f61",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 30.08,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_b8f9d0de_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 109.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_b8f9d0de_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 132.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_27f3535b",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 94.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_0ed62cfa",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 90.23,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_e59a097f",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 16.99,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_849b5dfd",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 0.88,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_ef028fa7",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 140.5,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_0c72b2d0",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 5.14,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_bf9778fc",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "14959-1"
+      },
+      "name": "Urine albumin/creatinine ratio",
+      "value": 16.73,
+      "unit": "mg/g",
+      "reference_range": null,
+      "effective_time": "2023-07-16T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_9c9be704",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 6.2,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_d06ff684",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 85.0,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_efb53beb",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 30.08,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_4b7db936_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 84.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_4b7db936_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 134.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_d90d8100",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 84.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_774f33c6",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 65.52,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_19dac770",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 11.36,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_df6fe736",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 0.87,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_cf72af12",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 137.6,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_b3ab446a",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 4.01,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_8713c0d2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "14959-1"
+      },
+      "name": "Urine albumin/creatinine ratio",
+      "value": 12.11,
+      "unit": "mg/g",
+      "reference_range": null,
+      "effective_time": "2024-07-21T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_85aecb3b",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 6.4,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_58f69ae1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 83.5,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_118cfc62",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 30.08,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_d6e56727_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 80.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_d6e56727_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 128.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_9854abbd",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 91.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_368f10a0",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 112.0,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_bd426ef7",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 19.28,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_ab39c199",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 0.99,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_6d5e52e5",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 139.88,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_22cccacc",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 3.92,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_52bfae2f",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "14959-1"
+      },
+      "name": "Urine albumin/creatinine ratio",
+      "value": 18.0,
+      "unit": "mg/g",
+      "reference_range": null,
+      "effective_time": "2025-07-27T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_c0001",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 7.1,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2026-01-25T09:15:00-05:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_c0002",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 142.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2026-01-25T09:15:00-05:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_c0003",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 88.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2026-01-25T09:15:00-05:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_c0006",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 142.0,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2026-01-25T09:15:00-05:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_c0007",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 84.2,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2026-01-25T09:15:00-05:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_c0004",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 148.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2026-07-11T09:15:00-05:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_c0005",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 92.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2026-07-11T09:15:00-05:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_434e1f0a",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "4548-4"
+      },
+      "name": "Hemoglobin A1c",
+      "value": 7.9,
+      "unit": "%",
+      "reference_range": {
+        "low": 4.0,
+        "high": 5.6
+      },
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_be74a6f3",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "29463-7"
+      },
+      "name": "Body weight",
+      "value": 85.6,
+      "unit": "kg",
+      "reference_range": null,
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_81080f60",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "39156-5"
+      },
+      "name": "Body mass index (BMI) [Ratio]",
+      "value": 30.08,
+      "unit": "kg/m2",
+      "reference_range": null,
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_1661ac49_1",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8462-4"
+      },
+      "name": "Diastolic blood pressure",
+      "value": 94.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 60.0,
+        "high": 80.0
+      },
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_1661ac49_2",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8480-6"
+      },
+      "name": "Systolic blood pressure",
+      "value": 154.0,
+      "unit": "mm[Hg]",
+      "reference_range": {
+        "low": 90.0,
+        "high": 120.0
+      },
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_b625fc3e",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "8867-4"
+      },
+      "name": "Heart rate",
+      "value": 78.0,
+      "unit": "/min",
+      "reference_range": null,
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_c4107052",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2339-0"
+      },
+      "name": "Glucose",
+      "value": 168.0,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 70.0,
+        "high": 99.0
+      },
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_e30ea185",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6299-2"
+      },
+      "name": "BUN",
+      "value": 10.08,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 7.0,
+        "high": 20.0
+      },
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_94b8b704",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "38483-4"
+      },
+      "name": "Creatinine (whole blood)",
+      "value": 0.8,
+      "unit": "mg/dL",
+      "reference_range": {
+        "low": 0.6,
+        "high": 1.2
+      },
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_2ec1337a",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "2947-0"
+      },
+      "name": "Sodium",
+      "value": 140.74,
+      "unit": "mmol/L",
+      "reference_range": null,
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "obs_4cfe85fb",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "6298-4"
+      },
+      "name": "Potassium",
+      "value": 4.1,
+      "unit": "mmol/L",
+      "reference_range": {
+        "low": 3.5,
+        "high": 5.1
+      },
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    },
+    {
+      "id": "obs_818e9fed",
+      "patient_id": "pt_002",
+      "code": {
+        "system": "LOINC",
+        "value": "14959-1"
+      },
+      "name": "Urine albumin/creatinine ratio",
+      "value": 48.0,
+      "unit": "mg/g",
+      "reference_range": null,
+      "effective_time": "2026-08-02T03:06:16-07:00",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      }
+    }
+  ],
+  "medications": [
+    {
+      "id": "med_hydrochlorothiazide",
+      "patient_id": "pt_002",
+      "name": "Hydrochlorothiazide",
+      "code": {
+        "system": "RxNorm",
+        "value": "310798"
+      },
+      "segments": [
+        {
+          "start": "2022-07-10",
+          "end": null,
+          "dose": "25 mg",
+          "route": "PO",
+          "frequency": "daily"
+        }
+      ],
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    },
+    {
+      "id": "med_metformin_hydrochloride",
+      "patient_id": "pt_002",
+      "name": "Metformin hydrochloride",
+      "code": {
+        "system": "RxNorm",
+        "value": "860975"
+      },
+      "segments": [
+        {
+          "start": "2022-07-10",
+          "end": null,
+          "dose": "500 mg",
+          "route": "PO",
+          "frequency": null
+        }
+      ],
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      }
+    }
+  ],
+  "encounters": [
+    {
+      "id": "enc_0001",
+      "patient_id": "pt_002",
+      "time": "1989-08-27T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0002",
+      "patient_id": "pt_002",
+      "time": "1990-09-02T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0003",
+      "patient_id": "pt_002",
+      "time": "1993-09-05T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0004",
+      "patient_id": "pt_002",
+      "time": "1993-11-16T02:06:16-08:00",
+      "type": "prenatal visit",
+      "summary": "Blighted ovum"
+    },
+    {
+      "id": "enc_0005",
+      "patient_id": "pt_002",
+      "time": "1996-07-30T04:05:06-07:00",
+      "type": "admission to surgical department",
+      "summary": "Sterilization requested"
+    },
+    {
+      "id": "enc_0006",
+      "patient_id": "pt_002",
+      "time": "1996-09-08T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0007",
+      "patient_id": "pt_002",
+      "time": "1998-05-06T10:06:16-07:00",
+      "type": "encounter for problem",
+      "summary": "Appendicitis"
+    },
+    {
+      "id": "enc_0008",
+      "patient_id": "pt_002",
+      "time": "2007-05-30T10:06:16-07:00",
+      "type": "encounter for symptom",
+      "summary": "Sinusitis"
+    },
+    {
+      "id": "enc_0009",
+      "patient_id": "pt_002",
+      "time": "2011-07-10T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0010",
+      "patient_id": "pt_002",
+      "time": "2015-07-19T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0011",
+      "patient_id": "pt_002",
+      "time": "2017-03-22T01:06:16-07:00",
+      "type": "encounter for symptom",
+      "summary": "Acute viral pharyngitis"
+    },
+    {
+      "id": "enc_0012",
+      "patient_id": "pt_002",
+      "time": "2017-07-23T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0013",
+      "patient_id": "pt_002",
+      "time": "2019-07-28T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0014",
+      "patient_id": "pt_002",
+      "time": "2019-10-28T03:06:16-07:00",
+      "type": "encounter for problem",
+      "summary": "Primary fibromyalgia syndrome"
+    },
+    {
+      "id": "enc_0015",
+      "patient_id": "pt_002",
+      "time": "2020-11-06T21:06:16-08:00",
+      "type": "encounter for symptom",
+      "summary": "Acute bronchitis"
+    },
+    {
+      "id": "enc_0016",
+      "patient_id": "pt_002",
+      "time": "2020-11-15T02:06:16-08:00",
+      "type": "urgent care clinic",
+      "summary": "Urgent care clinic"
+    },
+    {
+      "id": "enc_0017",
+      "patient_id": "pt_002",
+      "time": "2021-04-04T03:06:16-07:00",
+      "type": "administration of vaccine to produce active immunity",
+      "summary": "Administration of vaccine to produce active immunity"
+    },
+    {
+      "id": "enc_0018",
+      "patient_id": "pt_002",
+      "time": "2021-04-25T03:06:16-07:00",
+      "type": "administration of vaccine to produce active immunity",
+      "summary": "Administration of vaccine to produce active immunity"
+    },
+    {
+      "id": "enc_0019",
+      "patient_id": "pt_002",
+      "time": "2021-05-23T03:06:16-07:00",
+      "type": "urgent care clinic",
+      "summary": "Urgent care clinic"
+    },
+    {
+      "id": "enc_0020",
+      "patient_id": "pt_002",
+      "time": "2021-05-30T03:06:16-07:00",
+      "type": "urgent care clinic",
+      "summary": "Urgent care clinic"
+    },
+    {
+      "id": "enc_0021",
+      "patient_id": "pt_002",
+      "time": "2021-06-06T03:06:16-07:00",
+      "type": "encounter for check up",
+      "summary": "Encounter for check up"
+    },
+    {
+      "id": "enc_0022",
+      "patient_id": "pt_002",
+      "time": "2021-06-13T03:06:16-07:00",
+      "type": "encounter for check up",
+      "summary": "Patient referral for dental care"
+    },
+    {
+      "id": "enc_0023",
+      "patient_id": "pt_002",
+      "time": "2021-06-20T03:06:16-07:00",
+      "type": "encounter for symptom",
+      "summary": "Acute viral pharyngitis"
+    },
+    {
+      "id": "enc_0024",
+      "patient_id": "pt_002",
+      "time": "2021-07-04T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0025",
+      "patient_id": "pt_002",
+      "time": "2021-07-11T03:06:16-07:00",
+      "type": "encounter for check up",
+      "summary": "Screening for malignant neoplasm of colon"
+    },
+    {
+      "id": "enc_0026",
+      "patient_id": "pt_002",
+      "time": "2022-07-10T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0027",
+      "patient_id": "pt_002",
+      "time": "2022-07-24T03:06:16-07:00",
+      "type": "encounter for check up",
+      "summary": "Patient referral for dental care"
+    },
+    {
+      "id": "enc_0028",
+      "patient_id": "pt_002",
+      "time": "2022-07-31T03:06:16-07:00",
+      "type": "ophthalmic examination and evaluation",
+      "summary": "Diabetes mellitus type 2"
+    },
+    {
+      "id": "enc_0029",
+      "patient_id": "pt_002",
+      "time": "2022-08-09T03:06:16-07:00",
+      "type": "follow-up encounter",
+      "summary": "Essential hypertension"
+    },
+    {
+      "id": "enc_0030",
+      "patient_id": "pt_002",
+      "time": "2022-10-08T03:06:16-07:00",
+      "type": "follow-up encounter",
+      "summary": "Essential hypertension"
+    },
+    {
+      "id": "enc_0031",
+      "patient_id": "pt_002",
+      "time": "2022-12-07T02:06:16-08:00",
+      "type": "follow-up encounter",
+      "summary": "Essential hypertension"
+    },
+    {
+      "id": "enc_0032",
+      "patient_id": "pt_002",
+      "time": "2023-02-12T02:06:16-08:00",
+      "type": "urgent care clinic",
+      "summary": "Urgent care clinic"
+    },
+    {
+      "id": "enc_0033",
+      "patient_id": "pt_002",
+      "time": "2023-02-19T02:06:16-08:00",
+      "type": "encounter for check up",
+      "summary": "Encounter for check up"
+    },
+    {
+      "id": "enc_0034",
+      "patient_id": "pt_002",
+      "time": "2023-02-26T02:06:16-08:00",
+      "type": "encounter for check up",
+      "summary": "Patient referral for dental care"
+    },
+    {
+      "id": "enc_0035",
+      "patient_id": "pt_002",
+      "time": "2023-03-05T02:06:16-08:00",
+      "type": "encounter for symptom",
+      "summary": "Viral sinusitis"
+    },
+    {
+      "id": "enc_0036",
+      "patient_id": "pt_002",
+      "time": "2023-05-24T03:06:16-07:00",
+      "type": "hospital admission",
+      "summary": "Primary fibromyalgia syndrome"
+    },
+    {
+      "id": "enc_0037",
+      "patient_id": "pt_002",
+      "time": "2023-07-16T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0038",
+      "patient_id": "pt_002",
+      "time": "2023-07-26T03:27:23-07:00",
+      "type": "ophthalmic examination and evaluation",
+      "summary": "Ophthalmic examination and evaluation"
+    },
+    {
+      "id": "enc_0039",
+      "patient_id": "pt_002",
+      "time": "2024-06-20T03:43:25-07:00",
+      "type": "ophthalmic examination and evaluation",
+      "summary": "Ophthalmic examination and evaluation"
+    },
+    {
+      "id": "enc_0040",
+      "patient_id": "pt_002",
+      "time": "2024-07-21T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_0041",
+      "patient_id": "pt_002",
+      "time": "2024-08-04T03:06:16-07:00",
+      "type": "encounter for check up",
+      "summary": "Gingivitis"
+    },
+    {
+      "id": "enc_0042",
+      "patient_id": "pt_002",
+      "time": "2024-09-26T03:31:59-07:00",
+      "type": "emergency room admission",
+      "summary": "Laceration - injury"
+    },
+    {
+      "id": "enc_0043",
+      "patient_id": "pt_002",
+      "time": "2025-05-16T04:00:53-07:00",
+      "type": "ophthalmic examination and evaluation",
+      "summary": "Ophthalmic examination and evaluation"
+    },
+    {
+      "id": "enc_0044",
+      "patient_id": "pt_002",
+      "time": "2025-07-27T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    },
+    {
+      "id": "enc_c001",
+      "time": "2026-01-25T09:30:00-05:00",
+      "type": "encounter for check up",
+      "summary": "Follow-up, diabetes and hypertension",
+      "patient_id": "pt_002"
+    },
+    {
+      "id": "enc_0045",
+      "patient_id": "pt_002",
+      "time": "2026-05-11T04:17:06-07:00",
+      "type": "ophthalmic examination and evaluation",
+      "summary": "Ophthalmic examination and evaluation"
+    },
+    {
+      "id": "enc_0046",
+      "patient_id": "pt_002",
+      "time": "2026-07-11T03:36:32-07:00",
+      "type": "encounter for check up",
+      "summary": "Screening for malignant neoplasm of colon"
+    },
+    {
+      "id": "enc_0047",
+      "patient_id": "pt_002",
+      "time": "2026-07-22T03:06:16-07:00",
+      "type": "hospital admission",
+      "summary": "Primary fibromyalgia syndrome"
+    },
+    {
+      "id": "enc_0048",
+      "patient_id": "pt_002",
+      "time": "2026-08-02T03:06:16-07:00",
+      "type": "general examination of patient",
+      "summary": "General examination of patient"
+    }
+  ],
+  "notes": [
+    {
+      "id": "note_0001",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0001",
+      "time": "1989-08-27T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n1989-08-27\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 18 year-old nonhispanic white female.\n\n# Social History\n Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with educated to high school level (finding). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0002",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0002",
+      "time": "1990-09-02T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n1990-09-02\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 19 year-old nonhispanic white female.\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with social isolation (finding). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0003",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0003",
+      "time": "1993-09-05T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n1993-09-05\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 22 year-old nonhispanic white female.\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicaid.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with limited social contact (finding). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0004",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0004",
+      "time": "1993-11-16T02:06:16.662-08:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n1993-11-16\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 22 year-old nonhispanic white female. Patient has a history of limited social contact (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicaid.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with past pregnancy history of miscarriage (situation). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0005",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0005",
+      "time": "1996-07-30T04:05:06.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n1996-07-30\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 25 year-old nonhispanic white female. Patient has a history of limited social contact (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with history of tubal ligation (situation). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0006",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0006",
+      "time": "1996-09-08T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n1996-09-08\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 25 year-old nonhispanic white female. Patient has a history of limited social contact (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with prediabetes (finding), anemia (disorder). \n\n\n## Plan\n\nThe patient was placed on a careplan:\n- diabetes self management plan (record artifact)\n"
+    },
+    {
+      "id": "note_0007",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0007",
+      "time": "1998-05-06T10:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n1998-05-06\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 26 year-old nonhispanic white female. Patient has a history of limited social contact (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with history of appendectomy (situation). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0008",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0008",
+      "time": "2007-05-30T10:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2007-05-30\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 35 year-old nonhispanic white female. Patient has a history of limited social contact (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with chronic sinusitis (disorder). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0009",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0009",
+      "time": "2011-07-10T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2011-07-10\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 40 year-old nonhispanic white female. Patient has a history of limited social contact (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with body mass index 30+ - obesity (finding). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0010",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0010",
+      "time": "2015-07-19T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2015-07-19\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 44 year-old nonhispanic white female. Patient has a history of limited social contact (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with part-time employment (finding), stress (finding), victim of intimate partner abuse (finding). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0011",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0011",
+      "time": "2017-03-22T01:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2017-03-22\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 45 year-old nonhispanic white female. Patient has a history of part-time employment (finding), limited social contact (finding), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with acute viral pharyngitis (disorder). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0012",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0012",
+      "time": "2017-07-23T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2017-07-23\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 46 year-old nonhispanic white female. Patient has a history of part-time employment (finding), limited social contact (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with medication review due (situation), unhealthy alcohol drinking behavior (finding). \n\n\n## Plan\nPatient was given the following immunizations: influenza, split virus, trivalent, pf. \nThe following procedures were conducted:\n- assessment of health and social care needs (procedure)\n- screening for domestic abuse (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\n- assessment of substance use (procedure)\n- assessment using alcohol use disorders identification test - consumption (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- lipid panel with direct ldl - serum or plasma\n- cbc panel - blood by automated count\n- humiliation, afraid, rape, and kick questionnaire [hark]\n- patient health questionnaire 2 item (phq-2) [reported]\n- alcohol use disorder identification test - consumption [audit-c]\n"
+    },
+    {
+      "id": "note_0013",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0013",
+      "time": "2019-07-28T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2019-07-28\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 48 year-old nonhispanic white female. Patient has a history of part-time employment (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with unemployed (finding). \n\n\n## Plan\nPatient was given the following immunizations: influenza, split virus, trivalent, pf. \nThe following procedures were conducted:\n- assessment of health and social care needs (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\n- assessment of substance use (procedure)\n- assessment using alcohol use disorders identification test - consumption (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- patient health questionnaire 2 item (phq-2) [reported]\n- alcohol use disorder identification test - consumption [audit-c]\n"
+    },
+    {
+      "id": "note_0014",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0014",
+      "time": "2019-10-28T03:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2019-10-28\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 48 year-old nonhispanic white female. Patient has a history of part-time employment (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with primary fibromyalgia syndrome (disorder). \n\n\n## Plan\n\nThe patient was prescribed the following medications:\n- naproxen 500 mg oral tablet\nThe patient was placed on a careplan:\n- musculoskeletal care (regime/therapy)\n"
+    },
+    {
+      "id": "note_0015",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0015",
+      "time": "2020-11-06T21:06:16.662-08:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2020-11-06\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 49 year-old nonhispanic white female. Patient has a history of part-time employment (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nNo Active Medications.\n\n# Assessment and Plan\nPatient is presenting with acute bronchitis (disorder). \n\n\n## Plan\n\nThe following procedures were conducted:\n- measurement of respiratory function (procedure)\nThe patient was prescribed the following medications:\n- acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\nThe patient was placed on a careplan:\n- respiratory therapy (procedure)\n"
+    },
+    {
+      "id": "note_0016",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0016",
+      "time": "2020-11-15T02:06:16.662-08:00",
+      "author": "Dr. Vince Morissette",
+      "text": "\n2020-11-15\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 49 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\n\n# Assessment and Plan\nPatient is presenting with part-time employment (finding), stress (finding). \n\n\n## Plan\nPatient was given the following immunizations: influenza, split virus, trivalent, pf. \nThe following procedures were conducted:\n- medication reconciliation (procedure)\n- assessment of health and social care needs (procedure)\n- assessment of anxiety (procedure)\n- screening for domestic abuse (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\n- assessment of substance use (procedure)\n- assessment using alcohol use disorders identification test - consumption (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- lipid panel with direct ldl - serum or plasma\n- generalized anxiety disorder 7 item (gad-7)\n- humiliation, afraid, rape, and kick questionnaire [hark]\n- patient health questionnaire 2 item (phq-2) [reported]\n- alcohol use disorder identification test - consumption [audit-c]\n"
+    },
+    {
+      "id": "note_0017",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0017",
+      "time": "2021-04-04T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2021-04-04\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 49 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\n\n# Assessment and Plan\n\n\n\n## Plan\nPatient was given the following immunizations: covid-19, mrna, lnp-s, pf, 30 mcg/0.3 ml dose. \n"
+    },
+    {
+      "id": "note_0018",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0018",
+      "time": "2021-04-25T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2021-04-25\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 49 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\n\n# Assessment and Plan\n\n\n\n## Plan\nPatient was given the following immunizations: covid-19, mrna, lnp-s, pf, 30 mcg/0.3 ml dose. \n"
+    },
+    {
+      "id": "note_0019",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0019",
+      "time": "2021-05-23T03:06:16.662-07:00",
+      "author": "Dr. Vince Morissette",
+      "text": "\n2021-05-23\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 49 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\n\n# Assessment and Plan\nPatient is presenting with medication review due (situation), full-time employment (finding), reports of violence in the environment (finding), severe anxiety (panic) (finding). \n\n\n## Plan\nPatient was given the following immunizations: influenza, split virus, trivalent, pf. \nThe following procedures were conducted:\n- assessment of health and social care needs (procedure)\n- assessment of anxiety (procedure)\n- screening for domestic abuse (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\n- assessment of substance use (procedure)\n- assessment using alcohol use disorders identification test - consumption (procedure)\n- patient referral for dental care (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- generalized anxiety disorder 7 item (gad-7)\n- humiliation, afraid, rape, and kick questionnaire [hark]\n- patient health questionnaire 2 item (phq-2) [reported]\n- alcohol use disorder identification test - consumption [audit-c]\n"
+    },
+    {
+      "id": "note_0020",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0020",
+      "time": "2021-05-30T03:06:16.662-07:00",
+      "author": "Dr. Vince Morissette",
+      "text": "\n2021-05-30\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 49 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\n\n# Assessment and Plan\n\n\n\n## Plan\nPatient was given the following immunizations: influenza, split virus, trivalent, pf. \n"
+    },
+    {
+      "id": "note_0021",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0021",
+      "time": "2021-06-06T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2021-06-06\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 49 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\n\n# Assessment and Plan\nPatient is presenting with part-time employment (finding). \n\n\n## Plan\n\nThe following procedures were conducted:\n- assessment of health and social care needs (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\n- assessment of substance use (procedure)\n- screening for drug abuse (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- patient health questionnaire 2 item (phq-2) [reported]\n- drug abuse screening test-10 [dast-10]\n"
+    },
+    {
+      "id": "note_0022",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0022",
+      "time": "2021-06-13T03:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2021-06-13\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 49 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- dental consultation and report (procedure)\n- dental care (regime/therapy)\n- removal of supragingival plaque and calculus from all teeth using dental instrument (procedure)\n- removal of subgingival plaque and calculus from all teeth using dental instrument (procedure)\n- dental plain x-ray bitewing (procedure)\n- examination of gingivae (procedure)\n- oral health education (procedure)\n"
+    },
+    {
+      "id": "note_0023",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0023",
+      "time": "2021-06-20T03:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2021-06-20\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 49 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\n\n# Assessment and Plan\nPatient is presenting with acute viral pharyngitis (disorder). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0024",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0024",
+      "time": "2021-07-04T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2021-07-04\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 50 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\n\n# Assessment and Plan\nPatient is presenting with full-time employment (finding). \n\n\n## Plan\nPatient was given the following immunizations: zoster vaccine, live. \nThe following procedures were conducted:\n- medication reconciliation (procedure)\n- assessment of health and social care needs (procedure)\n- screening for domestic abuse (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\n- assessment of substance use (procedure)\n- screening for drug abuse (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- humiliation, afraid, rape, and kick questionnaire [hark]\n- patient health questionnaire 2 item (phq-2) [reported]\n- drug abuse screening test-10 [dast-10]\n"
+    },
+    {
+      "id": "note_0025",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0025",
+      "time": "2021-07-11T03:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2021-07-11\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 50 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has NO INSURANCE.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- colonoscopy (procedure)\n"
+    },
+    {
+      "id": "note_0026",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0026",
+      "time": "2022-07-10T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2022-07-10\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 51 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution\n\n# Assessment and Plan\nPatient is presenting with essential hypertension (disorder), medication review due (situation), metabolic syndrome x (disorder), diabetes mellitus type 2 (disorder). \n\n\n## Plan\nPatient was given the following immunizations: zoster vaccine, live, influenza, split virus, trivalent, pf, td (adult), 5 lf tetanus toxoid, preservative free, adsorbed. \nThe following procedures were conducted:\n- assessment of health and social care needs (procedure)\n- assessment of anxiety (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\n- assessment of substance use (procedure)\n- screening for drug abuse (procedure)\n- patient referral for dental care (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- lipid panel with direct ldl - serum or plasma\n- generalized anxiety disorder 7 item (gad-7)\n- patient health questionnaire 2 item (phq-2) [reported]\n- drug abuse screening test-10 [dast-10]\nThe patient was prescribed the following medications:\n- hydrochlorothiazide 25 mg oral tablet\n- hydrochlorothiazide 25 mg oral tablet\n- 24 hr metformin hydrochloride 500 mg extended release oral tablet\nThe patient was placed on a careplan:\n- lifestyle education regarding hypertension (procedure)\n"
+    },
+    {
+      "id": "note_0027",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0027",
+      "time": "2022-07-24T03:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2022-07-24\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 51 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; hydrochlorothiazide 25 mg oral tablet\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- dental consultation and report (procedure)\n- dental care (regime/therapy)\n- removal of supragingival plaque and calculus from all teeth using dental instrument (procedure)\n- removal of subgingival plaque and calculus from all teeth using dental instrument (procedure)\n- examination of gingivae (procedure)\n- dental fluoride treatment (procedure)\n- oral health education (procedure)\nThe patient was prescribed the following medications:\n- sodium fluoride 0.0272 mg/mg oral gel\n"
+    },
+    {
+      "id": "note_0028",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0028",
+      "time": "2022-07-31T03:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2022-07-31\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 51 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\nacetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- history taking (procedure)\n- visual acuity testing (procedure)\n- intraocular pressure test (procedure)\n- ocular slit lamp examination (procedure)\n- indirect gonioscopy (procedure)\n- camera fundoscopy (procedure)\n- diabetic retinal eye exam (procedure)\nThe patient was prescribed the following medications:\n- tropicamide 5 mg/ml ophthalmic solution\n"
+    },
+    {
+      "id": "note_0029",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0029",
+      "time": "2022-08-09T03:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2022-08-09\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 51 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0030",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0030",
+      "time": "2022-10-08T03:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2022-10-08\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 51 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0031",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0031",
+      "time": "2022-12-07T02:06:16.662-08:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2022-12-07\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 51 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0032",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0032",
+      "time": "2023-02-12T02:06:16.662-08:00",
+      "author": "Dr. Vince Morissette",
+      "text": "\n2023-02-12\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 51 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\nPatient is presenting with hyperglycemia (disorder), hypertriglyceridemia (disorder), stress (finding). \n\n\n## Plan\nPatient was given the following immunizations: influenza, split virus, trivalent, pf. \nThe following procedures were conducted:\n- assessment of health and social care needs (procedure)\n- assessment of anxiety (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\n- assessment of substance use (procedure)\n- screening for drug abuse (procedure)\n- patient referral for dental care (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- lipid panel with direct ldl - serum or plasma\n- cbc panel - blood by automated count\n- generalized anxiety disorder 7 item (gad-7)\n- patient health questionnaire 2 item (phq-2) [reported]\n- drug abuse screening test-10 [dast-10]\nThe patient was prescribed the following medications:\n- hydrochlorothiazide 25 mg oral tablet\n- 24 hr metformin hydrochloride 500 mg extended release oral tablet\n"
+    },
+    {
+      "id": "note_0033",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0033",
+      "time": "2023-02-19T02:06:16.662-08:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2023-02-19\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 51 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe patient was prescribed the following medications:\n- hydrochlorothiazide 25 mg oral tablet\n- 24 hr metformin hydrochloride 500 mg extended release oral tablet\n"
+    },
+    {
+      "id": "note_0034",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0034",
+      "time": "2023-02-26T02:06:16.662-08:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2023-02-26\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 51 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- dental consultation and report (procedure)\n- dental care (regime/therapy)\n- removal of supragingival plaque and calculus from all teeth using dental instrument (procedure)\n- removal of subgingival plaque and calculus from all teeth using dental instrument (procedure)\n- examination of gingivae (procedure)\n- oral health education (procedure)\n"
+    },
+    {
+      "id": "note_0035",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0035",
+      "time": "2023-03-05T02:06:16.662-08:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2023-03-05\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 51 year-old nonhispanic white female. Patient has a history of part-time employment (finding), acute bronchitis (disorder), severe anxiety (panic) (finding), medication review due (situation), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), unemployed (finding), full-time employment (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\nPatient is presenting with viral sinusitis (disorder). \n\n\n## Plan\n\n"
+    },
+    {
+      "id": "note_0036",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0036",
+      "time": "2023-05-24T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2023-05-24\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 51 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe patient was prescribed the following medications:\n- pregabalin 100 mg oral capsule\n"
+    },
+    {
+      "id": "note_0037",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0037",
+      "time": "2023-07-16T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2023-07-16\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 52 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- medication reconciliation (procedure)\n- assessment of health and social care needs (procedure)\n- assessment of anxiety (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\n- assessment of substance use (procedure)\n- assessment using alcohol use disorders identification test - consumption (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- lipid panel with direct ldl - serum or plasma\n- generalized anxiety disorder 7 item (gad-7)\n- patient health questionnaire 2 item (phq-2) [reported]\n- alcohol use disorder identification test - consumption [audit-c]\nThe patient was prescribed the following medications:\n- hydrochlorothiazide 25 mg oral tablet\n- 24 hr metformin hydrochloride 500 mg extended release oral tablet\n"
+    },
+    {
+      "id": "note_0038",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0038",
+      "time": "2023-07-26T03:27:23.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2023-07-26\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 52 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- visual acuity testing (procedure)\n- intraocular pressure test (procedure)\n- ocular slit lamp examination (procedure)\n- indirect gonioscopy (procedure)\n- camera fundoscopy (procedure)\n- diabetic retinal eye exam (procedure)\nThe patient was prescribed the following medications:\n- tropicamide 5 mg/ml ophthalmic solution\n"
+    },
+    {
+      "id": "note_0039",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0039",
+      "time": "2024-06-20T03:43:25.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2024-06-20\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 52 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- visual acuity testing (procedure)\n- intraocular pressure test (procedure)\n- ocular slit lamp examination (procedure)\n- indirect gonioscopy (procedure)\n- camera fundoscopy (procedure)\n- diabetic retinal eye exam (procedure)\nThe patient was prescribed the following medications:\n- tropicamide 5 mg/ml ophthalmic solution\n"
+    },
+    {
+      "id": "note_0040",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0040",
+      "time": "2024-07-21T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2024-07-21\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 53 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\nPatient is presenting with medication review due (situation), gingivitis (disorder). \n\n\n## Plan\nPatient was given the following immunizations: influenza, split virus, trivalent, pf. \nThe following procedures were conducted:\n- medication reconciliation (procedure)\n- assessment of health and social care needs (procedure)\n- assessment of anxiety (procedure)\n- screening for domestic abuse (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\n- assessment of substance use (procedure)\n- screening for drug abuse (procedure)\n- patient referral for dental care (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- lipid panel with direct ldl - serum or plasma\n- generalized anxiety disorder 7 item (gad-7)\n- humiliation, afraid, rape, and kick questionnaire [hark]\n- patient health questionnaire 2 item (phq-2) [reported]\n- drug abuse screening test-10 [dast-10]\nThe patient was prescribed the following medications:\n- hydrochlorothiazide 25 mg oral tablet\n- 24 hr metformin hydrochloride 500 mg extended release oral tablet\n"
+    },
+    {
+      "id": "note_0041",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0041",
+      "time": "2024-08-04T03:06:16.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2024-08-04\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 53 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), gingivitis (disorder), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- dental consultation and report (procedure)\n- dental care (regime/therapy)\n- removal of supragingival plaque and calculus from all teeth using dental instrument (procedure)\n- removal of subgingival plaque and calculus from all teeth using dental instrument (procedure)\n- dental plain x-ray bitewing (procedure)\n- examination of gingivae (procedure)\n- oral health education (procedure)\n"
+    },
+    {
+      "id": "note_0042",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0042",
+      "time": "2024-09-26T03:31:59.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2024-09-26\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 53 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), gingivitis (disorder), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\nPatient is presenting with laceration - injury (disorder), laceration of foot (disorder). \n\n\n## Plan\n\nThe following procedures were conducted:\n- suture open wound (procedure)\nThe patient was prescribed the following medications:\n- ibuprofen 200 mg oral tablet\nThe patient was placed on a careplan:\n- wound care (regime/therapy)\n"
+    },
+    {
+      "id": "note_0043",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0043",
+      "time": "2025-05-16T04:00:53.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2025-05-16\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 53 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), laceration of foot (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), laceration - injury (disorder), gingivitis (disorder), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; ibuprofen 200 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- visual acuity testing (procedure)\n- intraocular pressure test (procedure)\n- ocular slit lamp examination (procedure)\n- indirect gonioscopy (procedure)\n- camera fundoscopy (procedure)\n- diabetic retinal eye exam (procedure)\nThe patient was prescribed the following medications:\n- tropicamide 5 mg/ml ophthalmic solution\n"
+    },
+    {
+      "id": "note_0044",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0044",
+      "time": "2025-07-27T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2025-07-27\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 54 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), laceration of foot (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), laceration - injury (disorder), gingivitis (disorder), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; ibuprofen 200 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\nPatient is presenting with medication review due (situation), stress (finding). \n\n\n## Plan\nPatient was given the following immunizations: influenza, split virus, trivalent, pf. \nThe following procedures were conducted:\n- medication reconciliation (procedure)\n- assessment of health and social care needs (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- lipid panel with direct ldl - serum or plasma\n- patient health questionnaire 2 item (phq-2) [reported]\nThe patient was prescribed the following medications:\n- hydrochlorothiazide 25 mg oral tablet\n- 24 hr metformin hydrochloride 500 mg extended release oral tablet\n"
+    },
+    {
+      "id": "note_0045",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0045",
+      "time": "2026-05-11T04:17:06.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2026-05-11\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 54 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), laceration of foot (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), laceration - injury (disorder), gingivitis (disorder), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; ibuprofen 200 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- visual acuity testing (procedure)\n- intraocular pressure test (procedure)\n- ocular slit lamp examination (procedure)\n- indirect gonioscopy (procedure)\n- camera fundoscopy (procedure)\n- diabetic retinal eye exam (procedure)\nThe patient was prescribed the following medications:\n- tropicamide 5 mg/ml ophthalmic solution\n"
+    },
+    {
+      "id": "note_0046",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0046",
+      "time": "2026-07-11T03:36:32.662-07:00",
+      "author": "Dr. Donnell D'Amore",
+      "text": "\n2026-07-11\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 55 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), laceration of foot (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), laceration - injury (disorder), gingivitis (disorder), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; ibuprofen 200 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe following procedures were conducted:\n- colonoscopy (procedure)\n"
+    },
+    {
+      "id": "note_0047",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0047",
+      "time": "2026-07-22T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2026-07-22\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 55 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), laceration of foot (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), laceration - injury (disorder), gingivitis (disorder), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; ibuprofen 200 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\n\n\n\n## Plan\n\nThe patient was prescribed the following medications:\n- duloxetine 20 mg delayed release oral capsule\n"
+    },
+    {
+      "id": "note_0048",
+      "patient_id": "pt_002",
+      "encounter_id": "enc_0048",
+      "time": "2026-08-02T03:06:16.662-07:00",
+      "author": "Dr. Lynwood Tromp",
+      "text": "\n2026-08-02\n\n# Chief Complaint\n- Sleep Disturbances\n- Muscle Pain\n- Cognitive Difficulties\n\n\n# History of Present Illness\nJeane173 Casandra937 is a 55 year-old nonhispanic white female. Patient has a history of severe anxiety (panic) (finding), medication review due (situation), unemployed (finding), acute viral pharyngitis (disorder), laceration of foot (disorder), victim of intimate partner abuse (finding), viral sinusitis (disorder), part-time employment (finding), acute bronchitis (disorder), limited social contact (finding), unhealthy alcohol drinking behavior (finding), reports of violence in the environment (finding), full-time employment (finding), laceration - injury (disorder), gingivitis (disorder), stress (finding).\n\n# Social History\nPatient is married. Patient has never smoked.\n Patient identifies as heterosexual.\n\nPatient comes from a middle socioeconomic background.\n Patient has a high school education.\nPatient currently has Medicare.\n\n# Allergies\nNo Known Allergies.\n\n# Medications\ntropicamide 5 mg/ml ophthalmic solution; acetaminophen 21.7 mg/ml / dextromethorphan hydrobromide 1 mg/ml / doxylamine succinate 0.417 mg/ml oral solution; 24 hr metformin hydrochloride 500 mg extended release oral tablet; pregabalin 100 mg oral capsule; hydrochlorothiazide 25 mg oral tablet; duloxetine 20 mg delayed release oral capsule; ibuprofen 200 mg oral tablet; sodium fluoride 0.0272 mg/mg oral gel\n\n# Assessment and Plan\nPatient is presenting with medication review due (situation), not in labor force (finding), gingivitis (disorder). \n\n\n## Plan\nPatient was given the following immunizations: influenza, split virus, trivalent, pf. \nThe following procedures were conducted:\n- assessment of health and social care needs (procedure)\n- assessment of anxiety (procedure)\n- depression screening (procedure)\n- depression screening (procedure)\n- assessment of substance use (procedure)\n- screening for drug abuse (procedure)\n- patient referral for dental care (procedure)\nThe following lab reports were completed:\n- basic metabolic panel - blood\n- lipid panel with direct ldl - serum or plasma\n- generalized anxiety disorder 7 item (gad-7)\n- patient health questionnaire 2 item (phq-2) [reported]\n- drug abuse screening test-10 [dast-10]\nThe patient was prescribed the following medications:\n- hydrochlorothiazide 25 mg oral tablet\n- 24 hr metformin hydrochloride 500 mg extended release oral tablet\n"
+    }
+  ],
+  "links": [
+    {
+      "id": "lnk_0001",
+      "from": "LOINC:8480-6",
+      "to": "prob_0007",
+      "type": "monitors",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      },
+      "created_at": "2026-09-15T20:13:52-07:00"
+    },
+    {
+      "id": "lnk_0002",
+      "from": "LOINC:8462-4",
+      "to": "prob_0007",
+      "type": "monitors",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      },
+      "created_at": "2026-09-15T20:13:52-07:00"
+    },
+    {
+      "id": "lnk_0003",
+      "from": "LOINC:4548-4",
+      "to": "prob_0009",
+      "type": "monitors",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      },
+      "created_at": "2026-09-15T20:13:52-07:00"
+    },
+    {
+      "id": "lnk_0004",
+      "from": "LOINC:2339-0",
+      "to": "prob_0009",
+      "type": "monitors",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      },
+      "created_at": "2026-09-15T20:13:52-07:00"
+    },
+    {
+      "id": "lnk_0007",
+      "from": "med_hydrochlorothiazide",
+      "to": "prob_0007",
+      "type": "treats",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      },
+      "created_at": "2026-09-15T20:13:52-07:00"
+    },
+    {
+      "id": "lnk_0008",
+      "from": "med_metformin_hydrochloride",
+      "to": "prob_0009",
+      "type": "treats",
+      "status": "accepted",
+      "provenance": {
+        "source": "fhir_import"
+      },
+      "created_at": "2026-09-15T20:13:52-07:00"
+    },
+    {
+      "id": "lnk_c0001",
+      "from": "LOINC:14959-1",
+      "to": "prob_0009",
+      "type": "monitors",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      },
+      "created_at": "2026-09-15T00:00:00-05:00"
+    },
+    {
+      "id": "lnk_c0002",
+      "from": "LOINC:6298-4",
+      "to": "prob_0007",
+      "type": "monitors",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      },
+      "created_at": "2026-09-15T00:00:00-05:00"
+    },
+    {
+      "id": "lnk_c0003",
+      "from": "LOINC:38483-4",
+      "to": "prob_0007",
+      "type": "monitors",
+      "status": "accepted",
+      "provenance": {
+        "source": "curated"
+      },
+      "created_at": "2026-09-15T00:00:00-05:00"
+    }
+  ],
+  "insights": []
+}

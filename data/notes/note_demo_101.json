@@ -1,0 +1,17 @@
+{
+  "encounter": {
+    "id": "enc_c001",
+    "patient_id": "pt_002",
+    "time": "2026-01-25T09:30:00-05:00",
+    "type": "encounter for check up",
+    "summary": "Follow-up, diabetes and hypertension"
+  },
+  "note": {
+    "id": "note_demo_101",
+    "patient_id": "pt_002",
+    "encounter_id": "enc_c001",
+    "time": "2026-01-25T10:05:00-05:00",
+    "author": "Dr. Chen",
+    "text": "Jeane Lueilwitz, 54F. Routine follow-up for diabetes and hypertension.\n\nS: Feels well overall. Some stomach upset with metformin after dinner, so she sometimes skips the evening dose. Low back pain after long shifts, takes Advil when it's bad. Home BP readings \"in the 140s\" when she remembers to check. No chest pain, headache or visual change.\n\nO: BP 142/88, HR 76, wt 84.2 kg. Lungs clear. No edema. Labs today: A1c 7.1, up from 6.4 in July. Fasting glucose 142.\n\nA/P:\n1. Type 2 diabetes, control slipping. Reviewed diet; discussed taking metformin with food. Recheck A1c in 6 months.\n2. Hypertension, above goal today. Continue HCTZ 25 mg; asked for a home BP log.\n3. Low back pain, mechanical. Stretching handout; acetaminophen first line.\n\nRTC 6 months."
+  }
+}

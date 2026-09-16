@@ -1,0 +1,17 @@
+{
+  "encounter": {
+    "id": "enc_c002",
+    "patient_id": "pt_002",
+    "time": "2026-09-15T09:00:00-05:00",
+    "type": "office visit",
+    "summary": "Follow-up, diabetes and blood pressure"
+  },
+  "note": {
+    "id": "note_demo_102",
+    "patient_id": "pt_002",
+    "encounter_id": "enc_c002",
+    "time": "2026-09-15T09:40:00-05:00",
+    "author": "Dr. Chen",
+    "text": "Jeane Lueilwitz, 55F, here for follow-up of diabetes and blood pressure.\n\nS: Tired, thirstier than usual, up twice at night to urinate. Admits she has been skipping metformin most days for about three months because of the stomach upset. Back pain worse since spring; taking ibuprofen 400 mg two or three times a day most days since around May, over the counter. Home BP readings in the 150s over 90s. No chest pain, headache or visual change.\n\nO: BP 154/94 sitting, repeat 150/92. HR 78. Wt 85.6 kg. Lungs clear. No edema.\nLabs (8/2): A1c 7.9, up from 7.1 in January. Fasting glucose 168. Urine albumin/creatinine 48 mg/g, up from 18. Potassium 4.1, creatinine 0.8.\n\nA/P:\n1. Type 2 diabetes, uncontrolled, adherence the main driver. Switch metformin to extended-release 1000 mg daily with dinner. Repeat A1c in 3 months.\n2. Hypertension, above goal on HCTZ alone, with new albuminuria. Daily NSAID use since May, likely contributing. Stop ibuprofen; acetaminophen for the back. Start lisinopril 10 mg daily. BMP in 2 weeks. Home BP log, goal under 140/90 in 4 weeks.\n3. Low back pain, mechanical. Physical therapy referral.\n\nRTC 4 weeks."
+  }
+}

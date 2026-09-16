@@ -1,6 +1,6 @@
 # Hand-written demo notes
 
-Curated demo assets for `pt_001` (Willie Klocko). **Do not overwrite or regenerate.** Every number in
+Curated demo assets for `pt_002` (Jeane Lueilwitz, the demo) and `pt_001` (Willie Klocko, the first golden patient). **Do not overwrite or regenerate.** Every number in
 these notes matches the chart in `data/patients/pt_001.json` (creatinine under LOINC `38483-4`,
 eGFR `33914-3`, BP, weight, ACR, med list), so the timeline, the extraction output and the trend
 summaries line up during the demo.
@@ -64,3 +64,39 @@ naproxen since last October is a likely contributor; metformin is on board at an
 contraindicated.* `evidence` must cite real ids: the creatinine observations, `med_metformin_hydrochloride`,
 and the proposed naproxen course once accepted. `suggested_action`: stop naproxen (done in note), stop
 metformin, nephrology (already referred).
+
+
+---
+
+## pt_002 · Jeane Lueilwitz (the demo)
+
+Chart curated by `scripts/curate_pt_002.py`; every number below is on it.
+
+1. **`note_demo_101`** (2026-01-25, check-up). A1c 7.1 up from 6.4, BP 142/88, fasting glucose 142.
+   Plants the seeds: stomach upset with metformin, "takes Advil when it's bad", home BP in the 140s.
+2. **`note_demo_102`** (2026-09-15, the note that arrives). A1c 7.9, BP 154/94, ACR 48 up from 18.
+   Skipping metformin most days for three months; ibuprofen 400 mg two or three times a day since
+   around May. The plan: switch metformin to extended-release, stop ibuprofen, start lisinopril,
+   BMP in two weeks, home BP log with a goal, physical therapy referral, A1c in three months.
+
+### Extraction answer key for note_demo_102
+
+| Quote (verbatim) | Proposed item | Link |
+|---|---|---|
+| "BP 154/94 sitting" | Observations 8480-6 = 154, 8462-4 = 94 (2026-09-15) | relevant_to → HTN (prob_0007) |
+| "A1c 7.9" / "Fasting glucose 168" / "Urine albumin/creatinine 48 mg/g" | already on the chart (2026-08-02): dedupe or attach | relevant_to → T2DM (prob_0009) |
+| "skipping metformin most days for about three months because of the stomach upset" | finding | evidence_for → T2DM |
+| "taking ibuprofen 400 mg two or three times a day most days since around May, over the counter" | **new MedicationCourse** Ibuprofen 400 mg, start 2026-05-01, end 2026-09-15 ("Stop ibuprofen") | suspected_cause → HTN |
+| "Daily NSAID use since May, likely contributing." | suspected_cause | ibuprofen → HTN |
+| "Switch metformin to extended-release 1000 mg daily with dinner." | metformin dose_change + **plan** (therapeutic) | treats → T2DM |
+| "Start lisinopril 10 mg daily." | **new MedicationCourse** Lisinopril 10 mg + **plan** (therapeutic) | treats → HTN |
+| "Repeat A1c in 3 months." / "BMP in 2 weeks." / "Home BP log, goal under 140/90 in 4 weeks." | **plans** (monitoring) | T2DM / HTN |
+| "Physical therapy referral." | **plan** (referral) | new problem |
+| "Low back pain, mechanical." | **new Problem** Low back pain (status proposed) | evidence_for ← note |
+
+### Expected insights (reasoning, prob_0007 and prob_0009)
+
+Blood pressure above goal and rising on hydrochlorothiazide alone with daily NSAID use since May
+and new albuminuria; the stop and the ACE inhibitor start are recorded, the expectation is a fall
+within weeks. A1c rising with documented non-adherence rather than treatment failure; the
+extended-release switch addresses the cause; recheck in three months.
