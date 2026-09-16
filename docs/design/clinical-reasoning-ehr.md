@@ -5,8 +5,12 @@ target architecture already chosen (`docs/roadmap/00-north-star-and-gap-analysis
 PRDs, `docs/roadmap/schema-v2-proposal.md`) rather than replacing it. Every schema change it
 needs is listed in the appendix and flagged; `docs/patient-model-schema.md` is unchanged.
 
-**Companion:** the screen mockups, drawn on pt_001's real values, are published as the
-"Reasoning Chart" artifact and referenced by frame number below.
+**Companion:** the screen mockups, published as the "Reasoning Chart" artifact and referenced
+by frame number below, were drawn on the first golden patient (pt_001, Willie Klocko, CKD). The
+examples in this document use the demo patient, pt_002: Jeane Lueilwitz, 55, type 2 diabetes and
+hypertension on metformin and hydrochlorothiazide, A1c 6.4 → 7.9 and blood pressure 128/80 →
+154/94 over twelve months, new albuminuria, and a note on 15 September 2026 that reveals skipped
+metformin and daily ibuprofen since May.
 
 **Premise.** The record is not a transcript of clinical cognition. Clinicians carry a compressed,
 partly tacit model of the patient. The system's job is to externalise the clinically useful part
@@ -53,7 +57,7 @@ to 11 specify those; the rest of this document is how they are shown.
 
 ## 2. The concern: the primary object
 
-A concern is a `ClinicalFocus` (v2 §3). It may begin as "fatigue" or "declining kidney function"
+A concern is a `ClinicalFocus` (v2 §3). It may begin as "fatigue" or "blood pressure above goal"
 and never has to become a diagnosis to organise care. What the brief asks for, mapped field by
 field:
 
@@ -81,10 +85,10 @@ finding → syndrome → possible → suspected → working → probable → con
 
 `status` stays separate and orthogonal (`active | recurrence | relapse | remission | inactive |
 resolved | refuted`); "ruled out" is `status: refuted`, "historical" is `status: inactive` with
-`carries_forward`. So "Declining kidney function" can be `kind: concern, epistemic: syndrome,
+`carries_forward`. So "Blood pressure above goal" can be `kind: concern, epistemic: syndrome,
 status: active` and later become `kind: problem, epistemic: working` with the title
-"CKD progression, NSAID-accelerated", as a recorded transition with a rationale, never an
-overwrite (paper §6.3). The UI renders `epistemic` as one chip beside the name and never asks
+"Hypertension, uncontrolled, NSAID-aggravated", as a recorded transition with a rationale, never
+an overwrite (paper §6.3). The UI renders `epistemic` as one chip beside the name and never asks
 for it at creation; a raised concern starts at `finding` or `syndrome`.
 
 No numeric probabilities on hypotheses. The paper's argument (§6.3, A.2) holds: clinicians will
@@ -96,11 +100,11 @@ machine reads hedged prose perfectly well. Certainty is the ladder position plus
 A differential is not a list. Each alternative is a small focus:
 
 ```json
-{ "id": "prob_h_0057_02", "kind": "hypothesis", "name": "Assay or specimen discrepancy",
+{ "id": "prob_h_0007_02", "kind": "hypothesis", "name": "NSAID-driven rise",
   "standing": "competing | leading | unlikely | dismissed",
-  "epistemic": "possible", "steward": {...},
-  "discriminators": [ { "code": "2160-0", "label": "Repeat serum creatinine, single lab",
-                        "would_show": "concordant value near 5.7 confirms; near 2.0 reopens",
+  "epistemic": "suspected", "steward": {...},
+  "discriminators": [ { "code": "8480-6", "label": "Home blood pressure log, four weeks off ibuprofen",
+                        "would_show": "a fall toward 130s confirms; no fall points at the diuretic alone or at adherence",
                         "state": "ordered | pending | resulted | unavailable | not_ordered" } ] }
 ```
 
@@ -119,13 +123,14 @@ are the same object read two ways:
 ```json
 "surveillance": {
   "expected": [
-    { "statement": "Creatinine falls within two weeks off naproxen if the hemodynamic component is real",
-      "parameters": [ { "code": "38483-4", "direction": "falling", "by": "2026-09-25" } ],
-      "set_by": "usr_chen", "at": "2026-09-11T…", "from_insight": "ins_0057_02" } ],
+    { "statement": "Systolic under 140 within four weeks off ibuprofen and on lisinopril",
+      "parameters": [ { "code": "8480-6", "direction": "falling", "target": 140, "by": "2026-10-13" } ],
+      "set_by": "usr_chen", "at": "2026-09-15T…", "from_insight": "ins_0007_01" } ],
   "reconsider_if": [
-    { "trigger": "no fall in creatinine by 2026-09-25", "then": "renal ultrasound; nephrology now, not routine",
-      "parameters": [ { "code": "38483-4", "test": "not_falling", "by": "2026-09-25" } ] },
-    { "trigger": "potassium above 5.5", "then": "same-day review", "parameters": [ { "code": "2823-3", "test": "gt", "value": 5.5 } ] } ],
+    { "trigger": "systolic still above 140 by 2026-10-13", "then": "adherence and home cuff first; then a second agent",
+      "parameters": [ { "code": "8480-6", "test": "not_falling", "by": "2026-10-13" } ] },
+    { "trigger": "potassium above 5.5 or creatinine up by more than 30% on the two-week BMP", "then": "hold lisinopril, same-day review",
+      "parameters": [ { "code": "6298-4", "test": "gt", "value": 5.5 } ] } ],
   "parameters": [ ... existing tripwires ... ],
   "review_horizon": "P14D"
 }
@@ -170,10 +175,10 @@ interpretation, not a summary of data:
 
 ```json
 "representation": {
-  "text": "59M with T2DM, HFrEF and CKD 3, creatinine 1.6 → 5.7 over twelve months with eGFR now 15.6, rising from the month daily naproxen began, October 2025; three weeks of fatigue, nausea and poor appetite. Still on metformin 500 mg.",
+  "text": "55F with T2DM and hypertension on hydrochlorothiazide alone, blood pressure 128/80 → 154/94 over twelve months with new albuminuria (ACR 18 → 48), rising from the month daily ibuprofen began, May 2026; home readings in the 150s over 90s.",
   "qualifiers": ["chronic", "progressive", "worsening", "unexpected_rate"],
   "tier": "proposed | attested", "asserted_by": {...}, "as_of_event": "evt_…",
-  "cites": ["obs_243df5cd", "obs_7f3ce7a6", "med_demo_002_01", "note_demo_002"]
+  "cites": ["obs_c0006", "obs_c0007", "med_demo_102_01", "note_demo_102"]
 }
 ```
 
@@ -195,11 +200,11 @@ interpretation, not a summary of data:
 
 ## 5. Source, interpretation, inference: three objects, always
 
-| Layer | Object | Example on pt_001 | Provenance vocabulary |
+| Layer | Object | Example on pt_002 | Provenance vocabulary |
 |---|---|---|---|
-| Source finding | Observation event | Creatinine (whole blood) 5.7 mg/dL, 19 Aug | `measured`, `patient_reported`, `clinician_documented`, `imported` (outside record), `historical` |
-| Interpretation | Edge with valence, or a representation qualifier | `relevant_to` CKD, valence `for`; "worsening" | `asserted` (clinician), `ai_proposed`, `harvested` (rule) |
-| Clinical inference | Insight, hypothesis, `caused_by` edge | "Naproxen is a suspected contributor" | `inferred_by_ai`, `inferred_by_clinician`, with model or user id |
+| Source finding | Observation event | Systolic blood pressure 154 mm[Hg], 2 Aug | `measured`, `patient_reported`, `clinician_documented`, `imported` (outside record), `historical` |
+| Interpretation | Edge with valence, or a representation qualifier | `relevant_to` hypertension, valence `for`; "worsening" | `asserted` (clinician), `ai_proposed`, `harvested` (rule) |
+| Clinical inference | Insight, hypothesis, `caused_by` edge | "Daily ibuprofen is a suspected contributor" | `inferred_by_ai`, `inferred_by_clinician`, with model or user id |
 
 These are never merged into one card. On the problem card, a finding under *Supporting* shows the
 value in mono type (the machine-recorded fact), the valence mark, and a small provenance stamp; the
@@ -319,9 +324,9 @@ courses as bands, encounters as ticks. It gains two things (frame 3):
   assessment signed) sit as small marks on the axis at their date (the remaining P2 item in the
   principles scorecard), so the reader sees when the model changed relative to when the data did.
 
-The two creatinine series on pt_001 (whole-blood 38483-4 at 5.7, serum 2160-0 at 1.94, same
-date) plot as two series with a discordance mark, never averaged (P9). That discordance is
-exactly the kind of "doesn't fit" the card must show.
+Home and office blood pressure on pt_002 are two series (patient-reported 150s over 90s, measured
+154/94) and stay two series; where they disagree the chart marks it, never averages it (P9). A
+disagreement there is exactly the kind of "doesn't fit" the card must show.
 
 ---
 
@@ -331,12 +336,12 @@ CDS is not an alert layer. It is four kinds of insight, each a `proposal.raised`
 observation / attribution / confidence anatomy (PRD-04 §1), each attached to the focus it
 concerns, each quiet until the clinician turns to it:
 
-| Kind | Question it asks | Trigger | pt_001 example |
+| Kind | Question it asks | Trigger | pt_002 example |
 |---|---|---|---|
-| `mismatch` | What does not fit the current explanation? | `expectation.evaluated: missed`; new `valence: unexplained` finding | whole-blood creatinine fell to 3.69 in May while naproxen continued daily; serum creatinine flat at 1.9 while whole-blood reads 5.7 |
-| `discriminator` | Which evidence would separate the competing hypotheses? | two or more hypotheses with `standing: competing` and no resolved discriminator | a repeat serum creatinine and BUN from one lab separates "true stage 5" from "assay discrepancy" |
-| `missing` | What information would materially change the decision? | a plan or hypothesis whose discriminator is `not_ordered` or `unavailable` | no renal imaging on record; no urine albumin since November |
-| `contradiction` | What in the record disagrees with itself? | rule checks across diagnosis ↔ findings, medication ↔ problem state, plan ↔ goals, expected ↔ observed, steward ↔ steward | metformin 500 mg active with eGFR 15.6; CKD labelled stage 3 with eGFR 15.6 |
+| `mismatch` | What does not fit the current explanation? | `expectation.evaluated: missed`; new `valence: unexplained` finding | A1c rose 7.1 → 7.9 with metformin on the active list; the note attributes it to skipped doses, so treatment failure is not the reading; a home glucose log that stays high on the extended-release switch would reopen it |
+| `discriminator` | Which evidence would separate the competing hypotheses? | two or more hypotheses with `standing: competing` and no resolved discriminator | a four-week home blood pressure log off ibuprofen and on lisinopril separates "NSAID-driven" from "diuretic alone is not enough" |
+| `missing` | What information would materially change the decision? | a plan or hypothesis whose discriminator is `not_ordered` or `unavailable` | no home blood pressure log on the chart; no lipid panel since 2024; no repeat ACR after the first abnormal value |
+| `contradiction` | What in the record disagrees with itself? | rule checks across diagnosis ↔ findings, medication ↔ problem state, plan ↔ goals, expected ↔ observed, steward ↔ steward | ibuprofen daily with hypertension above goal and new albuminuria; A1c 7.9 with metformin "active" that is not being taken |
 
 Rules and the model both produce these. Contradiction and mismatch are rule-first (they are checks
 over structured state, PRD-03 §5) and the model is asked only to phrase and to cite. The phrasing
@@ -455,51 +460,53 @@ the one accent (the selection blue).
 
 ---
 
-## 18. The example card, on pt_001 (frame 2)
+## 18. The example card, on pt_002 (frame 2)
 
 ```
-Declining kidney function                      working · active · worsening · unexpected rate
-Concern, steward Dr. Chen · onset Nov 2025 · chronic care programme (CKD, HFrEF, T2DM)
+Blood pressure above goal                       working · active · worsening · unexpected rate
+Concern, steward Dr. Chen · onset Jan 2026 · with T2DM
 
-Representation  (proposed by the system, 11 Sep · Accept · Edit)
-  59M with T2DM, HFrEF and CKD 3, creatinine 1.6 → 5.7 over twelve months with eGFR now 15.6,
-  rising from the month daily naproxen began, October 2025; three weeks of fatigue, nausea and
-  poor appetite. Still on metformin 500 mg.
+Representation  (proposed by the system, 15 Sep · Accept · Edit)
+  55F with T2DM and hypertension on hydrochlorothiazide alone, blood pressure 128/80 → 154/94
+  over twelve months with new albuminuria (ACR 18 → 48), rising from the month daily ibuprofen
+  began, May 2026; home readings in the 150s over 90s.
 
-Assessment  (Dr. Chen, 11 Sep)
-  Most consistent with NSAID-accelerated progression of established CKD, now in the stage 5
-  range, with early uremic symptoms. I am not ready to restage until the two creatinine assays
-  agree.
+Assessment  (Dr. Chen, 15 Sep)
+  Above goal on one agent, with a daily NSAID she did not think to mention and new albuminuria
+  in a diabetic. Stop the ibuprofen, add an ACE inhibitor for the albuminuria as much as the
+  pressure, and let the home log tell us how much was the NSAID.
 
 Supporting                                      Doesn't fit
-  + creatinine (whole blood) 1.62 → 5.7, 12 mo     − serum creatinine 1.94, flat over the year
-  + eGFR 15.6 (19 Aug), from 55.45                 − BUN 17.3, flat; unusual beside a true 5.7
-  + naproxen daily since Oct 2025 (note, 11 Sep)   ○ fell to 3.69 in May while still on daily
-  + fatigue, nausea, poor appetite × 3 wk              naproxen
+  + systolic 128 → 142 → 148 → 154, 12 mo          − no home log on the chart: the "150s" are recalled
+  + ACR 18 → 48 mg/g (2 Aug)                        ○ diastolic 80 → 94 began before May, when the
+  + ibuprofen daily since May (note, 15 Sep)            ibuprofen started
+  + home readings 150s/90s (patient-reported)
 
 Alternatives
-  competing  Assay or specimen discrepancy · discriminator: repeat serum creatinine + BUN, one lab · ordered
-  competing  Hemodynamic AKI on CKD (lisinopril + furosemide + NSAID) · discriminator: response to stopping naproxen · pending
-  unlikely   Obstruction · discriminator: renal ultrasound · not ordered
+  leading    NSAID-driven rise · discriminator: home log four weeks off ibuprofen · not ordered
+  competing  Diuretic alone no longer enough · discriminator: response to lisinopril · pending
+  unlikely   White-coat component · discriminator: home log vs office · not ordered
 
 Plan
-  therapeutic  stop naproxen (signed)              diagnostic  creatinine + BUN, single lab (signed)
-  therapeutic  stop metformin (signed)             referral    nephrology, urgent (signed)
-  monitoring   creatinine, potassium every 2 weeks
+  therapeutic  stop ibuprofen (signed)             monitoring   home BP log, goal under 140/90 in 4 wk (signed)
+  therapeutic  start lisinopril 10 mg daily (signed)  diagnostic   BMP in 2 weeks (signed)
+  education    acetaminophen for the back           referral     physical therapy (signed)
 
-Expected     creatinine falls within two weeks off naproxen if the hemodynamic component is real
-Reassess if  no fall by 25 Sep → renal ultrasound, nephrology now · potassium above 5.5 → same day
+Expected     systolic under 140 within four weeks off ibuprofen and on lisinopril
+Reassess if  still above 140 by 13 Oct → adherence and home cuff first, then a second agent ·
+             potassium above 5.5 or creatinine up 30% on the two-week BMP → hold lisinopril, same day
 
-Changed since 29 Jul
-  creatinine (whole blood) 4.38 → 5.7 ▲   naproxen revealed, daily since last October   symptoms new: fatigue, nausea
+Changed since 11 Jul
+  systolic 148 → 154 ▲   ibuprofen revealed, daily since May   ACR 18 → 48, new albuminuria
 
 [Review evidence] [Update assessment] [View trajectory] [Add to plan] [Alternatives · 3]
 ```
 
-Every value is a real one from `data/patients/pt_001.json` or `data/notes/note_demo_002.json`.
-The two "doesn't fit" lines marked `−` and the `○` line are the contradiction and mismatch checks
-from §11, and they are the most important lines on the card: they are what a reader of four
-encounter notes would miss.
+Every value is a real one from `data/patients/pt_002.json` or `data/notes/note_demo_102.json`.
+The `−` line and the `○` line are the contradiction and mismatch checks from §11, and they are
+the most important lines on the card: the home readings the plan depends on are not on the chart
+yet, and the diastolic was already climbing before the ibuprofen started, so the NSAID is not
+the whole story.
 
 ---
 
