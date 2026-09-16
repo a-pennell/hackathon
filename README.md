@@ -45,16 +45,34 @@ The screen is framed like a record: session tabs for the open patients, the prac
 patient header with the visit and the note's status, and four patient tabs, **Overview ·
 Timeline · Care · Chart**. The header carries one button, the next thing owed, computed from the
 chart: read the note, review it, sign it, ask what changed on the concern that is moving, sign the
-insights, draft and sign the orders, and finally "nothing owed". Overview is the orientation
-screen (what changed since the last routine visit, ranked; concerns by what they need; open
-loops). Care holds the problems; opening one lands in its workspace, the problem card. The Note is
-a contextual destination reached from the header or the overview: the text with every passage
-the reading used marked, the proposals grouped by problem, one Sign note action, and the record
-of what it wrote. Timeline is the patient's visits and record events; Chart is medications,
-results by series and problems. Every screen has an "About this screen" door at its foot, and the
-Demo menu at the top right holds the Claude live/saved switch, an About page on the record's
-architecture, and Reset. Everything AI-proposed is drawn in *pencil* (dashed, amber) until a
-clinician signs it; signed items become ink.
+insights, draft and sign the orders, and finally "nothing owed".
+
+- **Overview** is orientation: what changed since the last routine visit, ranked by clinical
+  meaning; the active concerns by what they need; the open loops.
+- **Care** is what we are doing: one card per concern with its plan, its measures and its open
+  loops, chips that pivot the same objects by kind (plans, orders and requests, referrals,
+  follow-ups, measures), and a due strip for monitored measures past their interval. Opening a
+  card lands in the **problem workspace**: an evidence spine of the record read for that problem,
+  a banner for each consequential proposal, the summary stack (one line, the cited assessment
+  paragraph to accept or edit, the full history), the clinician's assessment in prose, a
+  surveillance card (each monitored series with its threshold and state, the expectation and
+  what to reassess on, the next review), a linked card, supporting and doesn't-fit evidence,
+  insights, plan, the trajectory with the expectation drawn as a corridor.
+- **The note** is the encounter canvas, reached from the header or the overview: the text with
+  every passage the reading used marked, the clinical diff (each proposal in diff notation),
+  consequential items first, each reviewed one at a time in a **drawer** (what the system saw,
+  what it concluded, its confidence, each part separately signable; what changes on the chart if
+  you sign; sign, or reject with a reason), the batchable rest under the problems they touch,
+  a panel rail (plan, last note, medications, results) and charge capture. **Sign note** unlocks
+  once the consequential items are decided and commits the rest; the record under the note lists
+  what the reading and the signature wrote.
+- **Timeline** is the patient's visits and record events; **Chart** is medications, results by
+  series and problems.
+
+Every screen has an "About this screen" door at its foot, and the Demo menu at the top right
+holds the Claude live/saved switch, an About page on the record's architecture, and Reset.
+Everything AI-proposed is drawn in *pencil* (dashed, amber) until a clinician signs it; signed
+items become ink.
 
 The chart opens on `pt_002`; `http://localhost:8000/?patient=pt_001` opens the first golden
 patient, whose recorded demo (CKD, naproxen, metformin) still plays through the same views.
@@ -73,13 +91,15 @@ been skipping metformin for stomach upset, and taking ibuprofen daily for her ba
 
 1. **Overview** opens cold: "here for: office visit, 15 Sep" with the note waiting, both concerns
    marked *worsening* with the blood pressure and glucose moves since January, nothing pending.
-2. **Read it** → **Read (saved)**. The **Note** view shows the text with every passage the
-   reading used marked, and the proposals grouped by problem: the results, the ibuprofen course
-   as a suspected cause of the blood pressure, the metformin switch, lisinopril, the plan items,
-   and a new concern, low back pain. Reject anything you disagree with, with a reason.
-3. **Sign note**. One signature attests the note and commits everything not rejected; the
-   **record** under the note lists what it wrote: results recorded, courses opened and changed,
-   links asserted, plan items set, your rejections with their reasons, the signature.
+2. **Read the note** (the header button). The note view shows the text with every passage the
+   reading used marked, the clinical diff, and the consequential items first: the ibuprofen
+   course as a suspected cause of the blood pressure, the metformin switch, lisinopril, the new
+   concern, low back pain. **Review** each in the drawer: sign it, or reject it with a reason.
+   The batchable rest, results and plan items, sit under the problems they touch.
+3. **Sign note** unlocks once the consequential items are decided. One signature commits the
+   rest and attests the note; the **record** under the note lists what it wrote: results
+   recorded, courses opened and changed, links asserted, plan items set, your rejections with
+   their reasons, the signature.
 4. Back on **Overview**: the medication changes lead the ranked list; open the hypertension row.
 5. **The card.** Representation (proposed), your assessment, supporting evidence with the ibuprofen
    course as a suspected cause, the plan items from the note under *Plan*, and once ibuprofen is

@@ -80,7 +80,8 @@ export default function App() {
   useEffect(() => {
     let live = true;
     if (view === "chart") api.chart(PID).then((c) => live && setChart(c)).catch(() => live && setChart(null));
-    if (view === "care") api.care(PID).then((c) => live && setCare(c)).catch(() => live && setCare(null));
+    if (view === "care" || view === "note") api.care(PID).then((c) => live && setCare(c)).catch(() => live && setCare(null));
+    if (view === "note") api.chart(PID).then((c) => live && setChart(c)).catch(() => live && setChart(null));
     if (view === "timeline") {
       api.chart(PID).then((c) => live && setChart(c)).catch(() => live && setChart(null));
       api.record(PID).then((r) => live && setPatientRecord(r)).catch(() => live && setPatientRecord([]));
@@ -334,6 +335,10 @@ export default function App() {
             record={record}
             busy={busy}
             mode={mode}
+            chart={chart}
+            care={care}
+            coding={coding}
+            lastNote={notes.filter((x) => x.time < openNoteFile.time).sort((x, y) => y.time.localeCompare(x.time))[0] ?? null}
           />
         ) : <div className="empty">That note is not on file.</div>)}
       </main>

@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import type { ReviewBody } from "./api";
 import { buildGroups, GroupCard, type Group } from "./Inbox";
 import ReviewDrawer, { isConsequential, type Reviewable } from "./ReviewDrawer";
-import type { NoteFile, Problem, QueueBatch, RecordEvent } from "./types";
+import Coding from "./Coding";
+import type { CareData, ChartData, Coding as CodingT, NoteFile, Problem, QueueBatch, RecordEvent } from "./types";
 
 type Props = {
   note: NoteFile;
@@ -18,6 +19,10 @@ type Props = {
   record: RecordEvent[];
   busy: string | null;
   mode: "live" | "replay";
+  chart: ChartData | null;
+  care: CareData | null;
+  coding: CodingT | null;
+  lastNote: NoteFile | null;
 };
 
 type Span = { start: number; end: number; ids: string[]; status: string };
@@ -61,10 +66,13 @@ function spansOf(text: string, batch: QueueBatch | null): Span[] {
   return out;
 }
 
-export default function NoteView({ note, batch, problems, labels, highlight, onHover, onReview, onRead, onSign, onOpenProblem, record, busy, mode }: Props) {
+export default function NoteView({ note, batch, problems, labels, highlight, onHover, onReview, onRead, onSign, onOpenProblem, record, busy, mode, chart, care, coding, lastNote }: Props) {
   const name = (id: string) => labels[id] ?? id;
   const [showSigned, setShowSigned] = useState(false);
   const [reviewing, setReviewing] = useState<Reviewable | null>(null);
+  const [panels, setPanels] = useState<Set<string>>(new Set(["plan", "last"]));
+  const [charge, setCharge] = useState(false);
+  const togglePanel = (p: string) => setPanels((s) => { const n = new Set(s); n.has(p) ? n.delete(p) : n.add(p); return n; });
   const spans = useMemo(() => spansOf(note.text, batch), [note.text, batch]);
   const groups = useMemo(() => (batch ? buildGroups(batch, name, new Set()) : []), [batch, labels]); // eslint-disable-line react-hooks/exhaustive-deps
   const open = groups.filter((g) => g.status === "proposed" && !(g.subject && g.subject.status === "rejected"));
@@ -87,6 +95,26 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
     const order = [...problems.map((p) => p.id), "_"];
     return [...m.entries()].sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
   }, [batchable, problems]);
+
+  // The clinical diff: every proposal as one line in diff notation, before the cards.
+  const changeset = useMemo(() => {
+    if (!batch) return [];
+    const rows: { sym: string; cls: string; text: string; ids: string[]; status: string }[] = [];
+    for (const g of groups) {
+      const status = g.subject && g.subject.status === "rejected" ? "rejected" : g.status;
+      if (g.kind === "problem") rows.push({ sym: "+", cls: "add", text: `New problem: ${name(g.subjectId)}`, ids: g.hoverIds, status });
+      else if (g.kind === "medication" && g.subject) rows.push({ sym: "+", cls: "add", text: `Course: ${name(g.subjectId)}`, ids: g.hoverIds, status });
+      else if (g.kind === "result") rows.push({ sym: "+", cls: "add", text: `Result: ${name(g.subjectId)}`, ids: g.hoverIds, status });
+      else if (g.kind === "plan") rows.push({ sym: "+", cls: "add", text: `Plan: ${name(g.subjectId).replace(/^plan: /, "")}`, ids: g.hoverIds, status });
+      for (const l of g.links) {
+        if (l.type === "suspected_cause") rows.push({ sym: "→", cls: "chg", text: `Link: ${name(l.from)} → suspected cause of ${name(l.to)}`, ids: [l.id, l.from, l.to], status: l.status });
+      }
+      if (g.kind === "finding") rows.push({ sym: "+", cls: "add", text: `Finding for ${g.links.map((l) => name(l.to)).join(", ")}`, ids: g.hoverIds, status });
+    }
+    for (const c of batch.medication_changes ?? []) rows.push({ sym: c.change === "stop" ? "−" : "~", cls: c.change === "stop" ? "rm" : "chg", text: `${c.change === "stop" ? "Stop" : "Change"}: ${name(c.med_id)}${c.dose && c.change === "dose_change" ? ` → ${c.dose}` : ""}`, ids: [c.med_id], status: c.status });
+    return rows;
+  }, [batch, groups, labels]); // eslint-disable-line react-hooks/exhaustive-deps
+  const touched = useMemo(() => new Set(groups.flatMap((g) => g.hoverIds.filter((id) => problems.some((p) => p.id === id)))), [groups, problems]);
 
   const pieces: React.ReactNode[] = [];
   let cursor = 0;
@@ -121,6 +149,7 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
               {mode === "live" ? "Read with Claude" : "Read (saved)"}
             </button>
           )}
+          {coding && coding.signed_today > 0 && <button className="btn" onClick={() => setCharge(true)} title="Visit coding computed from what was signed today">Charge capture</button>}
           {batch && !signed && (
             <button className="btn primary" disabled={!!busy || gated > 0} onClick={onSign} title={gated > 0 ? `${gated} consequential item${gated > 1 ? "s" : ""} first, one at a time` : "Signs every batchable proposal you have not rejected, then the note itself"}>
               {gated > 0 ? `Sign note · ${gated} to review first` : `Sign note${batchable.length > 0 ? ` · ${batchable.length}` : ""}`}
@@ -133,7 +162,16 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
             <h3>{note.file ? note.file.split("/").pop() : "chart note"} <span className="cnt">{spans.length ? `${spans.length} passages the reading used` : ""}</span></h3>
             <pre className="note-body">{pieces}</pre>
           </section>
+          <div className="panelrail">
           <section className="nprops">
+            {changeset.length > 0 && (
+              <div className="changeset" aria-label="The clinical diff">
+                <div className="cs-head"><span className="eyebrow">The clinical diff</span><span className="cnt">{changeset.filter((r) => r.status === "proposed").length} proposed · {changeset.filter((r) => r.status === "accepted").length} signed · {changeset.filter((r) => r.status === "rejected").length} rejected</span></div>
+                {changeset.map((r, i) => (
+                  <div key={i} className={`cs-row ${r.cls} ${r.status} ${r.ids.some((id) => highlight.has(id)) ? "hi" : ""}`} onMouseEnter={() => onHover(r.ids)} onMouseLeave={() => onHover(null)}><span className="sym">{r.sym}</span><span className="txt">{r.text}</span><span className="st">{r.status === "proposed" ? "" : r.status}</span></div>
+                ))}
+              </div>
+            )}
             <h3>What this note proposes <span className="cnt">{batch ? `${waiting} waiting · ${decided.length + changes.length - openChanges.length} decided` : "read the note to find out"}</span></h3>
             {!batch && <div className="quiet">Nothing has been read from this note. Reading it proposes changes; nothing reaches the chart until you sign.</div>}
             {(consequential.length > 0 || openChanges.length > 0) && (
@@ -175,6 +213,53 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
               <div className="quiet">{batch.rejected.length} item{batch.rejected.length > 1 ? "s" : ""} the reading produced could not be verified against the note and {batch.rejected.length > 1 ? "were" : "was"} dropped.</div>
             )}
           </section>
+
+          <div className="rail-closed">
+            <span className="lbl">Panels</span>
+            {[["plan", "Plan"], ["last", "Last note"], ["meds", "Meds"], ["results", "Results"]].map(([k, l]) => (
+              <button key={k} className={`pchip ${panels.has(k) ? "on" : ""}`} aria-pressed={panels.has(k)} onClick={() => togglePanel(k)}>{panels.has(k) ? "− " : "+ "}{l}</button>
+            ))}
+          </div>
+          {panels.has("plan") && (
+            <section className="panel">
+              <div className="panel-head"><h4>Plan · {[...touched].map((id) => name(id)).join(", ") || "problems this note touches"}</h4><span className="lens">lens · Care › Plans</span><span className="spacer" /><button className="x" aria-label="Close panel" onClick={() => togglePanel("plan")}>×</button></div>
+              <div className="panel-body">
+                {care ? care.cards.filter((c) => touched.size === 0 || touched.has(c.id) || c.members.some((m) => touched.has(m.id))).map((c) => (
+                  <div key={c.id} className="panel-prob">
+                    <button className="link" onClick={() => onOpenProblem(c.id)}>{c.name}</button>
+                    {c.plan.length === 0 && <div className="meta">nothing signed yet</div>}
+                    {c.plan.slice(0, 4).map((p) => <div key={p.id} className="planrow"><span className="k">{p.kind.replace("_", " ")}</span><span>{p.text}</span></div>)}
+                    {c.expected && <div className="meta">expected: {c.expected.statement}</div>}
+                  </div>
+                )) : <div className="meta">Loading the plan…</div>}
+              </div>
+            </section>
+          )}
+          {panels.has("last") && (
+            <section className="panel">
+              <div className="panel-head"><h4>Last note{lastNote ? ` · ${lastNote.time.slice(0, 10)}` : ""}</h4>{lastNote?.status === "signed" && <span className="tag ok">signed</span>}<span className="spacer" /><button className="x" aria-label="Close panel" onClick={() => togglePanel("last")}>×</button></div>
+              <div className="panel-body">
+                {lastNote ? <><div className="note-preview">{lastNote.text.replace(/\s+/g, " ").slice(0, 320)}…</div><div className="meta">{lastNote.author}</div></> : <div className="meta">No earlier note on file for this patient.</div>}
+              </div>
+            </section>
+          )}
+          {panels.has("meds") && (
+            <section className="panel">
+              <div className="panel-head"><h4>Medications</h4><span className="lens">lens · Chart › Medical info</span><span className="spacer" /><button className="x" aria-label="Close panel" onClick={() => togglePanel("meds")}>×</button></div>
+              <div className="panel-body">
+                {chart ? chart.medications.filter((m) => !m.segments[m.segments.length - 1].end).map((m) => { const last = m.segments[m.segments.length - 1]; return <div key={m.id} className={`planrow ${highlight.has(m.id) ? "hi" : ""}`} onMouseEnter={() => onHover([m.id])} onMouseLeave={() => onHover(null)}><span>{m.name}</span><span className="meta">{last.dose ?? ""} {last.frequency ?? ""}</span></div>; }) : <div className="meta">Loading…</div>}
+              </div>
+            </section>
+          )}
+          {panels.has("results") && (
+            <section className="panel">
+              <div className="panel-head"><h4>Results</h4><span className="lens">lens · Chart › Lab results</span><span className="spacer" /><button className="x" aria-label="Close panel" onClick={() => togglePanel("results")}>×</button></div>
+              <div className="panel-body">
+                {chart ? chart.series.map((r) => <div key={r.code} className="planrow"><span>{r.name}</span><span className={`num ${r.out ? "flag" : ""}`}>{r.latest.value} {r.unit ?? ""}</span><span className="meta">{r.latest.time.slice(0, 10)}</span></div>) : <div className="meta">Loading…</div>}
+              </div>
+            </section>
+          )}
+          </div>
         </div>
 
         <section className="nrecord">
@@ -193,6 +278,14 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
           ))}
         </section>
       </article>
+      {charge && coding && (
+        <div className="modal-bg" onClick={() => setCharge(false)}>
+          <div className="modal wide" onClick={(e) => e.stopPropagation()}>
+            <Coding coding={coding} highlight={highlight} onHover={onHover} />
+            <div className="row"><span className="spacer" /><button className="btn ghost" onClick={() => setCharge(false)}>Close</button></div>
+          </div>
+        </div>
+      )}
       {reviewing && <ReviewDrawer item={reviewing} labels={labels} problems={problems} onReview={onReview} onClose={() => setReviewing(null)} busy={busy} />}
 
       <details className="explain bottom">
