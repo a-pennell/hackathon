@@ -410,11 +410,13 @@ asks for structure at the reasoning grain.
 | Clinical | `/patients/:pid/chart` Chart | medications, labs, vitals, imaging, allergies, histories (six groups) |
 | Encounter | Chart › Session documentation, and the canvas | what happened in one interaction |
 | Documentation | compiled views, frozen by sign | notes, letters, summaries |
+| Notes | `/patients/:pid/notes` Notes | the notes on file by state (in progress, waiting to be read, signed); scoped to the patient or to all my patients |
 
 One object, one home, many lenses (PRD-10). Nothing is duplicated between views; a card on the
 Overview is a lens on the same focus that Care shows. The four tabs and the Care/Chart boundary
 are unchanged from `patient-ia-v2-proposal.md`; this design fills the Care tab's problem card and
-the Overview's top half.
+the Overview's top half. Notes is the fifth tab, added for the job every clinician role shares
+(`jobs-to-be-done.md`): see my notes in progress and completed, resume one, know which are unsigned.
 
 ---
 
@@ -560,7 +562,11 @@ Timeline · Care · Chart); Care carries problem cards with plan, measures and o
 kind-pivot chips; the workspace follows the CPOR problem view (evidence spine, proposal
 banners, summary stack, authored assessment, surveillance and linked cards); consequential
 proposals open the review drawer with the three-part anatomy and the what-changes table; the
-note is the encounter canvas with the clinical diff and a panel rail. What remains unbuilt is
+note is the encounter canvas with the clinical diff and a panel rail. The **Notes** tab lists the
+notes on file by state, each row's button the next thing owed on it, scoped to the patient or to
+all my patients; the header button's idle state is the clinician's documentation debt ("Unsigned
+notes · n") before it is "Nothing owed". `jobs-to-be-done.md` maps the jobs of seven roles onto
+what is built; outside primary care almost nothing is. What remains unbuilt is
 persistence of the accepted representation and assessment, and alternatives, which need the
 appendix's schema additions. In full: the
 representation and assessment as fields on the existing problem, `expected` as a field on the

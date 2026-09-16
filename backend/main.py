@@ -517,10 +517,17 @@ PRISTINE = DATA_DIR / ".pristine"   # snapshot of every chart at server start; g
 
 
 def _is_clean(chart: dict) -> bool:
-    """A chart with nothing AI-signed on it: the state the demo starts from."""
+    """A chart with nothing AI-signed on it and no note signed: the state the demo starts from."""
     return not chart.get("documents") and not chart.get("orders") and not chart.get("plans") and all(
         x["provenance"]["source"] in ("fhir_import", "curated")
-        for k in ("problems", "observations", "medications", "links", "insights") for x in chart.get(k, []))
+        for k in ("problems", "observations", "medications", "links", "insights") for x in chart.get(k, [])
+    ) and not any(n.get("status") or n.get("review") for n in chart.get("notes", []))
+
+
+def _mid_demo(pid: str) -> bool:
+    """A validated queue on disk means a note has been read: the chart has the note ingested and the demo is
+    under way, even though nothing is signed yet. Not a state to snapshot."""
+    return any(not q.name.endswith(".raw.json") for q in (PROPOSED_DIR / pid).glob("*.json"))
 
 
 def _snapshot_charts():
@@ -532,7 +539,7 @@ def _snapshot_charts():
         if p.name.endswith(".import-report.json"):
             continue
         chart = json.loads(p.read_text())
-        if _is_clean(chart):
+        if _is_clean(chart) and not _mid_demo(p.stem):
             (PRISTINE / p.name).write_bytes(p.read_bytes())
         elif not (PRISTINE / p.name).exists():
             print(f"warning: {p.name} has AI-signed items and no clean snapshot exists; 'Reset demo' unavailable until you start from a clean chart")
