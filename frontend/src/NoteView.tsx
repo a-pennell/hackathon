@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { ReviewBody } from "./api";
 import { buildGroups, GroupCard, type Group } from "./Inbox";
+import ReviewDrawer, { isConsequential, type Reviewable } from "./ReviewDrawer";
 import type { NoteFile, Problem, QueueBatch, RecordEvent } from "./types";
 
 type Props = {
@@ -63,6 +64,7 @@ function spansOf(text: string, batch: QueueBatch | null): Span[] {
 export default function NoteView({ note, batch, problems, labels, highlight, onHover, onReview, onRead, onSign, onOpenProblem, record, busy, mode }: Props) {
   const name = (id: string) => labels[id] ?? id;
   const [showSigned, setShowSigned] = useState(false);
+  const [reviewing, setReviewing] = useState<Reviewable | null>(null);
   const spans = useMemo(() => spansOf(note.text, batch), [note.text, batch]);
   const groups = useMemo(() => (batch ? buildGroups(batch, name, new Set()) : []), [batch, labels]); // eslint-disable-line react-hooks/exhaustive-deps
   const open = groups.filter((g) => g.status === "proposed" && !(g.subject && g.subject.status === "rejected"));
@@ -71,17 +73,20 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
   const openChanges = changes.filter((c) => c.status === "proposed");
   const signed = note.status === "signed";
   const waiting = open.length + openChanges.length;
+  const consequential = open.filter(isConsequential);
+  const batchable = open.filter((g) => !isConsequential(g));
+  const gated = consequential.length + openChanges.length;
 
   // Group proposals by the problem they touch, in problem-list order; the rest under "the note".
   const byProblem = useMemo(() => {
     const m = new Map<string, Group[]>();
-    for (const g of open) {
+    for (const g of batchable) {
       const pid = g.hoverIds.find((id) => problems.some((p) => p.id === id)) ?? (g.subject && "problem_id" in g.subject ? (g.subject as { problem_id: string }).problem_id : null) ?? "_";
       m.set(pid, [...(m.get(pid) ?? []), g]);
     }
     const order = [...problems.map((p) => p.id), "_"];
     return [...m.entries()].sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
-  }, [open, problems]);
+  }, [batchable, problems]);
 
   const pieces: React.ReactNode[] = [];
   let cursor = 0;
@@ -117,8 +122,8 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
             </button>
           )}
           {batch && !signed && (
-            <button className="btn primary" disabled={!!busy} onClick={onSign} title="Signs every proposal you have not rejected, then the note itself">
-              Sign note{waiting > 0 ? ` · ${waiting}` : ""}
+            <button className="btn primary" disabled={!!busy || gated > 0} onClick={onSign} title={gated > 0 ? `${gated} consequential item${gated > 1 ? "s" : ""} first, one at a time` : "Signs every batchable proposal you have not rejected, then the note itself"}>
+              {gated > 0 ? `Sign note · ${gated} to review first` : `Sign note${batchable.length > 0 ? ` · ${batchable.length}` : ""}`}
             </button>
           )}
         </header>
@@ -131,6 +136,25 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
           <section className="nprops">
             <h3>What this note proposes <span className="cnt">{batch ? `${waiting} waiting · ${decided.length + changes.length - openChanges.length} decided` : "read the note to find out"}</span></h3>
             {!batch && <div className="quiet">Nothing has been read from this note. Reading it proposes changes; nothing reaches the chart until you sign.</div>}
+            {(consequential.length > 0 || openChanges.length > 0) && (
+              <div className="pgroup consequential">
+                <div className="pgroup-head">Consequential · reviewed one at a time <span className="cnt">{consequential.length + openChanges.length}</span></div>
+                {consequential.map((g) => (
+                  <div key={g.key} className="crow" onMouseEnter={() => onHover(g.hoverIds)} onMouseLeave={() => onHover(null)}>
+                    <span className="kind">{g.kind === "problem" ? "problem" : g.kind === "medication" ? "course" : "cause"}</span>
+                    <span className="what">{g.title}</span>
+                    <button className="btn small primary" disabled={!!busy} onClick={() => setReviewing({ g, b: batch! })}>Review</button>
+                  </div>
+                ))}
+                {openChanges.map((c, i) => (
+                  <div key={i} className="crow" onMouseEnter={() => onHover([c.med_id])} onMouseLeave={() => onHover(null)}>
+                    <span className="kind">{c.change === "stop" ? "stop" : "dose"}</span>
+                    <span className="what"><b>{name(c.med_id)}</b>: {c.change.replace("_", " ")} effective {c.effective}</span>
+                    <button className="btn small primary" disabled={!!busy} onClick={() => setReviewing({ c, b: batch! })}>Review</button>
+                  </div>
+                ))}
+              </div>
+            )}
             {batch && waiting === 0 && !signed && <div className="quiet">Everything is decided. Sign the note to attest it.</div>}
             {byProblem.map(([pid, gs]) => (
               <div key={pid} className="pgroup">
@@ -139,14 +163,6 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
                   <span className="cnt">{gs.length}</span>
                 </div>
                 {gs.map((g) => <GroupCard key={g.key} g={g} b={batch!} name={name} highlight={highlight} onHover={onHover} onReview={onReview} onReadDocument={() => undefined} busy={busy} />)}
-              </div>
-            ))}
-            {openChanges.map((c, i) => (
-              <div key={i} className="card pencil">
-                <span className="kind">med change</span>
-                <div className="what"><b>{name(c.med_id)}</b>: {c.change.replace("_", " ")} effective {c.effective}{c.dose && c.change === "dose_change" ? ` → ${c.dose}` : ""}</div>
-                <div className="quote">{c.provenance.quote}</div>
-                <div className="row"><span className="spacer" /><button className="btn small primary" disabled={busy === batch!.stem} onClick={() => onReview(batch!.stem, { accept_changes: true })}>Sign</button></div>
               </div>
             ))}
             {decided.length > 0 && (
@@ -177,6 +193,7 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
           ))}
         </section>
       </article>
+      {reviewing && <ReviewDrawer item={reviewing} labels={labels} problems={problems} onReview={onReview} onClose={() => setReviewing(null)} busy={busy} />}
 
       <details className="explain bottom">
         <summary>About this screen</summary>

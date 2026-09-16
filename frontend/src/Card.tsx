@@ -4,7 +4,8 @@ import { buildGroups, decideIdsOf, GroupCard, type Group } from "./Inbox";
 import Timeline from "./Timeline";
 import Trail from "./Trail";
 import Coding from "./Coding";
-import type { Card as CardT, Coding as CodingT, Document, Insight, QueueBatch, RecordEvent, Timeline as TL, TrailEntry } from "./types";
+import ReviewDrawer, { type Reviewable } from "./ReviewDrawer";
+import type { Card as CardT, Coding as CodingT, Document, Insight, Problem, QueueBatch, RecordEvent, Timeline as TL, TrailEntry } from "./types";
 
 type Props = {
   card: CardT;
@@ -27,6 +28,7 @@ type Props = {
   trail: TrailEntry[];
   coding: CodingT | null;
   record: RecordEvent[];
+  problems: Problem[];
 };
 
 type Slot = "header" | "supporting" | "insights" | "plan" | "documents" | "other" | "routine";
@@ -46,7 +48,7 @@ const EV_WORD: Record<string, string> = {
   "order.placed": "order", "document.signed": "document", "proposal.rejected": "rejected",
 };
 
-export default function Card({ card, tl, queues, chartInsights, chartDocuments, labels, highlight, onHover, onReview, onReadDocument, onOpenNote, busy, window_, setWindow, windows, actions, trail, coding, record }: Props) {
+export default function Card({ card, tl, queues, chartInsights, chartDocuments, labels, highlight, onHover, onReview, onReadDocument, onOpenNote, busy, window_, setWindow, windows, actions, trail, coding, record, problems }: Props) {
   const name = (id: string) => labels[id] ?? id;
   const focusIds = useMemo(() => new Set([card.problem_id, ...card.members.map((m) => m.id), ...(tl?.series.map((s) => `LOINC:${s.code}`) ?? [])]), [card.problem_id, card.members, tl]);
   // Courses linked to this problem (treats or suspected cause); a change on one of these is consequential here.
@@ -73,13 +75,13 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
 
   // Consequential proposals get a banner: a superseding problem, a suspected cause, a course opened, stopped or changed.
   const consequential = useMemo(() => {
-    const out: { key: string; kind: string; title: string; text: string; anchor: string }[] = [];
-    for (const { g } of slots.header) out.push({ key: g.key, kind: "new problem", title: `${name(g.subjectId)} proposed in place of ${card.problem.name}`, text: g.quote ?? "", anchor: "slot-header" });
-    for (const { g } of slots.supporting) {
-      if (g.kind === "medication" && g.subject) out.push({ key: g.key, kind: "course", title: `${name(g.subjectId)}: a course to open on the chart`, text: g.quote ?? "", anchor: "slot-supporting" });
-      else if (g.links.some((l) => l.type === "suspected_cause")) out.push({ key: g.key, kind: "suspected cause", title: `${name(g.subjectId)} as a suspected cause`, text: g.quote ?? "", anchor: "slot-supporting" });
+    const out: { key: string; kind: string; title: string; text: string; item: Reviewable }[] = [];
+    for (const { g, b } of slots.header) out.push({ key: g.key, kind: "new problem", title: `${name(g.subjectId)} proposed in place of ${card.problem.name}`, text: g.quote ?? "", item: { g, b } });
+    for (const { g, b } of slots.supporting) {
+      if (g.kind === "medication" && g.subject) out.push({ key: g.key, kind: "course", title: `${name(g.subjectId)}: a course to open on the chart`, text: g.quote ?? "", item: { g, b } });
+      else if (g.links.some((l) => l.type === "suspected_cause")) out.push({ key: g.key, kind: "suspected cause", title: `${name(g.subjectId)} as a suspected cause`, text: g.quote ?? "", item: { g, b } });
     }
-    for (const { c } of slots.changes.filter((x) => x.here)) out.push({ key: `chg-${c.med_id}`, kind: c.change === "stop" ? "course stopped" : "dose change", title: `${name(c.med_id)}: ${c.change.replace("_", " ")} effective ${c.effective}`, text: c.provenance.quote ?? "", anchor: "slot-plan" });
+    for (const { c, b } of slots.changes.filter((x) => x.here)) out.push({ key: `chg-${c.med_id}`, kind: c.change === "stop" ? "course stopped" : "dose change", title: `${name(c.med_id)}: ${c.change.replace("_", " ")} effective ${c.effective}`, text: c.provenance.quote ?? "", item: { c, b } });
     return out;
   }, [slots, labels]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -90,6 +92,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
   const [showOther, setShowOther] = useState(false);
   const [showSupporting, setShowSupporting] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [reviewing, setReviewing] = useState<Reviewable | null>(null);
   const [openConsider, setOpenConsider] = useState<Set<string>>(new Set());
 
   const signedInsights = chartInsights.filter((i) => i.problem_id === card.problem_id);
@@ -147,7 +150,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
               <p className="why">Consequential changes are reviewed one at a time. Review before anything changes.</p>
             </div>
             <div className="bactions">
-              <button className="btn primary" onClick={() => jump(c.anchor)}>Review</button>
+              <button className="btn primary" onClick={() => setReviewing(c.item)}>Review</button>
               <button className="btn ghost" onClick={() => setDismissed((s) => new Set(s).add(c.key))}>Not now</button>
             </div>
           </div>
@@ -406,6 +409,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
         )}
 
         {coding && coding.signed_today > 0 && <section className="full doors"><Coding coding={coding} highlight={highlight} onHover={onHover} /></section>}
+        {reviewing && <ReviewDrawer item={reviewing} labels={labels} problems={problems} onReview={onReview} onClose={() => setReviewing(null)} busy={busy} />}
 
         <details className="explain bottom">
           <summary>About this screen</summary>

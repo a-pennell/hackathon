@@ -692,3 +692,41 @@ details.explain ul { border: 1px solid var(--rule); background: var(--paper-2); 
 .linkrow .meta { color: var(--graphite); font-size: 11.5px; }
 .pmain h3 .spacer { flex: 1; }
 .pmain .trajectory h3 .seg { margin-left: 0; }
+
+/* ----------------------------------------------------------- review drawer */
+.scrim { position: fixed; inset: 0; background: rgba(35, 38, 47, 0.34); z-index: 40; }
+.drawer { position: fixed; top: 0; right: 0; height: 100vh; width: min(640px, 100vw); background: var(--paper); border-left: 1px solid var(--rule-strong); z-index: 50; overflow-y: auto; box-shadow: -20px 0 44px rgba(26, 22, 20, 0.12); }
+.drawer .dhead { padding: 20px 26px 14px; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: var(--paper); z-index: 2; }
+.drawer .dhead h2 { margin: 6px 0 4px; font-family: var(--serif); font-weight: 400; font-size: 20px; letter-spacing: -.01em; }
+.drawer .dhead p { margin: 0; font-size: 12.5px; color: var(--graphite); }
+.drawer .dclose { position: absolute; top: 18px; right: 20px; border: 1px solid var(--rule); background: var(--paper-2); border-radius: var(--r-sm); width: 28px; height: 28px; color: var(--graphite); }
+.drawer .dbody { padding: 20px 26px 40px; }
+.drawer .dsect { margin-bottom: 22px; }
+.drawer .dsect > .eyebrow { display: block; margin-bottom: 8px; }
+.anat { border: 1px solid var(--rule); border-radius: var(--r-md); background: var(--paper-2); }
+.anat .arow { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 11px 14px; border-bottom: 1px solid var(--rule-soft); align-items: start; }
+.anat .arow:last-child { border-bottom: 0; }
+.anat .lab { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--graphite); padding-top: 3px; }
+.anat .val { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+.anat .val .serif { font-size: 14px; color: var(--ink); }
+.anat .val .hint { font-size: 11.5px; color: var(--graphite); margin-top: 4px; }
+.anat .accept { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--graphite); }
+.anat .accept input { accent-color: var(--select); width: 14px; height: 14px; }
+.conf { display: inline-block; font-family: var(--mono); font-size: 11px; border-radius: 3px; padding: 1px 7px; margin-right: 6px; border: 1px solid var(--rule); }
+.conf.high { color: var(--accepted); background: rgba(47, 107, 79, 0.10); border-color: rgba(47, 107, 79, 0.35); }
+.conf.moderate { color: var(--pending); background: var(--pending-wash); border-color: rgba(168, 107, 18, 0.45); }
+.conf.low { color: var(--flag); background: var(--flag-wash); border-color: rgba(194, 67, 31, 0.35); }
+.drawer .res { border: 1px solid var(--rule); border-radius: var(--r-md); padding: 6px 14px; background: var(--paper-2); }
+.drawer .res .kv { padding: 7px 0; }
+.drawer .res .v { color: var(--ink); font-family: var(--sans); font-size: 12.5px; }
+.drawer .res .v.strike { text-decoration: line-through; color: var(--pencil); }
+.drawer .guard { font-size: 12.5px; color: var(--graphite); border: 1px dashed var(--rule-strong); border-radius: var(--r-md); padding: 10px 12px; background: var(--paper-2); margin: 0; }
+.drawer .guard b { color: var(--ink-2); }
+.drawer .dactions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn.quiet { background: transparent; color: var(--graphite); border-color: var(--rule); }
+.drawer .reason .row { display: flex; margin-top: 8px; } .drawer .reason .row .spacer { flex: 1; }
+/* consequential first on the note */
+.nprops .consequential .pgroup-head { color: var(--pending); border-bottom-color: rgba(168, 107, 18, 0.45); }
+.crow { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--rule-soft); font-size: 13px; }
+.crow .kind { flex: none; font-family: var(--mono); font-size: 10.5px; color: var(--pending); text-transform: uppercase; letter-spacing: .06em; width: 56px; }
+.crow .what { flex: 1; min-width: 0; }

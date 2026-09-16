@@ -312,6 +312,7 @@ export default function App() {
                   trail={trail}
                   coding={coding}
                   record={problemRecord}
+                  problems={summary.problems}
                 />
               ) : <div className="empty">Computing the card…</div>}
             </div>
