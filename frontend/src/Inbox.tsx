@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { labelOf } from "./labels";
 import type { ReviewBody } from "./api";
 import type { Document, Insight, Link, Medication, Observation, Order, Plan, Problem, QueueBatch, Review } from "./types";
 import { REASON_CODES } from "./types";
@@ -47,7 +48,7 @@ const codeLabel = (code: string | null) => REASON_CODES.find((c) => c.code === c
 const LINK_WORD: Record<string, string> = { relevant_to: "relevant to", evidence_for: "evidence for", treats: "treats", suspected_cause: "suspected cause of", monitors: "monitors" };
 
 export default function Inbox({ queues, problemId, focusIds, chartMedIds, chartInsights, chartDocuments, labels, highlight, onHover, onReview, onReadDocument, busy }: Props) {
-  const name = (id: string) => labels[id] ?? id;
+  const name = (id: string) => labelOf(labels, id);
   const pending = queues.reduce(
     (n, b) => n + Object.values(b.proposed).flat().filter((it) => it && (it as { status: string }).status === "proposed").length +
       (b.medication_changes ?? []).filter((c) => c.status === "proposed").length,

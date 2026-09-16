@@ -1,3 +1,4 @@
+import { labelOf } from "./labels";
 import type { TrailEntry } from "./types";
 import { REASON_CODES } from "./types";
 
@@ -18,7 +19,7 @@ export default function Trail({ entries, labels, highlight, onHover }: Props) {
       {entries.map((e, i) => {
         const ids = e.kind === "link" ? e.what.split(" ").filter((w) => /^(prob|obs|med|note|lnk|ins|doc)_|^LOINC:/.test(w)) : [e.id];
         const what = e.kind === "link"
-          ? e.what.replace(/^link: /, "").split(" ").map((w) => labels[w] ?? w).join(" ")
+          ? e.what.replace(/^link: /, "").split(" ").map((w) => labelOf(labels, w)).join(" ")
           : e.what.replace(/^(problem|medication|result): /, "");
         return (
           <div key={e.id + i} className={`row ${ids.some((id) => highlight.has(id)) ? "hi" : ""}`} onMouseEnter={() => onHover(ids)} onMouseLeave={() => onHover(null)}>

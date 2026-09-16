@@ -8,6 +8,7 @@ import About from "./About";
 import { ChartTab, TimelineTab } from "./ChartTab";
 import CareTab from "./CareTab";
 import { nextAction } from "./next";
+import { labelOf } from "./labels";
 import type { Card as CardT, CareData, ChartData, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientRow, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry } from "./types";
 
 const PID = new URLSearchParams(window.location.search).get("patient") ?? "pt_002";
@@ -367,7 +368,7 @@ export default function App() {
                   <div className="chips" onMouseLeave={() => hover(null)}>
                     {s.cites.map((id) => (
                       <span key={id} className={`chip ${highlight.has(id) ? "hi" : ""}`} title={id} onMouseEnter={() => hover([id])}>
-                        {labels[id] ?? id}
+                        {labelOf(labels, id)}
                       </span>
                     ))}
                   </div>

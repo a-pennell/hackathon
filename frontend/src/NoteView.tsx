@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { labelOf } from "./labels";
 import type { ReviewBody } from "./api";
 import { buildGroups, GroupCard, type Group } from "./Inbox";
 import ReviewDrawer, { isConsequential, type Reviewable } from "./ReviewDrawer";
@@ -67,7 +68,7 @@ function spansOf(text: string, batch: QueueBatch | null): Span[] {
 }
 
 export default function NoteView({ note, batch, problems, labels, highlight, onHover, onReview, onRead, onSign, onOpenProblem, record, busy, mode, chart, care, coding, lastNote }: Props) {
-  const name = (id: string) => labels[id] ?? id;
+  const name = (id: string) => labelOf(labels, id);
   const [showSigned, setShowSigned] = useState(false);
   const [reviewing, setReviewing] = useState<Reviewable | null>(null);
   const [panels, setPanels] = useState<Set<string>>(new Set(["plan", "last"]));

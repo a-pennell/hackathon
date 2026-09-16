@@ -764,3 +764,13 @@ details.explain ul { border: 1px solid var(--rule); background: var(--paper-2); 
 .panel-body .link { color: var(--select); text-decoration: underline; text-underline-offset: 2px; font-size: 13px; font-family: var(--serif); }
 .note-preview { font-family: var(--serif); color: var(--ink-2); font-size: 13px; line-height: 1.55; border-left: 3px solid var(--rule); padding-left: 10px; margin: 2px 0 6px; }
 .panel-body .num.flag { color: var(--flag); }
+
+/* ------------------------------------------------------------- polish */
+:focus-visible { outline: 2px solid var(--select); outline-offset: 2px; border-radius: 3px; }
+:focus:not(:focus-visible) { outline: none; }
+.btn:focus-visible, .pt-tab:focus-visible, .kchip:focus-visible, .pchip:focus-visible { outline-offset: 1px; }
+.empty { padding: calc(var(--u) * 10) calc(var(--u) * 6); color: var(--graphite); font-family: var(--serif); font-size: 15px; }
+.empty::after { content: ""; display: inline-block; width: 10px; height: 10px; margin-left: 10px; border: 2px solid var(--rule-strong); border-top-color: var(--select); border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .empty::after { animation: none; } }
+.btn:disabled { cursor: not-allowed; }

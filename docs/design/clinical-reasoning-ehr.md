@@ -554,9 +554,15 @@ the note a signed thing on the record (§14): the text with every passage the re
 in it, one signature that commits what was not rejected, and `ehr/record.py` reading the ledger
 of §3 back off provenance and review stamps. Plan items (§2, `plan_`) are extracted from the
 assessment and plan and signed with the note. The demo patient is now Jeane Lueilwitz, diabetes
-and hypertension, curated by `scripts/curate_pt_002.py`. What remains unbuilt is persistence of
-the accepted representation and assessment, and alternatives, which need the appendix's schema
-additions. In full: the
+and hypertension, curated by `scripts/curate_pt_002.py`. The frame follows the NDE care
+mockup (session tabs, practice bar, patient header with one computed next action, Overview ·
+Timeline · Care · Chart); Care carries problem cards with plan, measures and open loops and
+kind-pivot chips; the workspace follows the CPOR problem view (evidence spine, proposal
+banners, summary stack, authored assessment, surveillance and linked cards); consequential
+proposals open the review drawer with the three-part anatomy and the what-changes table; the
+note is the encounter canvas with the clinical diff and a panel rail. What remains unbuilt is
+persistence of the accepted representation and assessment, and alternatives, which need the
+appendix's schema additions. In full: the
 representation and assessment as fields on the existing problem, `expected` as a field on the
 `monitors` link, proposals rendered into the card's slots from the existing queues, the timeline
 mounted as the card's trajectory section. The current three-pane desk is not extended; it is

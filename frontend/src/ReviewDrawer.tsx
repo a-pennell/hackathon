@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { labelOf } from "./labels";
 import type { ReviewBody } from "./api";
 import type { Group } from "./Inbox";
 import type { Link, Medication, Observation, Problem, QueueBatch } from "./types";
@@ -23,7 +24,7 @@ const LINK_WORD: Record<string, string> = { relevant_to: "bears on", evidence_fo
 /** The consequential review, one proposal at a time: what the system saw, what it concluded, how sure it is, each part
  *  separately signable; what changes on the chart if you sign; why it needs a signature; sign, or reject with a reason. */
 export default function ReviewDrawer({ item, labels, problems, onReview, onClose, busy }: Props) {
-  const name = (id: string) => labels[id] ?? id;
+  const name = (id: string) => labelOf(labels, id);
   const [obsPart, setObsPart] = useState(true);
   const [attrPart, setAttrPart] = useState(true);
   const [rejecting, setRejecting] = useState(false);

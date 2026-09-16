@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { labelOf } from "./labels";
 import type { ReviewBody } from "./api";
 import { buildGroups, decideIdsOf, GroupCard, type Group } from "./Inbox";
 import Timeline from "./Timeline";
@@ -49,7 +50,7 @@ const EV_WORD: Record<string, string> = {
 };
 
 export default function Card({ card, tl, queues, chartInsights, chartDocuments, labels, highlight, onHover, onReview, onReadDocument, onOpenNote, busy, window_, setWindow, windows, actions, trail, coding, record, problems }: Props) {
-  const name = (id: string) => labels[id] ?? id;
+  const name = (id: string) => labelOf(labels, id);
   const focusIds = useMemo(() => new Set([card.problem_id, ...card.members.map((m) => m.id), ...(tl?.series.map((s) => `LOINC:${s.code}`) ?? [])]), [card.problem_id, card.members, tl]);
   // Courses linked to this problem (treats or suspected cause); a change on one of these is consequential here.
   const chartMedIds = useMemo(() => new Set((tl?.medications ?? []).filter((m) => m.relation && m.relation !== "on_board").map((m) => m.id)), [tl]);
