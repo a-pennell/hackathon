@@ -62,6 +62,8 @@ def _accepted(items):
 def patients():
     out = []
     for p in sorted(DATA_DIR.glob("pt_*.json")):
+        if p.name.endswith(".import-report.json"):
+            continue
         d = json.loads(p.read_text())
         out.append({**d["patient"], "problems_active": sum(1 for x in d["problems"] if x["status"] == "active")})
     return out
@@ -104,11 +106,36 @@ def overview(pid: str, since: str | None = None):
     if newest_file and (not enc or newest_file[1]["time"][:10] >= enc["time"][:10]):
         n, e, p = newest_file
         o["here_for"]["encounter"] = {k: e[k] for k in ("id", "time", "type", "summary")}
+        on_chart = next((x for x in d.get("notes", []) if x["id"] == n["id"]), None)
         note = {"id": n["id"], "file": str(p.relative_to(ROOT)), "author": n["author"], "time": n["time"],
                 "has_queue": (PROPOSED_DIR / pid / f"{n['id']}.json").exists(),
-                "has_replay": (PROPOSED_DIR / pid / f"{n['id']}.raw.json").exists()}
+                "has_replay": (PROPOSED_DIR / pid / f"{n['id']}.raw.json").exists(),
+                "status": (on_chart or {}).get("status", "received")}
     o["here_for"]["note"] = note
     return o
+
+
+@app.get("/api/patients/{pid}/chart")
+def chart_tab(pid: str):
+    """Chart: medications, latest value per monitored series, problems, encounters. A lens, not a copy."""
+    d = _patient(pid)
+    monitored = {}
+    for p in d["problems"]:
+        for c in monitored_codes(d, p["id"]):
+            monitored.setdefault(c, []).append(p["name"])
+    series = []
+    for code, names in monitored.items():
+        pts = sorted((o for o in _accepted(d["observations"]) if o["code"]["value"] == code), key=lambda o: o["effective_time"])
+        if not pts:
+            continue
+        last = pts[-1]
+        rr = last.get("reference_range") or {}
+        out = (rr.get("high") is not None and last["value"] > rr["high"]) or (rr.get("low") is not None and last["value"] < rr["low"])
+        series.append({"code": code, "name": last["name"], "unit": last["unit"], "n": len(pts), "out": bool(out),
+                       "latest": {"value": last["value"], "time": last["effective_time"]}, "problem_names": sorted(set(names))})
+    series.sort(key=lambda s: s["latest"]["time"], reverse=True)
+    return {"medications": sorted(_accepted(d["medications"]), key=lambda m: (bool(m["segments"][-1].get("end")), m["name"])),
+            "series": series, "problems": d["problems"], "encounters": sorted(d["encounters"], key=lambda e: e["time"], reverse=True)}
 
 
 @app.get("/api/patients/{pid}/problems/{prob}/timeline")

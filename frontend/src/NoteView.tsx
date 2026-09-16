@@ -98,14 +98,7 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
 
   return (
     <div className="cardpage">
-      <section className="explain top">
-        <h2>The note</h2>
-        <p>
-          The note is a thing on the record, not a text box. It arrives with the visit, the system reads it and marks in the text every finding, result, medication and plan item it
-          proposes, and the clinician signs the note once, which commits what they did not reject. The record below the note lists exactly what that reading and that signature wrote.
-        </p>
-        <p className="qs"><b>Q1</b> what is happening · <b>Q4</b> what we are doing · <b>Q6</b> what should happen next</p>
-      </section>
+
 
       <article className="noteview">
         <header className="ntitle">
@@ -185,15 +178,15 @@ export default function NoteView({ note, batch, problems, labels, highlight, onH
         </section>
       </article>
 
-      <section className="explain bottom">
-        <h2>What you are looking at</h2>
+      <details className="explain bottom">
+        <summary>About this screen</summary>
         <ul>
           <li><b>The text is the evidence.</b> Every proposal carries a verbatim quote, and the quote is marked where it sits in the note. Hover a mark to see what it proposes; hover a proposal to see where it came from. A proposal whose quote is not in the note is dropped before you see it.</li>
           <li><b>One signature.</b> Reject anything you disagree with, with a reason, then sign the note. Signing commits every remaining proposal and stamps the note itself; the note becomes a signed thing on the chart, not a draft in an editor.</li>
           <li><b>The record</b> is the ledger read back: the note arriving, each result, course, link and plan item the signature wrote, each rejection with its reason, and the signature. Nothing here is a stored log; it is folded from the provenance and review stamps every item already carries.</li>
           <li><b>Plan items are entities.</b> Each thing the assessment-and-plan says will be done is one item with a kind, tied to the problem it addresses. They show here, on the problem card under Plan, and in the record.</li>
         </ul>
-      </section>
+      </details>
     </div>
   );
 }

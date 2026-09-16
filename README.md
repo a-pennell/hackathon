@@ -41,19 +41,20 @@ Open http://localhost:8000. The built frontend is committed in `frontend/dist`; 
 `frontend/src`, rebuild with `cd frontend && npm install && npm run build` (Node 22). For live
 frontend reloads use `npm run dev` (port 5173, proxies `/api` to 8000).
 
-The header switches between three views of the same chart, each carrying its own explanation
-above and below it (they are demos of the components; what you accept or write on the card is
-not written to the chart). **Overview** (the default) is the orientation screen from
-`docs/design/clinical-reasoning-ehr.md`: who this is, why they are here and whether a note is
-waiting, what changed since the last routine visit ranked by clinical meaning, the active concerns
-by what they need, and the open loops. **Note** is the note as a thing on the record: the text
-with every passage the reading used marked in it, the proposals it made grouped by problem, one
-**Sign note** action that attests the note and everything not rejected, and the record of what
-that reading and that signature wrote. **Card** is the problem card: one screen for one concern,
-with a proposed representation, the clinician's assessment, supporting and doesn't-fit evidence,
-insights, plan (orders and the note's plan items), the expected trajectory drawn as a corridor,
-and every remaining proposal in the slot it would fill. Everything AI-proposed is drawn in
-*pencil* (dashed, amber) until a clinician signs it; signed items become ink.
+The screen is framed like a record: session tabs for the open patients, the practice bar, a
+patient header with the visit and the note's status, and four patient tabs, **Overview ·
+Timeline · Care · Chart**. The header carries one button, the next thing owed, computed from the
+chart: read the note, review it, sign it, ask what changed on the concern that is moving, sign the
+insights, draft and sign the orders, and finally "nothing owed". Overview is the orientation
+screen (what changed since the last routine visit, ranked; concerns by what they need; open
+loops). Care holds the problems; opening one lands in its workspace, the problem card. The Note is
+a contextual destination reached from the header or the overview: the text with every passage
+the reading used marked, the proposals grouped by problem, one Sign note action, and the record
+of what it wrote. Timeline is the patient's visits and record events; Chart is medications,
+results by series and problems. Every screen has an "About this screen" door at its foot, and the
+Demo menu at the top right holds the Claude live/saved switch, an About page on the record's
+architecture, and Reset. Everything AI-proposed is drawn in *pencil* (dashed, amber) until a
+clinician signs it; signed items become ink.
 
 The chart opens on `pt_002`; `http://localhost:8000/?patient=pt_001` opens the first golden
 patient, whose recorded demo (CKD, naproxen, metformin) still plays through the same views.

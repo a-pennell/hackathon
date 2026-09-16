@@ -1,4 +1,4 @@
-import type { Brief, Card, Coding, Overview, RecordEvent, NoteFile, PatientSummary, QueueBatch, Timeline, TrailEntry } from "./types";
+import type { Brief, Card, ChartData, Coding, Overview, PatientRow, RecordEvent, NoteFile, PatientSummary, QueueBatch, Timeline, TrailEntry } from "./types";
 
 export type ReviewBody = { accept?: string[]; reject?: string[]; accept_all?: boolean; accept_changes?: boolean; reason?: string; reason_code?: string; by?: string };
 
@@ -18,7 +18,9 @@ async function req<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  patients: () => req<PatientRow[]>(`/api/patients`),
   patient: (pid: string) => req<PatientSummary>(`/api/patients/${pid}`),
+  chart: (pid: string) => req<ChartData>(`/api/patients/${pid}/chart`),
   timeline: (pid: string, prob: string, window: string) =>
     req<Timeline>(`/api/patients/${pid}/problems/${prob}/timeline?window=${window}`),
   queue: (pid: string) => req<{ batches: QueueBatch[]; labels: Record<string, string> }>(`/api/patients/${pid}/queue`),

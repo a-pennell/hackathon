@@ -1,39 +1,32 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import ProblemList from "./ProblemList";
-import Timeline from "./Timeline";
-import Trail from "./Trail";
-import Coding from "./Coding";
 import Card from "./Card";
 import Overview from "./Overview";
 import NoteView from "./NoteView";
-import type { Card as CardT, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry } from "./types";
+import Shell, { type Tab, type View } from "./Shell";
+import About from "./About";
+import { ChartTab, TimelineTab } from "./ChartTab";
+import { nextAction } from "./next";
+import type { Card as CardT, ChartData, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientRow, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry } from "./types";
 
 const PID = new URLSearchParams(window.location.search).get("patient") ?? "pt_002";
 const WINDOWS = ["3m", "6m", "1y", "2y", "5y", "all"];
 
-function age(dob: string) {
-  const d = new Date(dob), n = new Date();
-  return n.getFullYear() - d.getFullYear() - (n < new Date(n.getFullYear(), d.getMonth(), d.getDate()) ? 1 : 0);
-}
-
 export default function App() {
+  const [patients, setPatients] = useState<PatientRow[]>([]);
   const [summary, setSummary] = useState<PatientSummary | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [window_, setWindow] = useState("1y");
   const [tl, setTl] = useState<TL | null>(null);
   const [card, setCard] = useState<CardT | null>(null);
   const [overview, setOverview] = useState<OverviewT | null>(null);
-  const [view, setView] = useState<"overview" | "note" | "card">(() => {
-    try {
-      const v = localStorage.getItem("view") as "overview" | "note" | "card" | null;
-      return v && v !== "note" ? v : "overview";
-    } catch {
-      return "overview";
-    }
-  });
+  const [chart, setChart] = useState<ChartData | null>(null);
+  const [view, setView] = useState<View>("overview");
+  const [tab, setTab] = useState<Tab>("overview");
   const [noteId, setNoteId] = useState<string | null>(null);
   const [record, setRecord] = useState<RecordEvent[]>([]);
+  const [patientRecord, setPatientRecord] = useState<RecordEvent[]>([]);
   const [trail, setTrail] = useState<TrailEntry[]>([]);
   const [coding, setCoding] = useState<CodingT | null>(null);
   const [queues, setQueues] = useState<QueueBatch[]>([]);
@@ -42,7 +35,7 @@ export default function App() {
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [menu, setMenu] = useState<"note" | null>(null);
+  const [about, setAbout] = useState(false);
   const [mode, setMode] = useState<"live" | "replay">(() => {
     try {
       return (localStorage.getItem("claudeMode") as "live" | "replay") || "replay";
@@ -55,12 +48,13 @@ export default function App() {
   const [readingDoc, setReadingDoc] = useState<Document | null>(null);
 
   const refresh = useCallback(async () => {
-    const [s, q, n, o] = await Promise.all([api.patient(PID), api.queue(PID), api.notes(), api.overview(PID).catch(() => null)]);
+    const [s, q, n, o, ps] = await Promise.all([api.patient(PID), api.queue(PID), api.notes(), api.overview(PID).catch(() => null), api.patients().catch(() => [])]);
     setSummary(s);
     setOverview(o);
     setQueues(q.batches);
     setQueueLabels(q.labels);
     setNotes(n.filter((x) => x.patient_id === PID));
+    setPatients(ps);
     setProblem((p) => p ?? o?.concerns[0]?.id ?? s.problems.find((x) => (x.monitored_codes?.length ?? 0) > 0)?.id ?? null);
   }, []);
 
@@ -79,6 +73,27 @@ export default function App() {
       live = false;
     };
   }, [problem, window_, queues, summary]);
+
+  useEffect(() => {
+    let live = true;
+    if (view === "chart") api.chart(PID).then((c) => live && setChart(c)).catch(() => live && setChart(null));
+    if (view === "timeline") {
+      api.chart(PID).then((c) => live && setChart(c)).catch(() => live && setChart(null));
+      api.record(PID).then((r) => live && setPatientRecord(r)).catch(() => live && setPatientRecord([]));
+    }
+    return () => {
+      live = false;
+    };
+  }, [view, queues, summary]);
+
+  useEffect(() => {
+    if (!noteId) return;
+    let live = true;
+    api.record(PID, noteId).then((r) => live && setRecord(r)).catch(() => live && setRecord([]));
+    return () => {
+      live = false;
+    };
+  }, [noteId, queues, summary]);
 
   // id -> human label, for chips and link rows
   const labels = useMemo(() => {
@@ -110,6 +125,12 @@ export default function App() {
     () => [...new Set(queues.flatMap((b) => (b.proposed.problems ?? []).filter((p) => p.status === "proposed").map((p) => p.name)))],
     [queues],
   );
+  const pendingCount = useMemo(
+    () => queues.reduce((n, b) => n + Object.values(b.proposed).flat().filter((it) => it && (it as { status: string }).status === "proposed").length + (b.medication_changes ?? []).filter((c) => c.status === "proposed").length, 0),
+    [queues],
+  );
+
+  const fail = (e: unknown) => setError(String((e as Error).message ?? e));
 
   const review = useCallback(
     async (stem: string, body: import("./api").ReviewBody) => {
@@ -122,7 +143,7 @@ export default function App() {
         const verb = body.reject?.length ? "Rejected" : "Signed";
         if (n > 0) setToast({ stem, ids: r.decided, text: `${verb} ${n === 1 ? "1 item" : n + " items"}` });
       } catch (e) {
-        setError(String((e as Error).message ?? e));
+        fail(e);
       } finally {
         setBusy(null);
       }
@@ -145,18 +166,9 @@ export default function App() {
       await api.undo(PID, stem, ids);
       await refresh();
     } catch (e) {
-      setError(String((e as Error).message ?? e));
+      fail(e);
     } finally {
       setBusy(null);
-    }
-  };
-
-  const setViewPersist = (v: "overview" | "note" | "card") => {
-    setView(v);
-    try {
-      localStorage.setItem("view", v);
-    } catch {
-      /* private mode: fine */
     }
   };
 
@@ -169,256 +181,168 @@ export default function App() {
     }
   };
 
+  const goTab = (t: Tab) => {
+    setTab(t);
+    setView(t);
+    window.scrollTo(0, 0);
+  };
   const openNote = (id: string) => {
     setNoteId(id);
-    setViewPersist("note");
+    setView("note");
+    window.scrollTo(0, 0);
+  };
+  const openProblem = (id: string) => {
+    setProblem(id);
+    setTab("care");
+    setView("problem");
+    window.scrollTo(0, 0);
   };
 
-  useEffect(() => {
-    if (!noteId) return;
-    let live = true;
-    api.record(PID, noteId).then((r) => live && setRecord(r)).catch(() => live && setRecord([]));
-    return () => {
-      live = false;
-    };
-  }, [noteId, queues, summary]);
-
-  const signNote = async () => {
-    if (!noteId) return;
-    setBusy("sign");
+  const run = async (what: string, fn: () => Promise<unknown>) => {
+    setBusy(what);
     setError(null);
     try {
-      const r = await api.signNote(PID, noteId);
+      await fn();
       await refresh();
-      setToast({ stem: noteId, ids: [], text: `Note signed by ${r.by}` });
     } catch (e) {
-      setError(String((e as Error).message ?? e));
+      fail(e);
     } finally {
       setBusy(null);
     }
   };
-
-  const runExtract = async (n: NoteFile, mode: "live" | "replay") => {
-    setMenu(null);
-    setReading(null);
-    setBusy("extract");
-    setError(null);
-    try {
-      if (!n.file) return;
-      await api.extract(PID, n.file, mode);
-      await refresh();
-    } catch (e) {
-      setError(String((e as Error).message ?? e));
-    } finally {
-      setBusy(null);
-    }
+  const signNote = () => noteId && run("sign", async () => { const r = await api.signNote(PID, noteId); setToast({ stem: noteId, ids: [], text: `Note signed by ${r.by}` }); });
+  const runExtract = (n: NoteFile, m: "live" | "replay") => { setReading(null); if (n.file) return run("extract", () => api.extract(PID, n.file!, m)); };
+  const runReason = (pid: string) => run("reason", () => api.reason(PID, pid, mode, window_));
+  const runOrders = (pid: string) => run("orders", () => api.orders(PID, pid, mode, window_));
+  const runCompose = (pid: string) => run("compose", () => api.compose(PID, pid, "referral", "nephrology", mode, window_));
+  const runReset = () => {
+    if (!window.confirm("Reset the demo? Unsigns everything and clears the review queue (saved model responses are kept).")) return;
+    return run("reset", async () => { await api.reset(PID); setSummary(null); setNoteId(null); goTab("overview"); });
   };
 
-  const runCompose = async (mode: "live" | "replay") => {
-    if (!problem) return;
-    setMenu(null);
-    setBusy("compose");
-    setError(null);
-    try {
-      await api.compose(PID, problem, "referral", "nephrology", mode, window_);
-      await refresh();
-    } catch (e) {
-      setError(String((e as Error).message ?? e));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const runOrders = async (mode: "live" | "replay") => {
-    if (!problem) return;
-    setMenu(null);
-    setBusy("orders");
-    setError(null);
-    try {
-      await api.orders(PID, problem, mode, window_);
-      await refresh();
-    } catch (e) {
-      setError(String((e as Error).message ?? e));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const runReason = async (mode: "live" | "rules" | "replay") => {
-    if (!problem) return;
-    setMenu(null);
-    setBusy("reason");
-    setError(null);
-    try {
-      await api.reason(PID, problem, mode, window_);
-      await refresh();
-    } catch (e) {
-      setError(String((e as Error).message ?? e));
-    } finally {
-      setBusy(null);
+  const next = useMemo(() => nextAction(overview, notes, queues, summary), [overview, notes, queues, summary]);
+  const doNext = async () => {
+    switch (next.kind) {
+      case "read": {
+        const n = notes.find((x) => x.id === next.noteId);
+        if (!n) return;
+        openNote(n.id);
+        if (n.file && (mode === "live" || n.has_replay)) await runExtract(n, mode);
+        return;
+      }
+      case "review": return openNote(next.noteId!);
+      case "sign": openNote(next.noteId!); return signNote();
+      case "reason": openProblem(next.problemId!); return runReason(next.problemId!);
+      case "orders": openProblem(next.problemId!); return runOrders(next.problemId!);
+      case "sign-insights":
+      case "sign-orders": return openProblem(next.problemId!);
+      default: return;
     }
   };
 
   const hover = useCallback((ids: string[] | null) => setHighlight(new Set(ids ?? [])), []);
-
-  const openChartNote = async (noteId: string) => {
+  const openChartNote = async (id: string) => {
     try {
-      setReading(await api.note(PID, noteId));
+      setReading(await api.note(PID, id));
     } catch (e) {
-      setError(String((e as Error).message ?? e));
-    }
-  };
-
-  // ids the inbox treats as "about the selected problem": the problem itself and its monitored series
-  const focusIds = useMemo(() => new Set([...(problem ? [problem] : []), ...(tl?.series.map((s) => `LOINC:${s.code}`) ?? [])]), [problem, tl]);
-
-  const runReset = async () => {
-    if (!window.confirm("Reset the demo? Unsigns everything and clears the review queue (saved model responses are kept).")) return;
-    setBusy("reset");
-    setError(null);
-    try {
-      await api.reset(PID);
-      setSummary(null);
-      await refresh();
-    } catch (e) {
-      setError(String((e as Error).message ?? e));
-    } finally {
-      setBusy(null);
+      fail(e);
     }
   };
 
   if (!summary) return <div className="sheet empty">{error ?? "Opening chart…"}</div>;
   const pt = summary.patient;
   const selected = summary.problems.find((p) => p.id === problem);
+  const openNoteFile = noteId ? notes.find((x) => x.id === noteId) : null;
+  const crumb = view === "problem" && selected ? { back: "Care", onBack: () => goTab("care"), title: selected.name }
+    : view === "note" && openNoteFile ? { back: tab[0].toUpperCase() + tab.slice(1), onBack: () => goTab(tab), title: `Note · ${openNoteFile.time.slice(0, 10)}` } : null;
 
   return (
-    <div className="desk cardview" onClick={() => menu && setMenu(null)}>
-      <header className="head">
-        <div className="who">
-          {pt.name}
-          <small>
-            {pt.sex} · {age(pt.dob)} · DOB {pt.dob} · {pt.id}
-          </small>
-        </div>
-        <span className="seg view" title="Desk: list, sheet and inbox. Card: the problem card, with proposals in their slots">
-          <button className={view === "overview" ? "on" : ""} onClick={() => setViewPersist("overview")}>Overview</button>
-          <button className={view === "note" ? "on" : ""} disabled={!noteId} onClick={() => setViewPersist("note")}>Note</button>
-          <button className={view === "card" ? "on" : ""} onClick={() => setViewPersist("card")}>Card</button>
-        </span>
-        <span className="spacer" />
-        {busy && <span className="busy">{busy === "extract" ? "Reading the note…" : busy === "sign" ? "Signing the note…" : busy === "reason" ? "Looking at what changed…" : busy === "compose" ? "Drafting the referral…" : busy === "orders" ? "Drafting orders…" : busy === "brief" ? "Writing the brief…" : busy === "reset" ? "Resetting…" : "Saving…"}</span>}
-        <span className="mode" title="Live asks Claude now; saved uses the recorded response, no network">
-          Claude
-          <span className="seg">
-            <button className={mode === "live" ? "on" : ""} onClick={() => setModePersist("live")}>live</button>
-            <button className={mode === "replay" ? "on" : ""} onClick={() => setModePersist("replay")}>saved</button>
-          </span>
-        </span>
-        <div className="rel" onClick={(e) => e.stopPropagation()}>
-          <button className="btn" disabled={!!busy} onClick={() => setMenu(menu === "note" ? null : "note")}>
-            Read a note ▾
-          </button>
-          {menu === "note" && (
-            <div className="menu">
-              {notes.map((n) => (
-                <button key={n.id} onClick={() => { setMenu(null); openNote(n.id); }}>
-                  <div className="t">
-                    {n.id} · {n.time.slice(0, 10)} · {n.author}
-                    {n.status === "signed" ? " · signed" : n.has_queue ? " · read" : ""}
-                  </div>
-                  <div className="x">{n.excerpt.replace(/\s+/g, " ").slice(0, 90)}…</div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <button className="btn primary" disabled={!!busy || !problem} onClick={() => runReason(mode)} title="Trend summaries and medication events go to Claude; insights come back for your signature">
-          What's changed?
-        </button>
-        <button className="btn" disabled={!!busy || !problem} onClick={() => runOrders(mode)} title="Turn the actions in signed insights into orders to sign">
-          Draft orders
-        </button>
-        <button className="btn" disabled={!!busy || !problem} onClick={() => runCompose(mode)} title="A nephrology referral rendered from the chart, signed insights and your decisions">
-          Draft referral
-        </button>
-        <button className="btn ghost small" disabled={!!busy} onClick={runReset} title="Restore the chart to its state at server start">
-          Reset demo
-        </button>
-        <div className="seg">
-          {WINDOWS.map((w) => (
-            <button key={w} className={w === window_ ? "on" : ""} onClick={() => setWindow(w)}>
-              {w}
-            </button>
-          ))}
-        </div>
-      </header>
+    <div className="app">
+      <Shell
+        patients={patients.length ? patients : [{ id: pt.id, name: pt.name, problems_active: summary.problems.length }]}
+        pid={PID}
+        summary={summary}
+        overview={overview}
+        view={view}
+        tab={tab}
+        onTab={goTab}
+        next={next}
+        onNext={doNext}
+        busy={busy}
+        mode={mode}
+        onMode={setModePersist}
+        onReset={runReset}
+        onAbout={() => setAbout(true)}
+        pendingCount={pendingCount}
+        onPending={() => (overview?.here_for.note && queues.some((b) => b.note_id === overview.here_for.note!.id) ? openNote(overview.here_for.note.id) : goTab("care"))}
+        crumb={crumb}
+      />
 
-      <ProblemList problems={summary.problems} selected={problem} onSelect={setProblem} proposedNames={proposedProblemNames} />
-
-      <main className="sheet">
+      <main className={`canvas ${view === "problem" ? "with-rail" : ""}`}>
         {error && <div className="err">{error}</div>}
-        {view === "overview" && overview && (
-          <Overview
-            data={overview}
-            problems={summary.problems}
-            highlight={highlight}
-            onHover={hover}
-            onOpen={(id) => { setProblem(id); setViewPersist("card"); }}
-            onReadNote={openNote}
-            busy={busy}
-          />
+        {view === "overview" && (overview ? (
+          <Overview data={overview} problems={summary.problems} highlight={highlight} onHover={hover} onOpen={openProblem} />
+        ) : <div className="empty">Computing the overview…</div>)}
+        {view === "timeline" && (chart ? <TimelineTab record={patientRecord} encounters={chart.encounters} /> : <div className="empty">Loading the timeline…</div>)}
+        {view === "chart" && (chart ? <ChartTab data={chart} onOpenProblem={openProblem} /> : <div className="empty">Loading the chart…</div>)}
+        {view === "care" && (
+          <div className="care">
+            <ProblemList problems={summary.problems} selected={problem} onSelect={openProblem} proposedNames={proposedProblemNames} />
+            <div className="care-hint quiet">Pick a problem to open its workspace. Problem cards grouped by concern land here next.</div>
+          </div>
         )}
-        {view === "overview" && !overview && <div className="empty">Computing the overview…</div>}
-        {view === "note" && noteId && (() => {
-          const n = notes.find((x) => x.id === noteId);
-          if (!n) return <div className="empty">That note is not on file.</div>;
-          return (
-            <NoteView
-              key={n.id}
-              note={n}
-              batch={queues.find((b) => b.note_id === n.id) ?? null}
-              problems={summary.problems}
-              labels={labels}
-              highlight={highlight}
-              onHover={hover}
-              onReview={review}
-              onRead={(m) => runExtract(n, m)}
-              onSign={signNote}
-              onOpenProblem={(id) => { setProblem(id); setViewPersist("card"); }}
-              record={record}
-              busy={busy}
-              mode={mode}
-            />
-          );
-        })()}
-        {view === "card" && selected && card && card.problem_id === selected.id && (
-          <Card
-            key={card.problem_id}
-            card={card}
-            tl={tl && tl.problem.id === selected.id ? tl : null}
-            queues={queues}
-            chartInsights={summary.insights}
-            chartDocuments={summary.documents ?? []}
+        {view === "problem" && (
+          <>
+            <ProblemList problems={summary.problems} selected={problem} onSelect={(id) => { setProblem(id); window.scrollTo(0, 0); }} proposedNames={proposedProblemNames} />
+            <div className="sheet">
+              {selected && card && card.problem_id === selected.id ? (
+                <Card
+                  key={card.problem_id}
+                  card={card}
+                  tl={tl && tl.problem.id === selected.id ? tl : null}
+                  queues={queues}
+                  chartInsights={summary.insights}
+                  chartDocuments={summary.documents ?? []}
+                  labels={labels}
+                  highlight={highlight}
+                  onHover={hover}
+                  onReview={review}
+                  onReadDocument={setReadingDoc}
+                  onOpenNote={openChartNote}
+                  busy={busy}
+                  mode={mode}
+                  window_={window_}
+                  setWindow={setWindow}
+                  windows={WINDOWS}
+                  actions={{ reason: () => runReason(selected.id), orders: () => runOrders(selected.id), compose: () => runCompose(selected.id), readNote: () => overview?.here_for.note && openNote(overview.here_for.note.id) }}
+                  trail={trail}
+                  coding={coding}
+                />
+              ) : <div className="empty">Computing the card…</div>}
+            </div>
+          </>
+        )}
+        {view === "note" && (openNoteFile ? (
+          <NoteView
+            key={openNoteFile.id}
+            note={openNoteFile}
+            batch={queues.find((b) => b.note_id === openNoteFile.id) ?? null}
+            problems={summary.problems}
             labels={labels}
             highlight={highlight}
             onHover={hover}
             onReview={review}
-            onReadDocument={setReadingDoc}
-            onOpenNote={openChartNote}
+            onRead={(m) => runExtract(openNoteFile, m)}
+            onSign={signNote}
+            onOpenProblem={openProblem}
+            record={record}
             busy={busy}
             mode={mode}
-            window_={window_}
-            setWindow={setWindow}
-            windows={WINDOWS}
-            actions={{ reason: () => runReason(mode), orders: () => runOrders(mode), compose: () => runCompose(mode), readNote: () => setMenu("note") }}
-            trail={trail}
-            coding={coding}
           />
-        )}
-        {view === "card" && selected && !card && <div className="empty">Computing the card…</div>}
+        ) : <div className="empty">That note is not on file.</div>)}
       </main>
 
-
+      {about && <About onClose={() => setAbout(false)} />}
       {toast && (
         <div className="toast" role="status">
           <span>{toast.text}</span>
@@ -441,8 +365,8 @@ export default function App() {
                   <p>{s.text}</p>
                   <div className="chips" onMouseLeave={() => hover(null)}>
                     {s.cites.map((id) => (
-                      <span key={id} className={`chip ${highlight.has(id) ? "hi" : ""}`} title={labels[id] ?? id} onMouseEnter={() => hover([id])}>
-                        {id}
+                      <span key={id} className={`chip ${highlight.has(id) ? "hi" : ""}`} title={id} onMouseEnter={() => hover([id])}>
+                        {labels[id] ?? id}
                       </span>
                     ))}
                   </div>
@@ -475,26 +399,13 @@ export default function App() {
       {reading && (
         <div className="modal-bg" onClick={() => setReading(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>
-              Note {reading.id.replace("note_", "")} · {reading.author}
-            </h3>
-            <div className="meta">
-              {reading.time.slice(0, 16).replace("T", " ")} · {reading.file ?? "chart note (imported)"}
-              {reading.has_queue ? " · already read (reading again replaces what is waiting)" : ""}
-            </div>
+            <h3>Note {reading.id.replace("note_", "")} · {reading.author}</h3>
+            <div className="meta">{reading.time.slice(0, 16).replace("T", " ")} · {reading.file ?? "chart note (imported)"}</div>
             <pre>{reading.text.trim()}</pre>
             <div className="row">
               <span className="spacer" />
-              <button className="btn ghost" onClick={() => setReading(null)}>
-                Close
-              </button>
-              {reading.file && (
-                <>
-                  <button className="btn primary" disabled={mode === "replay" && !reading.has_replay} title={mode === "replay" && !reading.has_replay ? "no saved reading yet; switch Claude to live" : ""} onClick={() => runExtract(reading, mode)}>
-                    {mode === "live" ? "Read with Claude" : "Read (saved)"}
-                  </button>
-                </>
-              )}
+              <button className="btn ghost" onClick={() => setReading(null)}>Close</button>
+              {reading.file && <button className="btn" onClick={() => { setReading(null); openNote(reading.id); }}>Open the note</button>}
             </div>
           </div>
         </div>

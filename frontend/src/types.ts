@@ -38,6 +38,7 @@ export type Document = {
 export type Problem = {
   id: string;
   name: string;
+  code?: { system: string; value: string } | null;
   status: "active" | "resolved" | "proposed";
   onset_date: string | null;
   resolved_date: string | null;
@@ -322,6 +323,15 @@ export type OverviewConcern = {
 export type OverviewLoop = { id: string; kind: string; text: string; detail: string; status: string; problem_id: string; problem_name: string };
 export type Overview = {
   patient: Patient; as_of: string; since: { date: string; why: string; encounter_id?: string };
-  here_for: { encounter: { id: string; time: string; type: string; summary: string } | null; note: { id: string; file: string; author: string; time: string; has_queue: boolean; has_replay: boolean } | null };
+  here_for: { encounter: { id: string; time: string; type: string; summary: string } | null; note: { id: string; file: string; author: string; time: string; has_queue: boolean; has_replay: boolean; status?: "received" | "signed" } | null };
   changes: OverviewChange[]; other_changes: number; concerns: OverviewConcern[]; more_concerns: number; pending: OverviewLoop[];
 };
+
+/* Chart tab (backend chart_tab): medications, latest value per series, problems, encounters. */
+export type ChartData = {
+  medications: Medication[];
+  series: { code: string; name: string; unit: string | null; n: number; out: boolean; latest: { value: number; time: string }; problem_names: string[] }[];
+  problems: Problem[];
+  encounters: { id: string; time: string; type: string; summary: string }[];
+};
+export type PatientRow = { id: string; name: string; dob: string; sex: string; problems_active: number };

@@ -84,16 +84,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
 
   return (
     <div className="cardpage">
-      <section className="explain top">
-        <h2>The problem card</h2>
-        <p>
-          One screen for one concern, organised around what the clinician thinks is happening rather than around the note. Everything in ink below is on the chart; everything in
-          pencil is proposed and waits for a signature in the slot it would fill. The card is computed from the chart each time it opens, like a trend summary: nothing on it is stored.
-        </p>
-        <p className="qs">
-          <b>Q1</b> what is happening · <b>Q2</b> what we think it means · <b>Q3</b> what changed · <b>Q4</b> what we are doing · <b>Q5</b> what we are unsure of · <b>Q6</b> what should happen next · <b>Q7</b> what would change our mind
-        </p>
-      </section>
+
 
       <article className="pcard">
         <header className="ptitle">
@@ -340,8 +331,8 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
         </section>
       </article>
 
-      <section className="explain bottom">
-        <h2>What you are looking at</h2>
+      <details className="explain bottom">
+        <summary>About this screen</summary>
         <ul>
           <li><b>Representation</b> is the compressed problem statement, in illness-script order: context, presentation, trajectory, current state. Rules propose it with a citation per clause. It renders in pencil until you accept or edit it, and the compiler would never cite an unaccepted one.</li>
           <li><b>Assessment</b> stays prose and is only ever yours. The card asks for it at checkpoints, not per visit.</li>
@@ -352,7 +343,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
           <li><b>The trajectory</b> draws the expectation as a corridor on its series: from the value at the stop toward a quarter's move, until the due date, with the axis extended past today. A result inside it is quiet; one outside it after the due date is ringed as a mismatch, and the corridor turns vermilion.</li>
           <li><b>Not in this slice:</b> alternatives with discriminators, and persistence of what you accept or write here. Those are the schema additions flagged in the design document's appendix.</li>
         </ul>
-      </section>
+      </details>
     </div>
   );
 }
