@@ -1,0 +1,87 @@
+{
+  "parsed": {
+    "orders": [
+      {
+        "kind": "lab",
+        "name": "Glucose (fasting)",
+        "detail": "Fasting plasma glucose at the 4-week return visit; if still near 168 mg/dL, discuss therapy intensification alongside metformin adherence review",
+        "loinc": "2339-0",
+        "med_id": null,
+        "change": null,
+        "dose": null,
+        "audience": null,
+        "from_insight": "ins_0009_01",
+        "evidence": [
+          "obs_c4107052",
+          "obs_c0006",
+          "obs_434e1f0a",
+          "med_metformin_hydrochloride",
+          "lnk_demo_102_25"
+        ],
+        "confidence": 0.78
+      },
+      {
+        "kind": "lab",
+        "name": "Hemoglobin A1c",
+        "detail": "Follow-up A1c to capture response to metformin 1000 mg daily started 2026-09-15 (no post-start A1c yet)",
+        "loinc": "4548-4",
+        "med_id": null,
+        "change": null,
+        "dose": null,
+        "audience": null,
+        "from_insight": "ins_0009_01",
+        "evidence": [
+          "obs_434e1f0a",
+          "obs_c0001",
+          "med_metformin_hydrochloride",
+          "lnk_demo_102_07"
+        ],
+        "confidence": 0.55
+      },
+      {
+        "kind": "lab",
+        "name": "Urine albumin/creatinine ratio",
+        "detail": "Repeat UACR to confirm persistent albuminuria after single value of 48 mg/g; if confirmed, review need for renal-protective therapy",
+        "loinc": "14959-1",
+        "med_id": null,
+        "change": null,
+        "dose": null,
+        "audience": null,
+        "from_insight": "ins_0009_02",
+        "evidence": [
+          "obs_818e9fed",
+          "obs_434e1f0a",
+          "obs_c4107052",
+          "prob_0009"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "kind": "medication_change",
+        "name": "Ibuprofen",
+        "detail": "Confirm at visit whether ibuprofen 400 mg TID is still being taken; if yes, stop NSAID given albuminuria with concurrent hydrochlorothiazide and metformin",
+        "loinc": null,
+        "med_id": "med_demo_102_01",
+        "change": "stop",
+        "dose": null,
+        "audience": null,
+        "from_insight": "ins_0009_03",
+        "evidence": [
+          "med_demo_102_01",
+          "med_hydrochlorothiazide",
+          "med_metformin_hydrochloride",
+          "obs_818e9fed"
+        ],
+        "confidence": 0.45
+      }
+    ]
+  },
+  "model": "claude-opus-5",
+  "usage": {
+    "input_tokens": 2740,
+    "output_tokens": 1029,
+    "cache_read_input_tokens": 955,
+    "cache_creation_input_tokens": 0
+  },
+  "request_id": "req_011Cf7UAXFxLqY3mAFVpuvYZ"
+}

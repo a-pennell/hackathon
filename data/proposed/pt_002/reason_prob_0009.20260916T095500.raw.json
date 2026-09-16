@@ -1,0 +1,67 @@
+{
+  "parsed": {
+    "insights": [
+      {
+        "statement": "Hemoglobin A1c has risen from 7.1% on 2026-01-25 to 7.9% on 2026-08-02 (+0.8 points, ~11%) over roughly 6 months, with fasting glucose rising in parallel from 142 to 168 mg/dL (+26, ~18%). The patient concurrently reports fatigue, increased thirst and twice-nightly nocturia, consistent with symptomatic hyperglycemia rather than lab drift. The note attributes the loss of control primarily to metformin adherence, and the recorded metformin 1000 mg daily start date (2026-09-15) postdates these labs, so the current regimen has not yet been reflected in any follow-up A1c.",
+        "evidence": [
+          "prob_0009",
+          "obs_c0001",
+          "obs_434e1f0a",
+          "obs_c0006",
+          "obs_c4107052",
+          "lnk_demo_102_07",
+          "lnk_demo_102_08",
+          "lnk_demo_102_09",
+          "lnk_demo_102_12",
+          "lnk_demo_102_20",
+          "med_metformin_hydrochloride",
+          "note_demo_102"
+        ],
+        "suggested_action": "Consider reviewing metformin adherence and barriers at the 4-week return visit and discussing whether therapy intensification is warranted if fasting glucose remains near 168 mg/dL.",
+        "trend_codes": [
+          "4548-4",
+          "2339-0"
+        ],
+        "confidence": 0.82
+      },
+      {
+        "statement": "A urine albumin/creatinine ratio of 48 mg/g on 2026-08-02 is the only value in the window and falls in the moderately increased albuminuria range, occurring alongside A1c of 7.9% and fasting glucose of 168 mg/dL. With only a single measurement there is no trend, and transient causes (including hyperglycemia itself) have not been excluded. Confirmation would clarify whether early diabetic kidney disease is present.",
+        "evidence": [
+          "prob_0009",
+          "obs_818e9fed",
+          "obs_434e1f0a",
+          "obs_c4107052"
+        ],
+        "suggested_action": "Consider repeating the urine albumin/creatinine ratio to confirm persistent albuminuria and reviewing whether renal-protective therapy is indicated.",
+        "trend_codes": [
+          "14959-1",
+          "4548-4"
+        ],
+        "confidence": 0.72
+      },
+      {
+        "statement": "Ibuprofen 400 mg two to three times daily was started on 2026-05-01, within the same interval in which the urine albumin/creatinine ratio was measured at 48 mg/g on 2026-08-02, and the patient is also on hydrochlorothiazide 25 mg daily. Ongoing NSAID use combined with a thiazide in a diabetic patient with albuminuria raises the risk of reduced renal perfusion, which also bears on metformin safety. The medication list shows ibuprofen as no longer ongoing, so current use should be confirmed.",
+        "evidence": [
+          "prob_0009",
+          "med_demo_102_01",
+          "med_hydrochlorothiazide",
+          "med_metformin_hydrochloride",
+          "obs_818e9fed"
+        ],
+        "suggested_action": "Consider confirming whether ibuprofen is still being taken and, if so, reviewing the need for continued NSAID use given the albuminuria and concurrent hydrochlorothiazide and metformin.",
+        "trend_codes": [
+          "14959-1"
+        ],
+        "confidence": 0.68
+      }
+    ]
+  },
+  "model": "claude-opus-5",
+  "usage": {
+    "input_tokens": 2966,
+    "output_tokens": 1430,
+    "cache_read_input_tokens": 908,
+    "cache_creation_input_tokens": 0
+  },
+  "request_id": "req_011Cf7U8Ns8CMCZRQ64dx3YN"
+}

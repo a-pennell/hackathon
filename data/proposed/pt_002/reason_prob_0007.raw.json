@@ -1,0 +1,71 @@
+{
+  "parsed": {
+    "insights": [
+      {
+        "statement": "Blood pressure has remained above goal for the entire window despite hydrochlorothiazide 25 mg daily since 2022: systolic first crossed high at 142 mmHg on 2026-01-25 and was 150 mmHg at the 2026-09-15 visit (repeat 150/92 after an initial 154/94), with diastolic rising from 88 to 92 mmHg over the same interval. Home readings documented in the note are also in the 150s over 90s, so this is sustained rather than white-coat elevation. Lisinopril 10 mg daily was added on 2026-09-15; response has not yet been measured.",
+        "evidence": [
+          "prob_0007",
+          "obs_c0002",
+          "obs_demo_102_03",
+          "obs_c0003",
+          "obs_demo_102_04",
+          "med_hydrochlorothiazide",
+          "med_demo_102_03",
+          "note_demo_102",
+          "lnk_demo_102_05",
+          "lnk_demo_102_06",
+          "lnk_demo_102_13"
+        ],
+        "suggested_action": "Consider a follow-up office or home BP check within 2-4 weeks to confirm response to the newly added lisinopril before further titration.",
+        "trend_codes": [
+          "8480-6",
+          "8462-4"
+        ],
+        "confidence": 0.82
+      },
+      {
+        "statement": "Daily ibuprofen 400 mg two to three times a day was started 2026-05-01 and the note flags this NSAID use as a likely contributor to the elevated pressures; systolic remained 150 mmHg and diastolic 92 mmHg through 2026-09-15. Ibuprofen was stopped and acetaminophen substituted on 2026-09-15, so any BP benefit from NSAID withdrawal should become apparent over the next few weeks. NSAIDs also blunt the effect of both hydrochlorothiazide and the newly started lisinopril.",
+        "evidence": [
+          "med_demo_102_01",
+          "med_demo_102_02",
+          "lnk_demo_102_18",
+          "note_demo_102",
+          "obs_demo_102_03",
+          "obs_demo_102_04",
+          "med_hydrochlorothiazide",
+          "med_demo_102_03"
+        ],
+        "suggested_action": "Consider confirming that NSAIDs are fully discontinued, including over-the-counter sources, and reassessing BP before escalating antihypertensive therapy further.",
+        "trend_codes": [
+          "8480-6",
+          "8462-4"
+        ],
+        "confidence": 0.75
+      },
+      {
+        "statement": "Lisinopril 10 mg daily was started on 2026-09-15 on a background of hydrochlorothiazide 25 mg daily, and the only renal and electrolyte data in the window are single values from 2026-08-02 (potassium 4.1, creatinine 0.8). There is no post-initiation chemistry to assess the combined effect of the ACE inhibitor and thiazide, and recent NSAID exposure through 2026-09-15 adds further renal risk. A repeat panel would establish whether potassium and creatinine remain stable on the new regimen.",
+        "evidence": [
+          "obs_4cfe85fb",
+          "obs_94b8b704",
+          "med_demo_102_03",
+          "med_hydrochlorothiazide",
+          "med_demo_102_01"
+        ],
+        "suggested_action": "Consider repeating a basic metabolic panel roughly 1-2 weeks after the lisinopril start to recheck potassium and creatinine.",
+        "trend_codes": [
+          "6298-4",
+          "38483-4"
+        ],
+        "confidence": 0.78
+      }
+    ]
+  },
+  "model": "claude-opus-5",
+  "usage": {
+    "input_tokens": 4373,
+    "output_tokens": 1214,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 908
+  },
+  "request_id": "req_011Cf7U7E8jg1zF2na7VQUPu"
+}

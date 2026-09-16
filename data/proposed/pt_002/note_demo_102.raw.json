@@ -1,0 +1,427 @@
+{
+  "parsed": {
+    "observations": [
+      {
+        "quote": "BP 154/94 sitting",
+        "loinc": "8480-6",
+        "value": 154,
+        "unit": "mm[Hg]",
+        "date": null,
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.96
+      },
+      {
+        "quote": "BP 154/94 sitting",
+        "loinc": "8462-4",
+        "value": 94,
+        "unit": "mm[Hg]",
+        "date": null,
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.96
+      },
+      {
+        "quote": "repeat 150/92",
+        "loinc": "8480-6",
+        "value": 150,
+        "unit": "mm[Hg]",
+        "date": null,
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "repeat 150/92",
+        "loinc": "8462-4",
+        "value": 92,
+        "unit": "mm[Hg]",
+        "date": null,
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "HR 78",
+        "loinc": "8867-4",
+        "value": 78,
+        "unit": "/min",
+        "date": null,
+        "problem_refs": [],
+        "confidence": 0.94
+      },
+      {
+        "quote": "Wt 85.6 kg",
+        "loinc": "29463-7",
+        "value": 85.6,
+        "unit": "kg",
+        "date": null,
+        "problem_refs": [],
+        "confidence": 0.94
+      },
+      {
+        "quote": "A1c 7.9",
+        "loinc": "4548-4",
+        "value": 7.9,
+        "unit": "%",
+        "date": "2026-08-02",
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "up from 7.1 in January",
+        "loinc": "4548-4",
+        "value": 7.1,
+        "unit": "%",
+        "date": "2026-01-01",
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.6
+      },
+      {
+        "quote": "Fasting glucose 168",
+        "loinc": "2339-0",
+        "value": 168,
+        "unit": "mg/dL",
+        "date": "2026-08-02",
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "quote": "Urine albumin/creatinine 48 mg/g",
+        "loinc": "14959-1",
+        "value": 48,
+        "unit": "mg/g",
+        "date": "2026-08-02",
+        "problem_refs": [
+          "new_1"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "up from 18",
+        "loinc": "14959-1",
+        "value": 18,
+        "unit": "mg/g",
+        "date": null,
+        "problem_refs": [
+          "new_1"
+        ],
+        "confidence": 0.55
+      },
+      {
+        "quote": "Potassium 4.1",
+        "loinc": "6298-4",
+        "value": 4.1,
+        "unit": "mmol/L",
+        "date": "2026-08-02",
+        "problem_refs": [],
+        "confidence": 0.9
+      },
+      {
+        "quote": "creatinine 0.8",
+        "loinc": "2160-0",
+        "value": 0.8,
+        "unit": "mg/dL",
+        "date": "2026-08-02",
+        "problem_refs": [],
+        "confidence": 0.9
+      }
+    ],
+    "findings": [
+      {
+        "quote": "Tired, thirstier than usual, up twice at night to urinate.",
+        "summary": "Fatigue, polydipsia and nocturia",
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "quote": "Admits she has been skipping metformin most days for about three months because of the stomach upset.",
+        "summary": "Non-adherence to metformin for ~3 months due to GI upset",
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "Back pain worse since spring",
+        "summary": "Worsening back pain since spring",
+        "problem_refs": [
+          "new_2"
+        ],
+        "confidence": 0.88
+      },
+      {
+        "quote": "Home BP readings in the 150s over 90s.",
+        "summary": "Home BP readings in 150s/90s",
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "quote": "No chest pain, headache or visual change.",
+        "summary": "No chest pain, headache or visual change",
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "quote": "Lungs clear. No edema.",
+        "summary": "Lungs clear, no peripheral edema",
+        "problem_refs": [],
+        "confidence": 0.85
+      },
+      {
+        "quote": "Type 2 diabetes, uncontrolled, adherence the main driver.",
+        "summary": "Type 2 diabetes uncontrolled, attributed mainly to non-adherence",
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "quote": "Hypertension, above goal on HCTZ alone",
+        "summary": "Hypertension above goal on HCTZ monotherapy",
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.9
+      }
+    ],
+    "problems": [
+      {
+        "ref": "new_1",
+        "quote": "with new albuminuria",
+        "name": "Albuminuria",
+        "status": "active",
+        "onset_date": "2026-08-02",
+        "supersedes_problem_id": null,
+        "confidence": 0.85
+      },
+      {
+        "ref": "new_2",
+        "quote": "Low back pain, mechanical.",
+        "name": "Mechanical low back pain",
+        "status": "active",
+        "onset_date": null,
+        "supersedes_problem_id": null,
+        "confidence": 0.88
+      }
+    ],
+    "medications": [
+      {
+        "ref": "med_1",
+        "quote": "Switch metformin to extended-release 1000 mg daily with dinner.",
+        "name": "Metformin extended-release",
+        "dose": "1000 mg",
+        "route": "PO",
+        "frequency": "daily with dinner",
+        "start": "2026-09-15",
+        "end": null,
+        "existing_med_id": "med_metformin_hydrochloride",
+        "change": "dose_change",
+        "treats_problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "ref": "med_2",
+        "quote": "taking ibuprofen 400 mg two or three times a day most days since around May, over the counter",
+        "name": "Ibuprofen",
+        "dose": "400 mg",
+        "route": "PO",
+        "frequency": "two or three times a day",
+        "start": "2026-05-01",
+        "end": "2026-09-15",
+        "existing_med_id": null,
+        "change": "stop",
+        "treats_problem_refs": [
+          "new_2"
+        ],
+        "confidence": 0.87
+      },
+      {
+        "ref": "med_3",
+        "quote": "acetaminophen for the back",
+        "name": "Acetaminophen",
+        "dose": null,
+        "route": null,
+        "frequency": null,
+        "start": "2026-09-15",
+        "end": null,
+        "existing_med_id": null,
+        "change": "new",
+        "treats_problem_refs": [
+          "new_2"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "ref": "med_4",
+        "quote": "Start lisinopril 10 mg daily.",
+        "name": "Lisinopril",
+        "dose": "10 mg",
+        "route": null,
+        "frequency": "daily",
+        "start": "2026-09-15",
+        "end": null,
+        "existing_med_id": null,
+        "change": "new",
+        "treats_problem_refs": [
+          "prob_0007",
+          "new_1"
+        ],
+        "confidence": 0.94
+      },
+      {
+        "ref": "med_5",
+        "quote": "above goal on HCTZ alone",
+        "name": "Hydrochlorothiazide",
+        "dose": "25 mg",
+        "route": "PO",
+        "frequency": "daily",
+        "start": null,
+        "end": null,
+        "existing_med_id": "med_hydrochlorothiazide",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.75
+      }
+    ],
+    "plans": [
+      {
+        "quote": "Switch metformin to extended-release 1000 mg daily with dinner.",
+        "kind": "therapeutic",
+        "text": "Switch metformin to extended-release 1000 mg daily with dinner",
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "Repeat A1c in 3 months.",
+        "kind": "monitoring",
+        "text": "Repeat A1c in 3 months",
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "Stop ibuprofen",
+        "kind": "therapeutic",
+        "text": "Stop ibuprofen",
+        "problem_refs": [
+          "prob_0007",
+          "new_1",
+          "new_2"
+        ],
+        "confidence": 0.92
+      },
+      {
+        "quote": "acetaminophen for the back",
+        "kind": "therapeutic",
+        "text": "Acetaminophen for back pain",
+        "problem_refs": [
+          "new_2"
+        ],
+        "confidence": 0.88
+      },
+      {
+        "quote": "Start lisinopril 10 mg daily.",
+        "kind": "therapeutic",
+        "text": "Start lisinopril 10 mg daily",
+        "problem_refs": [
+          "prob_0007",
+          "new_1"
+        ],
+        "confidence": 0.94
+      },
+      {
+        "quote": "BMP in 2 weeks.",
+        "kind": "diagnostic",
+        "text": "BMP in 2 weeks",
+        "problem_refs": [
+          "prob_0007",
+          "new_1"
+        ],
+        "confidence": 0.92
+      },
+      {
+        "quote": "Home BP log, goal under 140/90 in 4 weeks.",
+        "kind": "monitoring",
+        "text": "Home BP log, goal under 140/90 in 4 weeks",
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.91
+      },
+      {
+        "quote": "Physical therapy referral.",
+        "kind": "referral",
+        "text": "Physical therapy referral",
+        "problem_refs": [
+          "new_2"
+        ],
+        "confidence": 0.92
+      },
+      {
+        "quote": "RTC 4 weeks.",
+        "kind": "follow_up",
+        "text": "Return to clinic in 4 weeks",
+        "problem_refs": [
+          "prob_0007",
+          "prob_0009"
+        ],
+        "confidence": 0.9
+      }
+    ],
+    "suspected_causes": [
+      {
+        "quote": "Daily NSAID use since May, likely contributing.",
+        "cause_ref": "med_2",
+        "effect_ref": "prob_0007",
+        "rationale": "Note attributes above-goal BP partly to daily NSAID use",
+        "confidence": 0.85
+      },
+      {
+        "quote": "Daily NSAID use since May, likely contributing.",
+        "cause_ref": "med_2",
+        "effect_ref": "new_1",
+        "rationale": "NSAID use raised as contributor to new albuminuria",
+        "confidence": 0.7
+      },
+      {
+        "quote": "Type 2 diabetes, uncontrolled, adherence the main driver.",
+        "cause_ref": "med_metformin_hydrochloride",
+        "effect_ref": "prob_0009",
+        "rationale": "Note names metformin non-adherence as main driver of uncontrolled diabetes",
+        "confidence": 0.65
+      }
+    ]
+  },
+  "model": "claude-opus-5",
+  "usage": {
+    "input_tokens": 573,
+    "output_tokens": 4718,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 3718
+  },
+  "request_id": "req_011Cf7TUdinJf2pYou4RF2rY"
+}
