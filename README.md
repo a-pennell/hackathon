@@ -89,6 +89,12 @@ items become ink.
 The chart opens on `pt_002`; `http://localhost:8000/?patient=pt_001` opens the first golden
 patient, whose recorded demo (CKD, naproxen, metformin) still plays through the same views.
 
+## v2
+
+A simpler front on the same chart: the problem list as a gate (which problems are in good standing
+and which are not), one problem as the seven questions, and the visit note assembled from what was
+decided. `v2/README.md` describes it; it is served at `/v2/?patient=pt_002` by the same server.
+
 ## Demo runbook
 
 Every Claude call in the demo (extraction, reasoning, orders, referral, brief) is run live once

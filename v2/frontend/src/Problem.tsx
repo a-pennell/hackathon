@@ -1,0 +1,110 @@
+import { useEffect, useState } from "react";
+import { api } from "./api";
+import type { Ctx } from "./App";
+import type { Timeline as TL, QueueBatch } from "./types";
+import type { ProblemView } from "./v2types";
+import Timeline from "./Timeline";
+
+const KINDS = ["therapeutic", "diagnostic", "monitoring", "referral", "follow_up", "education"];
+const dmy = (iso: string) => { const d = new Date(iso.slice(0, 10) + "T00:00:00"); return `${d.getDate()} ${d.toLocaleString("en", { month: "short" })} ${d.getFullYear()}`; };
+
+/** One problem as seven answers. Everything on this page is computed from the record; the buttons are the only
+ *  places a signature happens: acknowledging a detected change, signing an insight, adding to the plan. */
+export default function Problem({ pid, problemId, busy, run, go, refreshKey }: Ctx & { problemId: string }) {
+  const [v, setV] = useState<ProblemView | null>(null);
+  const [tl, setTl] = useState<TL | null>(null);
+  const [queues, setQueues] = useState<QueueBatch[]>([]);
+  const [hi, setHi] = useState<Set<string>>(new Set());
+  const [kind, setKind] = useState("monitoring");
+  const [text, setText] = useState("");
+  useEffect(() => {
+    let live = true;
+    api.problem(pid, problemId).then((x) => live && setV(x)).catch(() => live && setV(null));
+    api.trajectory(pid, problemId).then((x) => live && setTl(x)).catch(() => live && setTl(null));
+    api.queue(pid).then((q) => live && setQueues(q.batches)).catch(() => live && setQueues([]));
+    return () => { live = false; };
+  }, [pid, problemId, refreshKey]);
+  if (!v) return <div className="lede">Reading the record for this problem…</div>;
+  const a = v.answers;
+  const hover = (ids: string[] | null) => setHi(new Set(ids ?? []));
+  const reasonStem = `reason_${problemId}`;
+  const reasonBatch = queues.find((b) => b.stem === reasonStem);
+  const signInsight = (id: string) => reasonBatch && run("sign", () => api.review(pid, reasonStem, { accept: [id] }), "Insight signed: its first sentence goes to the note");
+  const rejectInsight = (id: string) => reasonBatch && run("sign", () => api.review(pid, reasonStem, { reject: [id], reason_code: "disagree" }), "Insight rejected");
+  const Q = ({ n, ask, sub, children }: { n: number; ask: string; sub?: string; children: React.ReactNode }) => (
+    <section className="q" id={`q${n}`}><div className="ask"><span className="n">{n}</span><h2>{ask}</h2>{sub && <div className="sub">{sub}</div>}</div><div className="ans">{children}</div></section>
+  );
+  const Line = ({ x, v: mark }: { x: { text: string; detail?: string; ids: string[]; source?: string; valence?: string }; v?: string }) => (
+    <div className="line" onMouseEnter={() => hover(x.ids)} onMouseLeave={() => hover(null)}>
+      <span className={`v ${mark ?? x.valence ?? ""}`}>{mark === "for" || x.valence === "for" ? "+" : mark === "against" || x.valence === "against" ? "−" : x.valence === "unx" ? "○" : "·"}</span>
+      <span>{x.text}{x.detail && <span className="d">{x.detail}</span>}</span>
+      <span className="src">{x.source ?? ""}</span>
+    </div>
+  );
+  return (
+    <div>
+      <button className="link" onClick={() => go("#/")}>← Problems</button>
+      <h1 style={{ marginTop: 6 }}>{v.problem.name} <span className={`dot ${v.problem.standing}`} style={{ display: "inline-block", marginLeft: 8 }} /> <span className="tag">{v.problem.standing_word}</span> <span className="tag ep" title={v.problem.epistemic.why}>{v.problem.epistemic.value}</span></h1>
+      <p className="lede">{v.problem.why}. {v.problem.steward ? `Steward ${typeof v.problem.steward === "string" ? v.problem.steward : v.problem.steward.name}. ` : ""}{v.problem.onset ? `On the chart since ${dmy(v.problem.onset)}. ` : ""}{v.decisions} decisions on the record.</p>
+
+      <Q n={1} ask="What is happening?" sub="the monitored series, the courses on board, what the patient reported">
+        {a.happening.map((x, i) => <Line key={i} x={x} />)}
+        {tl && <div className="chart"><Timeline data={tl} highlight={hi} onHover={(id) => hover(id ? [id] : null)} corridor={a.change_course.expected} /></div>}
+        <div style={{ fontSize: 11.5, color: "var(--graphite)" }}>Courses are drawn as bands under the series they are linked to, so a medication's effect on a value is read off the same axis.</div>
+      </Q>
+
+      <Q n={2} ask="What do we think it means?" sub="the working summary, the causes on the record, the reasoning">
+        <p className="serif" onMouseEnter={() => hover(a.means.cites)} onMouseLeave={() => hover(null)}>{a.means.text}</p>
+        {a.means.causes.map((c, i) => <Line key={i} x={{ ...c, source: c.signed ? "signed" : "rejected" }} v={c.signed ? "for" : "against"} />)}
+        {a.means.insights.map((i) => (
+          <div key={i.id} className="line" onMouseEnter={() => hover(i.ids)} onMouseLeave={() => hover(null)}>
+            <span className="v">{i.status === "signed" ? "✓" : "?"}</span>
+            <span>{i.text}{i.action && <span className="d">Suggests: {i.action}</span>}</span>
+            {i.status === "proposed" ? <span className="acts"><button className="btn small primary" disabled={!!busy} onClick={() => signInsight(i.id)}>Sign</button> <button className="btn small ghost" disabled={!!busy} onClick={() => rejectInsight(i.id)}>Reject</button></span> : <span className="src">{i.source === "rules" ? "seen by you" : "signed insight"}</span>}
+          </div>
+        ))}
+        {!a.means.insights.some((i) => i.status === "proposed") && <div className="addplan"><button className="btn small" disabled={!!busy || !!reasonBatch} title={reasonBatch ? "the reasoning has run for this problem; its insights are above" : undefined} onClick={() => run("reason", () => api.reason(pid, problemId), "The reasoning ran; its insights wait for your signature")}>Ask what changed</button><span className="pill">the model reads the trends and the course events; nothing is written until you sign</span></div>}
+      </Q>
+
+      <Q n={3} ask="What changed?" sub={`since ${dmy(a.changed.since)} · detected by rules, signed by you`}>
+        {a.changed.lines.map((x, i) => <Line key={i} x={x} />)}
+        {a.changed.detected.map((d) => (
+          <div key={d.id} className={`det ${d.acknowledged ? "ack" : ""}`} onMouseEnter={() => hover(d.ids)} onMouseLeave={() => hover(null)}>
+            <span className="grow">{d.text}</span>
+            {d.acknowledged ? <span className="pill">seen · in the note</span> : <button className="btn small primary" disabled={!!busy} onClick={() => run("ack", () => api.acknowledge(pid, problemId, d.text, d.ids), "Acknowledged: it is on the record and will be in the note")}>Acknowledge</button>}
+          </div>
+        ))}
+        {a.changed.lines.length + a.changed.detected.length === 0 && <div className="quiet">Nothing has moved. Quiet is a valid answer.</div>}
+      </Q>
+
+      <Q n={4} ask="What are we doing?" sub="the plan on the record, the courses, the loops open">
+        {a.doing.linked.map((l, i) => <Line key={i} x={{ text: `${l.rel}: ${l.text}`, detail: l.detail, ids: l.ids }} />)}
+        {a.doing.plan.map((p) => <Line key={p.id} x={{ text: p.text, detail: `${p.plan_kind.replace("_", " ")} · ${p.detail}`, ids: p.ids, source: p.status }} />)}
+        {a.doing.loops.map((l) => <Line key={l.id} x={{ text: l.text, detail: l.detail, ids: [l.id], source: l.status }} />)}
+        <form className="addplan" onSubmit={(e) => { e.preventDefault(); if (text.trim()) run("intent", () => api.intent(pid, problemId, kind, text.trim()), "Signed and added to the plan").then(() => setText("")); }}>
+          <select value={kind} onChange={(e) => setKind(e.target.value)} aria-label="Kind">{KINDS.map((k) => <option key={k} value={k}>{k.replace("_", " ")}</option>)}</select>
+          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Your own line for the plan; signed as you add it" aria-label="Plan item" />
+          <button className="btn small primary" disabled={!!busy || !text.trim()} type="submit">Add to plan</button>
+        </form>
+      </Q>
+
+      <Q n={5} ask="What are we uncertain about?" sub="what does not fit, what is only proposed, what is still unanswered">
+        {a.uncertain.map((x, i) => <Line key={i} x={x} />)}
+        {a.uncertain.length === 0 && <div className="quiet">Nothing on the chart argues against the current reading.</div>}
+      </Q>
+
+      <Q n={6} ask="What should happen next?" sub="loops to close, actions the reasoning suggested, the next review">
+        {a.next.map((x, i) => <Line key={i} x={x} />)}
+        {a.next.length === 0 && <div className="quiet">Nothing is owed on this problem.</div>}
+      </Q>
+
+      <Q n={7} ask="What would make us change course?" sub="the expectation, and the thresholds the rules watch">
+        {a.change_course.expected ? (
+          <p className="serif">{a.change_course.expected.statement}, by {dmy(a.change_course.expected.by)} · <b>{a.change_course.expected.status.replace("_", " ")}</b>.</p>
+        ) : <p className="serif">No expectation is set. One is written when a suspected cause is stopped.</p>}
+        {a.change_course.reconsider_if.map((r, i) => <Line key={`r${i}`} x={{ text: `Reassess if ${r}`, ids: [] }} v="unx" />)}
+        {a.change_course.tripwires.map((t, i) => <Line key={i} x={{ text: `${t.name} ${t.latest.value} · ${t.state}`, detail: `tripwire: ${t.threshold}`, ids: t.ids }} />)}
+      </Q>
+    </div>
+  );
+}

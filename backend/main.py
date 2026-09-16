@@ -730,6 +730,20 @@ def reset(pid: str):
     return {"restored": pid, "queues_cleared": removed}
 
 
+# v2: the gate, the seven answers, the assembled note. Served at /v2/, its API under /v2/api.
+from v2.api import router as v2_router  # noqa: E402
+app.include_router(v2_router)
+V2_DIST = ROOT / "v2" / "frontend" / "dist"
+if V2_DIST.is_dir():
+    app.mount("/v2/assets", StaticFiles(directory=V2_DIST / "assets"), name="v2-assets")
+
+    @app.get("/v2/{path:path}")
+    def v2_spa(path: str):
+        target = V2_DIST / path
+        if path and target.is_file():
+            return FileResponse(target)
+        return FileResponse(V2_DIST / "index.html")
+
 DIST = ROOT / "frontend" / "dist"
 if DIST.is_dir():
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
