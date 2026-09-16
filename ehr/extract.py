@@ -41,6 +41,7 @@ LINK_TYPES = {"relevant_to", "treats", "evidence_for", "suspected_cause", "monit
 CODE_GROUPS = {"2160-0": "creatinine", "38483-4": "creatinine", "2339-0": "glucose", "2345-7": "glucose"}
 DEDUPE_DAYS = 45      # a restated historical value ("3.69 in May") matches a charted value this close in time
 DEDUPE_TOLERANCE = 0.02  # ...and this close in value (2%)
+COMPARISON_FROM_RE = re.compile(r"\bfrom\s+(\d+(?:\.\d+)?)")  # "up from 18": the number after "from" is the earlier value
 PLAN_KINDS = ("diagnostic", "therapeutic", "monitoring", "referral", "education", "follow_up")
 
 # ----------------------------------------------------------------------------- prompt
@@ -286,6 +287,13 @@ class Validator:
             self.reject(kind, item, f"quote not found verbatim in note: {item.get('quote')!r}")
         return q
 
+    def historical_existing(self, code: str, value: float) -> str | None:
+        """The most recent charted observation of the same analyte within DEDUPE_TOLERANCE, at any earlier date."""
+        note_day = self.note["time"][:10]
+        cands = [(d, oid) for d, v, oid in self.obs_by_group.get(CODE_GROUPS.get(code, code), [])
+                 if d < note_day and abs(v - value) <= DEDUPE_TOLERANCE * max(abs(value), 1e-9)]
+        return max(cands)[1] if cands else None
+
     def fuzzy_existing(self, code: str, day: str, value: float) -> str | None:
         """Charted observation of the same analyte within DEDUPE_DAYS and DEDUPE_TOLERANCE, else None."""
         from datetime import date as _date
@@ -369,6 +377,15 @@ class Validator:
                 # Only a value the note attributes to an earlier date can be a restatement of a charted result;
                 # a measurement taken at this visit is new data even if the number matches a recent one.
                 existing = self.fuzzy_existing(code, t[:10], value)
+            if not existing and not it.get("date"):
+                m = COMPARISON_FROM_RE.search(q)
+                if m and float(m.group(1)) == value:
+                    # "up from 18" with no date is the earlier half of a comparison, not a result from this visit:
+                    # attach it to the charted value it restates, or drop it rather than chart it on the note's date.
+                    existing = self.historical_existing(code, value)
+                    if not existing:
+                        self.reject("observation", it, "earlier value of a comparison, undated and not on the chart")
+                        continue
             if existing:
                 oid = existing
                 self.review_hints[oid] = f"already in chart; note restates it ({q!r})"
@@ -413,6 +430,15 @@ class Validator:
                 continue
             change = it.get("change")
             existing = it.get("existing_med_id")
+            closed_here = None
+            if change in ("stop", "dose_change", "frequency_change") and existing not in self.med_ids \
+                    and (it.get("name") or "").strip().lower() not in self.new_med_by_name and _iso_date_or_none(it.get("start")):
+                # "ibuprofen 400 mg ... since around May" and "Stop ibuprofen" in one note, about a course the chart never
+                # held: open the course with its history (and its end) rather than lose it as a change to nothing.
+                if change == "stop":
+                    closed_here = _iso_date_or_none(it.get("end")) or self.note["time"][:10]
+                    it = {**it, "end": closed_here}
+                change = "new"
             if change == "new":
                 mid = self.new_id("med")
                 self.ref_map[it.get("ref", "")] = mid
@@ -425,6 +451,8 @@ class Validator:
                 self.new_med_by_name[it["name"].strip().lower()] = self.out["medications"][-1]
                 if not _iso_date_or_none(it.get("start")):
                     self.review_hints[mid] = "start date unknown; set it on accept"
+                if closed_here:
+                    self.review_hints[mid] = f"course the chart never held; opened {it['start']} and closed {closed_here} by this note"
                 for ref in it.get("treats_problem_refs") or []:
                     target = self.resolve_problem(ref)
                     if target:

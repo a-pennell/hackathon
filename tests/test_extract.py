@@ -276,3 +276,41 @@ def test_review_accept_and_reject(patient, note, raw):
     msg = accept_medication_change(chart, batch["medication_changes"][0])
     hctz = next(m for m in chart["medications"] if m["id"] == "med_hctz")
     assert hctz["segments"][-1]["end"] == "2026-09-11" and "stopped" in msg
+
+
+def test_stop_of_a_course_the_chart_never_held_opens_it_with_its_end(patient, note):
+    raw = {"problems": [], "findings": [], "observations": [], "plans": [],
+           "medications": [
+               {"ref": "med_2", "quote": "taking naproxen 500 mg twice a day most days since around April", "name": "Ibuprofen", "dose": "400 mg",
+                "route": "PO", "frequency": "bid", "start": "2026-05-01", "end": None, "existing_med_id": None, "change": "stop",
+                "treats_problem_refs": [], "confidence": 0.87}],
+           "suspected_causes": [
+               {"quote": "Hold HCTZ starting today", "cause_ref": "med_2", "effect_ref": "prob_htn", "rationale": "NSAID", "confidence": 0.85}]}
+    batch = validate(patient, note, raw, "claude-test")
+    p = batch["proposed"]
+    assert batch["rejected"] == []
+    course = p["medications"][0]
+    assert course["name"] == "Ibuprofen" and course["segments"] == [{"start": "2026-05-01", "end": "2026-09-11", "dose": "400 mg", "route": "PO", "frequency": "bid"}]
+    assert "never held" in batch["review_hints"][course["id"]]
+    assert any(l["from"] == course["id"] and l["to"] == "prob_htn" and l["type"] == "suspected_cause" for l in p["links"])  # the ref resolves
+
+
+def test_undated_earlier_half_of_a_comparison_attaches_or_drops(patient, note):
+    patient = copy.deepcopy(patient)
+    patient["observations"].append({"id": "obs_may", "patient_id": "pt_t", "code": {"system": "LOINC", "value": "38483-4"}, "name": "Creatinine (whole blood)",
+                                    "value": 3.69, "unit": "mg/dL", "reference_range": None, "effective_time": "2026-05-20T10:00:00-07:00",
+                                    "status": "accepted", "provenance": {"source": "fhir_import"}})
+    note = {**note, "text": note["text"] + "\nK 4.2, up from 3.8."}
+    raw = {"problems": [], "findings": [], "suspected_causes": [], "medications": [], "plans": [],
+           "observations": [
+               # the earlier half of a comparison, undated: it is the charted May value, not a new result on the note date
+               {"quote": "up from 3.69 in May", "loinc": "2160-0", "value": 3.69, "unit": None, "date": None, "problem_refs": ["prob_ckd3"], "confidence": 0.6},
+               # an undated comparison value the chart never saw: dropped rather than charted today
+               {"quote": "up from 3.8", "loinc": "6298-4", "value": 3.8, "unit": None, "date": None, "problem_refs": ["prob_ckd3"], "confidence": 0.6},
+               # this visit's value quoted with its comparison: new data, kept
+               {"quote": "creatinine 5.7, up from 3.69 in May", "loinc": "2160-0", "value": 5.7, "unit": None, "date": None, "problem_refs": ["prob_ckd3"], "confidence": 0.9}]}
+    batch = validate(patient, note, raw, "claude-test")
+    p = batch["proposed"]
+    assert [o["value"] for o in p["observations"]] == [5.7]
+    assert any(l["from"] == "obs_may" and l["to"] == "prob_ckd3" for l in p["links"])
+    assert [r["reason"] for r in batch["rejected"]] == ["earlier value of a comparison, undated and not on the chart"]
