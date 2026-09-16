@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import date, datetime
 from pathlib import Path
@@ -42,6 +43,14 @@ def _nice(v) -> str:
         return str(v)
     s = f"{f:.0f}" if abs(f) >= 100 else f"{f:.1f}" if abs(f) >= 10 else f"{f:.2f}"
     return s.rstrip("0").rstrip(".") if "." in s else s
+
+
+def _first_sentence(text: str) -> str:
+    """An insight's first sentence is its observation; the rest is its reasoning, kept behind the citation. Splits on a
+    period followed by a space and a capital, so decimals, dates and units survive."""
+    parts = re.split(r"(?<=[a-z0-9%)\]])\.\s+(?=[A-Z])", text.strip(), maxsplit=1)
+    head = parts[0].rstrip(".")
+    return head + "."
 
 
 def _in_encounter(x: dict, enc_id: str, enc_day: str, note_id: str | None) -> bool:
@@ -170,7 +179,7 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
             lines.append(f"{names.get(l['from'], l['from'])} was proposed as a cause and rejected:{why}".rstrip(":") + ("" if why else "."))
             cites.append(l["id"])
         for i in t["insights"]:
-            lines.append(i["statement"])
+            lines.append(_first_sentence(i["statement"]))
             cites += [i["id"]] + list(i.get("evidence") or [])
         if lines:
             add(f"Assessment · {pname}", " ".join(lines), cites, "compiled", pid)
