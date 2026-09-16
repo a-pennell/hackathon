@@ -34,6 +34,7 @@ const dmy = (iso: string) => {
   return `${d.getDate()} ${d.toLocaleString("en", { month: "short" })}`;
 };
 const hm = (iso: string) => iso.slice(11, 16);
+const dmyFull = (iso: string) => { const d = new Date(iso.slice(0, 10) + "T00:00:00"); return `${d.getDate()} ${d.toLocaleString("en", { month: "short" })} ${d.getFullYear()}`; };
 const BUSY: Record<string, string> = { extract: "Reading the note…", sign: "Signing the note…", reason: "Looking at what changed…", compose: "Drafting the referral…", orders: "Drafting orders…", reset: "Resetting…" };
 
 export default function Shell({ patients, pid, summary, overview, view, tab, onTab, next, onNext, busy, mode, onMode, onReset, onAbout, pendingCount, onPending, crumb }: Props) {
@@ -88,7 +89,7 @@ export default function Shell({ patients, pid, summary, overview, view, tab, onT
       <div className="pt-header">
         <span className="pt-name">{pt.name}</span>
         <span className="hchip">{pt.sex === "F" ? "she/her" : pt.sex === "M" ? "he/him" : "they/them"}</span>
-        <span className="hchip">{age(pt.dob)} · <span className="soft">DOB {pt.dob}</span></span>
+        <span className="hchip">{age(pt.dob)} · <span className="soft">DOB {dmyFull(pt.dob)}</span></span>
         <span className="hchip">{pt.id.replace("pt_", "MRN 00")}</span>
         <span className="hchip allergy">No allergies on file</span>
         {flags > 0 ? <button className="hchip flags" onClick={onPending} title="Proposals waiting for a signature">⚑ {flags} waiting</button> : <span className="hchip soft">⚑ nothing waiting</span>}

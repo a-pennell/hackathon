@@ -127,7 +127,7 @@ export default function App() {
       for (const pl of b.proposed.plans ?? []) m[pl.id] = `plan: ${pl.text}`;
       if (b.note_id) m[b.note_id] = `note ${b.note_id.replace("note_", "")}`;
     }
-    for (const n of notes) m[n.id] = `${n.author}'s note · ${n.time.slice(0, 10)}`;
+    for (const n of notes) m[n.id] = `${n.author}’s note · ${n.time.slice(0, 10)}`;
     // A link reads as the sentence it asserts, never as an id.
     const nm = (id: string) => m[id] ?? labelOf(m, id);
     for (const b of queues) for (const l of b.proposed.links ?? []) m[l.id] = `${nm(l.from)} ${LINK_WORD[l.type] ?? l.type} ${nm(l.to)}`;

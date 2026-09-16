@@ -50,8 +50,7 @@ export default function CareTab({ data, highlight, onHover, onOpen }: Props) {
           {active.map((c) => (
             <article key={c.id} className={`ccard ${hi([c.id])}`} onMouseEnter={() => onHover([c.id])} onMouseLeave={() => onHover(null)}>
               <header className="ccard-head">
-                <h3>{c.name}</h3>
-                {c.code && <span className="code num">{c.code.value}</span>}
+                <h3 title={c.code ? `${c.code.system} ${c.code.value}` : undefined}>{c.name}</h3>
                 <span className="tag ep">{c.epistemic}</span>
                 {c.members.length > 0 && <span className="tag soft" title={c.members.map((m) => m.name).join(" · ")}>+{c.members.length} related entr{c.members.length > 1 ? "ies" : "y"}</span>}
                 {c.qualifiers.filter((q) => q !== "chronic" && q !== "new").map((q) => <span key={q} className={`tag ${q === "worsening" || q === "unexpected" ? "warn" : "soft"}`}>{q}</span>)}
@@ -64,7 +63,7 @@ export default function CareTab({ data, highlight, onHover, onOpen }: Props) {
               <div className="ccard-body">
                 <div className="module">
                   <p className="mod-label">Plan <span className="cnt">{c.plan.length}</span></p>
-                  {c.plan.length === 0 && <p className="quiet">Nothing signed on this problem yet.</p>}
+                  {c.plan.length === 0 && <p className="quiet">Nothing signed yet.</p>}
                   {c.plan.slice(0, 5).map((p) => (
                     <div key={p.id} className={`planrow ${hi([p.id])}`} onMouseEnter={(e) => { e.stopPropagation(); onHover([p.id]); }}>
                       <span className="k">{p.kind.replace("_", " ")}</span><span>{p.text}</span><span className="meta">{p.source}</span>
@@ -85,7 +84,7 @@ export default function CareTab({ data, highlight, onHover, onOpen }: Props) {
                 </div>
                 <div className="module wide">
                   <p className="mod-label">Open loops <span className="cnt">{c.loops.length}</span></p>
-                  {c.loops.length === 0 && <p className="quiet">Nothing waiting on an answer.</p>}
+                  {c.loops.length === 0 && <p className="quiet">Nothing waiting.</p>}
                   {c.loops.map((l) => (
                     <div key={l.id} className="loop">
                       <span className="kind">{l.kind}</span>

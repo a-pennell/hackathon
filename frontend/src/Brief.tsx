@@ -28,7 +28,7 @@ export default function Brief({ brief, highlight, onHover, onAskClaude, busy, mo
         <span className="src">{model ? `written by ${brief.source.split("/").pop()}` : "computed from the chart"}</span>
         {!model && (
           <button className="btn small ghost" disabled={busy} onClick={onAskClaude} title={mode === "live" ? "Three or four sentences from Claude over the same evidence" : "The saved Claude brief"}>
-            {mode === "live" ? "Ask Claude" : "Claude's version"}
+            {mode === "live" ? "Ask Claude" : "Claude’s version"}
           </button>
         )}
       </div>

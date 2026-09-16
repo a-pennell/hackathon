@@ -41,9 +41,13 @@ body {
   font-size: 13px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "kern" 1, "liga" 1;
+  text-rendering: optimizeLegibility;
 }
 button { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; }
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+/* Every recorded figure lines up: mono values, deltas, counts and stamps take tabular figures. */
+.mono, .delta, .val, .cnt, .stamp, .n, .when, .conf, .code { font-variant-numeric: tabular-nums; }
 
 /* ------------------------------------------------------------------ frame */
 .desk {
@@ -136,14 +140,14 @@ svg.tl .enc.findings { stroke: var(--select); stroke-width: 2; }
 svg.tl .enc-note { fill: var(--select); }
 svg.tl .med-name { font-size: 11px; fill: var(--ink); }
 svg.tl .med-name.pencil { fill: var(--pending); }
-svg.tl .med-dose { font-family: var(--mono); font-size: 9.5px; fill: #fff; }
+svg.tl .med-dose { font-family: var(--mono); font-size: 10.5px; fill: #fff; }
 svg.tl .seg { rx: 2; opacity: 0.9; }
 svg.tl .seg.hi { stroke: var(--select); stroke-width: 2; opacity: 1; }
 svg.tl .seg.pencil { fill: var(--pending-wash); stroke: var(--pending); stroke-dasharray: 3 2; }
 svg.tl .change { stroke: #fff; stroke-width: 1.5; }
 svg.tl .cursor { stroke: var(--select); stroke-dasharray: 2 3; }
 svg.tl .section { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; fill: var(--graphite); }
-svg.tl .relation { font-size: 9px; fill: var(--graphite); }
+svg.tl .relation { font-size: 10.5px; fill: var(--graphite); }
 svg.tl .relation.cause { fill: var(--flag); }
 
 .tip {
@@ -331,7 +335,9 @@ svg.tl .order.med { fill: var(--select); }
 .cardpage { max-width: 1040px; margin: 0 auto; padding: calc(var(--u) * 4) calc(var(--u) * 6) calc(var(--u) * 12); }
 .explain { margin: 0 0 calc(var(--u) * 4); padding: calc(var(--u) * 3) calc(var(--u) * 4); border: 1px solid var(--rule); background: var(--paper-2); }
 .explain h2 { font-family: var(--serif); font-weight: 400; font-size: 16px; margin: 0 0 var(--u); }
-.explain p { margin: var(--u) 0 0; max-width: 78ch; font-size: 13px; color: var(--ink-2); }
+.explain p { margin: var(--u) 0 0; max-width: 72ch; font-size: 13px; color: var(--ink-2); }
+.explain li, .explain ul { max-width: 72ch; font-size: 13px; color: var(--ink-2); }
+.explain ul { padding-left: 1.2em; }
 .explain p.qs { font-size: 11.5px; color: var(--graphite); }
 .explain p.qs b { font-family: var(--mono); font-weight: 500; color: var(--ink-2); }
 .explain ul { margin: var(--u) 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
@@ -635,8 +641,8 @@ details.explain ul { border: 1px solid var(--rule); background: var(--paper-2); 
 
 /* ------------------------------------------------------- problem workspace */
 .pwork { display: grid; grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
-@media (max-width: 1100px) { .pwork { grid-template-columns: 1fr; } }
-.spine { border-right: 1px solid var(--rule); padding: calc(var(--u) * 5) calc(var(--u) * 5) calc(var(--u) * 12); min-height: 60vh;
+@media (max-width: 1100px) { .pwork { grid-template-columns: 1fr; } .spine { border-right: none; border-bottom: 1px solid var(--rule); padding-bottom: calc(var(--u) * 5); } }
+.spine { border-right: 1px solid var(--rule); padding: calc(var(--u) * 5) calc(var(--u) * 5) calc(var(--u) * 8); align-self: stretch;
   background: repeating-linear-gradient(0deg, transparent 0 19px, var(--rule-soft) 19px 20px), var(--paper); }
 .eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); font-weight: 600; }
 .spine h2 { font-family: var(--serif); font-weight: 400; font-size: 15px; margin: 6px 0 4px; }
@@ -674,7 +680,7 @@ details.explain ul { border: 1px solid var(--rule); background: var(--paper-2); 
 .stackbar { display: flex; gap: 2px; border: 1px solid var(--rule); border-radius: var(--r-md); padding: 3px; background: var(--paper-inset); width: max-content; margin: 8px 0 12px; }
 .lvl { border: 0; background: transparent; color: var(--graphite); border-radius: 4px; padding: 5px 12px; font-size: 12px; font-family: var(--mono); }
 .lvl[aria-selected="true"] { background: var(--paper-2); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-.machine-text { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); margin: 0 0 8px; }
+.machine-text { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); margin: 0 0 8px; max-width: 72ch; }
 .machine-text.lead { font-size: 18px; line-height: 1.45; color: var(--ink); letter-spacing: -.01em; font-family: var(--serif); }
 .machine-text.muted { color: var(--graphite); font-size: 13px; }
 .stack .pencil-box .machine-text { color: var(--ink); }

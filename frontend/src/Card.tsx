@@ -248,7 +248,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
         <div className="cards2">
           <section className="scard watch">
             <span className="eyebrow">Surveillance</span>
-            <h4>What would change this problem's status</h4>
+            <h4>What would change this problem’s status</h4>
             {card.surveillance.rows.map((r) => (
               <div key={r.code} className={`kv ${r.ids.some((id) => highlight.has(id)) ? "hi" : ""}`} onMouseEnter={() => onHover(r.ids)} onMouseLeave={() => onHover(null)}>
                 <span className="k">{r.name}</span>
@@ -298,7 +298,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
             {slots.supporting.map(({ g, b }) => <GroupCard key={g.key} g={g} b={b} {...cardProps} />)}
           </section>
           <section>
-            <h3>Doesn't fit <span className="cnt">{card.doesnt_fit.length}</span></h3>
+            <h3>Doesn’t fit <span className="cnt">{card.doesnt_fit.length}</span></h3>
             <ul className="ev">
               {card.doesnt_fit.map((x, i) => (
                 <li key={i} {...ev(x)}>
@@ -315,7 +315,7 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
         <section className="full" id="slot-insights">
           <h3>Insights <span className="cnt">{signedInsights.length} signed{slots.insights.length ? ` · ${slots.insights.length} proposed` : ""}</span>
             <span className="spacer" />
-            <button className="btn small" disabled={!!busy} onClick={actions.reason} title="Trend summaries and medication events go to the model; insights come back for your signature">What's changed?</button>
+            <button className="btn small" disabled={!!busy} onClick={actions.reason} title="Trend summaries and medication events go to the model; insights come back for your signature">What’s changed?</button>
           </h3>
           {signedInsights.length + slots.insights.length === 0 && <div className="quiet">No reasoning has run on this problem. An empty answer is a normal answer.</div>}
           {signedInsights.map((i) => (
@@ -419,9 +419,9 @@ export default function Card({ card, tl, queues, chartInsights, chartDocuments, 
             <li><b>A banner</b> appears for anything consequential the system proposes on this problem: a new or superseding problem, a suspected cause, a course opened, stopped or changed. Consequential changes are reviewed one at a time; the batchable rest sit in the slots below.</li>
             <li><b>The summary stack</b> has three depths. The one-liner is the trajectory sentence. The assessment paragraph is drafted by rules in illness-script order (context, presentation, trajectory, current state) and cites every clause; accept, edit or reject it. The full history is the decision trail.</li>
             <li><b>Your assessment</b> stays prose and is only ever yours.</li>
-            <li><b>Surveillance</b> is what would change this problem's status: each monitored series with its threshold and where it stands, the expectation set when a cause was stopped, what to reassess on, and the next review.</li>
-            <li><b>Supporting</b> and <b>Doesn't fit</b> keep the recorded value, its provenance and its interpretation apart. The <span className="v against">−</span> and <span className="v unx">○</span> lines are rule checks over the chart.</li>
-            <li><b>Not in this slice:</b> alternatives with discriminators, and persistence of what you accept or write here. Those are the schema additions flagged in the design document's appendix.</li>
+            <li><b>Surveillance</b> is what would change this problem’s status: each monitored series with its threshold and where it stands, the expectation set when a cause was stopped, what to reassess on, and the next review.</li>
+            <li><b>Supporting</b> and <b>Doesn’t fit</b> keep the recorded value, its provenance and its interpretation apart. The <span className="v against">−</span> and <span className="v unx">○</span> lines are rule checks over the chart.</li>
+            <li><b>Not in this slice:</b> alternatives with discriminators, and persistence of what you accept or write here. Those are the schema additions flagged in the design document’s appendix.</li>
           </ul>
         </details>
       </article>

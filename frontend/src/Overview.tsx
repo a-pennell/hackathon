@@ -96,9 +96,9 @@ export default function Overview({ data, problems, highlight, onHover, onOpen }:
         <summary>About this screen</summary>
         <ul>
           <li><b>Since you last looked</b> is the last routine visit before the newest encounter, at least two weeks earlier, so a run of visits in one week reads as one. The ranking rule is fixed and stated: a missed expectation or a triggered contingency always leads; a change in what a problem is called comes next; then medication changes on courses linked to an active problem; then a monitored parameter leaving its range or moving by more than a quarter; then a finding the current story cannot explain; and only then proposals waiting and decisions made.</li>
-          <li><b>Active concerns</b> are ordered by what they need, not by when they were added. A row's button is its pending item made actionable; a row with no button says nothing is owed. The chip after the name is the only certainty encoding on the screen.</li>
+          <li><b>Active concerns</b> are ordered by what they need, not by when they were added. A row’s button is its pending item made actionable; a row with no button says nothing is owed. The chip after the name is the only certainty encoding on the screen.</li>
           <li><b>Pending</b> shows the loop rule: an order and its result show each other. A lab order stays here until a result with its code lands on the chart, and a referral until a reply does.</li>
-          <li>Opening a row goes to that problem's card. The overview is a lens on the same objects; nothing is duplicated.</li>
+          <li>Opening a row goes to that problem’s card. The overview is a lens on the same objects; nothing is duplicated.</li>
         </ul>
       </details>
     </div>

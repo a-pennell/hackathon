@@ -22,7 +22,7 @@ export function nextAction(overview: Overview | null, notes: NoteFile[], queues:
   if (here) {
     const note = notes.find((n) => n.id === here.id);
     const batch = queues.find((b) => b.note_id === here.id);
-    if (!batch) return { label: "Read the note", hint: `${note?.author ? note.author + "'s" : "The"} note from this visit has not been read`, kind: "read", noteId: here.id };
+    if (!batch) return { label: "Read the note", hint: `${note?.author ? note.author + "’s" : "The"} note from this visit has not been read`, kind: "read", noteId: here.id };
     const waiting = waitingIn(batch);
     if (waiting > 0) return { label: `Review the note · ${waiting}`, hint: "decide what it proposed, then sign it", kind: "review", noteId: here.id };
     if (note?.status !== "signed") return { label: "Sign the note", hint: "everything it proposed is decided", kind: "sign", noteId: here.id };

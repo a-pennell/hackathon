@@ -8,7 +8,8 @@ const LANES: { key: TimelineLane; label: string }[] = [
   { key: "changes", label: "Changes" }, { key: "reasoning", label: "Reasoning" },
 ];
 const TAG_CLASS: Record<string, string> = { signed: "ok", proposed: "pend", rejected: "warn", unsigned: "pend", imported: "soft" };
-const LANE_CLASS: Record<TimelineLane, string> = { sessions: "ep", results: "soft", documents: "soft", changes: "chg", reasoning: "pencil" };
+// The blue chip is reserved for epistemic state everywhere else; lanes stay neutral, changes take the accent, reasoning is pencil.
+const LANE_CLASS: Record<TimelineLane, string> = { sessions: "soft", results: "soft", documents: "soft", changes: "chg", reasoning: "pencil" };
 const dmy = (day: string) => {
   const d = new Date(day + "T00:00:00");
   return `${d.getDate()} ${d.toLocaleString("en", { month: "short" })} ${d.getFullYear()}`;

@@ -143,7 +143,7 @@ export default function ReviewDrawer({ item, labels, problems, onReview, onClose
               </div>
               <div className="arow">
                 <span className="lab">Confidence</span>
-                <div className="val"><span className={`conf ${band(confidence)}`}>{band(confidence)}</span> the system's estimate that you sign this as written{prov?.note_id ? ` · from ${name(prov.note_id)}` : ""}</div>
+                <div className="val"><span className={`conf ${band(confidence)}`}>{band(confidence)}</span> the system’s estimate that you sign this as written{prov?.note_id ? ` · from ${name(prov.note_id)}` : ""}</div>
               </div>
             </div>
           </section>

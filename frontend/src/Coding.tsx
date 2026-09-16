@@ -11,7 +11,7 @@ export default function Coding({ coding, highlight, onHover }: Props) {
   return (
     <section className="coding" aria-label="Visit coding">
       <h2>
-        Visit coding · computed from today's signatures
+        Visit coding · computed from today’s signatures
         <span className="cpt">
           {m.cpt} <span className="lvl">{cap(m.level)}</span>
         </span>
@@ -45,7 +45,7 @@ export default function Coding({ coding, highlight, onHover }: Props) {
           </div>
         ))}
       </div>
-      <div className="note">{m.rule}. Diagnosis codes are a demo mapping from the chart's SNOMED codes; nothing here is written to the chart, and nothing is generated to justify a code.</div>
+      <div className="note">{m.rule}. Diagnosis codes are a demo mapping from the chart’s SNOMED codes; nothing here is written to the chart, and nothing is generated to justify a code.</div>
     </section>
   );
 }
