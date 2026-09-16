@@ -7,7 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from ehr.overview import _since, clusters, patient_overview  # noqa: E402
+from ehr.focus import clusters  # noqa: E402
+from ehr.overview import _since, patient_overview  # noqa: E402
 from tests.test_reason import link, obs, patient as reason_patient  # noqa: E402,F401
 
 TODAY = date(2026, 8, 31)

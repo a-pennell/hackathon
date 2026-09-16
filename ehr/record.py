@@ -22,6 +22,7 @@ import sys
 from pathlib import Path
 
 from ehr.extract import PROPOSED_DIR
+from ehr.focus import focus_ids
 from ehr.review import list_queues
 from ehr.trend import DATA_DIR, load_patient
 
@@ -42,7 +43,8 @@ def _names(patient: dict, queues: list[dict]) -> dict[str, str]:
     return n
 
 
-def record_events(patient: dict, proposed_dir: Path = PROPOSED_DIR, *, note_id: str | None = None, since: str | None = None) -> list[dict]:
+def record_events(patient: dict, proposed_dir: Path = PROPOSED_DIR, *, note_id: str | None = None, since: str | None = None,
+                  problem_id: str | None = None) -> list[dict]:
     queues = list_queues(patient["patient"]["id"], proposed_dir)
     names = _names(patient, queues)
     ev: list[dict] = []
@@ -122,6 +124,10 @@ def record_events(patient: dict, proposed_dir: Path = PROPOSED_DIR, *, note_id: 
                     add("proposal.rejected", rv["at"], it["id"], f"Rejected {k[:-1]}: {what}{reason}", by=rv["by"],
                         source=(it.get("provenance") or {}).get("source"), note=b.get("note_id"))
 
+    if problem_id:
+        focus = focus_ids(patient, problem_id)
+        ev = [e for e in ev if e["kind"] in ("note.received", "note.signed") and any(x["note_id"] == e["note_id"] for x in ev if x["kind"] != "note.received" and set(x["ids"]) & focus)
+              or (e["kind"] not in ("note.received", "note.signed") and set(e["ids"]) & focus)]
     if note_id:
         ev = [e for e in ev if e["note_id"] == note_id]
     if since:
@@ -134,11 +140,12 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("patient_id")
     ap.add_argument("--note")
+    ap.add_argument("--problem")
     ap.add_argument("--since")
     ap.add_argument("--data-dir", default=str(DATA_DIR))
     args = ap.parse_args(argv)
     data_dir = Path(args.data_dir)
-    for e in record_events(load_patient(args.patient_id, data_dir), data_dir.parent / "proposed", note_id=args.note, since=args.since):
+    for e in record_events(load_patient(args.patient_id, data_dir), data_dir.parent / "proposed", note_id=args.note, since=args.since, problem_id=args.problem):
         print(f"{e['at'][:16]}  {e['kind']:<28} {e['text']}" + (f"  [{e['by']}]" if e["by"] else ""))
     return 0
 

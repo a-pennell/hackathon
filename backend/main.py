@@ -373,10 +373,10 @@ def sign(pid: str, note_id: str, body: SignBody):
 
 
 @app.get("/api/patients/{pid}/record")
-def record(pid: str, note_id: str | None = None, since: str | None = None):
+def record(pid: str, note_id: str | None = None, since: str | None = None, problem_id: str | None = None):
     """The record as a list of events, derived from provenance and review stamps. Never stored."""
     d = _patient(pid)
-    return record_events(d, PROPOSED_DIR, note_id=note_id, since=since)
+    return record_events(d, PROPOSED_DIR, note_id=note_id, since=since, problem_id=problem_id)
 
 
 @app.get("/api/patients/{pid}/notes/{note_id}")

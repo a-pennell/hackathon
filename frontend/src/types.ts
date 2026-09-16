@@ -312,6 +312,10 @@ export type Card = {
   pending: number;
   decisions: number;
   lead_code: string | null;
+  members: { id: string; name: string; onset_date: string | null }[];
+  linked: { rel: string; id: string; text: string; detail: string; ids: string[] }[];
+  surveillance: { rows: { code: string; name: string; latest: { value: number; time: string }; threshold: string; state: string; tripped: boolean; ids: string[] }[]; next_review: string; expected: CardExpectation | null };
+  steward: { name: string; role: string };
 };
 
 /* The patient overview (ehr/overview.py): orientation, computed from the chart. */

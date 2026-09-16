@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "./api";
-import ProblemList from "./ProblemList";
 import Card from "./Card";
 import Overview from "./Overview";
 import NoteView from "./NoteView";
@@ -29,6 +28,7 @@ export default function App() {
   const [noteId, setNoteId] = useState<string | null>(null);
   const [record, setRecord] = useState<RecordEvent[]>([]);
   const [patientRecord, setPatientRecord] = useState<RecordEvent[]>([]);
+  const [problemRecord, setProblemRecord] = useState<RecordEvent[]>([]);
   const [trail, setTrail] = useState<TrailEntry[]>([]);
   const [coding, setCoding] = useState<CodingT | null>(null);
   const [queues, setQueues] = useState<QueueBatch[]>([]);
@@ -71,6 +71,7 @@ export default function App() {
     api.card(PID, problem, window_).then((c) => live && setCard(c)).catch(() => live && setCard(null));
     api.trail(PID, problem).then((t) => live && setTrail(t)).catch(() => live && setTrail([]));
     api.coding(PID).then((c) => live && setCoding(c)).catch(() => live && setCoding(null));
+    api.record(PID, undefined, problem).then((r) => live && setProblemRecord(r)).catch(() => live && setProblemRecord([]));
     return () => {
       live = false;
     };
@@ -124,10 +125,6 @@ export default function App() {
     return m;
   }, [summary, tl, queues, queueLabels]);
 
-  const proposedProblemNames = useMemo(
-    () => [...new Set(queues.flatMap((b) => (b.proposed.problems ?? []).filter((p) => p.status === "proposed").map((p) => p.name)))],
-    [queues],
-  );
   const pendingCount = useMemo(
     () => queues.reduce((n, b) => n + Object.values(b.proposed).flat().filter((it) => it && (it as { status: string }).status === "proposed").length + (b.medication_changes ?? []).filter((c) => c.status === "proposed").length, 0),
     [queues],
@@ -281,7 +278,7 @@ export default function App() {
         crumb={crumb}
       />
 
-      <main className={`canvas ${view === "problem" ? "with-rail" : ""}`}>
+      <main className="canvas">
         {error && <div className="err">{error}</div>}
         {view === "overview" && (overview ? (
           <Overview data={overview} problems={summary.problems} highlight={highlight} onHover={hover} onOpen={openProblem} />
@@ -291,7 +288,6 @@ export default function App() {
         {view === "care" && (care ? <CareTab data={care} highlight={highlight} onHover={hover} onOpen={openProblem} /> : <div className="empty">Loading care…</div>)}
         {view === "problem" && (
           <>
-            <ProblemList problems={summary.problems} selected={problem} onSelect={(id) => { setProblem(id); window.scrollTo(0, 0); }} proposedNames={proposedProblemNames} />
             <div className="sheet">
               {selected && card && card.problem_id === selected.id ? (
                 <Card
@@ -315,6 +311,7 @@ export default function App() {
                   actions={{ reason: () => runReason(selected.id), orders: () => runOrders(selected.id), compose: () => runCompose(selected.id), readNote: () => overview?.here_for.note && openNote(overview.here_for.note.id) }}
                   trail={trail}
                   coding={coding}
+                  record={problemRecord}
                 />
               ) : <div className="empty">Computing the card…</div>}
             </div>

@@ -34,6 +34,7 @@ from pathlib import Path
 
 from ehr.brief import deterministic_brief
 from ehr.extract import PROPOSED_DIR
+from ehr.focus import cluster_of
 from ehr.reason import _accepted, build_context, monitored_codes
 from ehr.review import ledger_for_problem, list_queues
 from ehr.trend import DATA_DIR, load_patient
@@ -373,6 +374,46 @@ def _plan(patient: dict, problem: dict, proposed_dir: Path) -> list[dict]:
     return out
 
 
+TRIPWIRE_PCT = 25
+REVIEW_DAYS = 90
+
+
+def _linked(patient: dict, problem: dict, ctx: dict) -> list[dict]:
+    """What this problem is linked to in the graph: courses that treat it, suspected causes, notes that evidence it."""
+    out = []
+    targets = _targets(patient, problem)
+    meds = {m["id"]: m for m in patient["medications"]}
+    seen = set()
+    for l in _accepted(patient["links"]):
+        if l["to"] not in targets:
+            continue
+        if l["type"] in ("treats", "suspected_cause") and l["from"] in meds and (l["from"], l["type"]) not in seen:
+            seen.add((l["from"], l["type"]))
+            m = meds[l["from"]]
+            seg = m["segments"][-1]
+            out.append({"rel": "treated by" if l["type"] == "treats" else "suspected cause", "id": m["id"], "text": f"{m['name']} {seg.get('dose') or ''}".strip(),
+                        "detail": "stopped " + _dmy(seg["end"]) if seg.get("end") else "active", "ids": [m["id"], l["id"]]})
+    notes = {n["id"]: n for n in patient["notes"]}
+    for nid in sorted({l["from"] for l in _accepted(patient["links"]) if l["type"] == "evidence_for" and l["to"] == problem["id"] and l["from"] in notes}, key=lambda i: notes[i]["time"], reverse=True):
+        n = notes[nid]
+        out.append({"rel": "documented in", "id": nid, "text": f"note · {_dmy(n['time'])} · {n['author']}", "detail": (n.get("status") or "received"), "ids": [nid]})
+    return out
+
+
+def _surveillance(patient: dict, problem: dict, ctx: dict, expectation: dict | None, today: date) -> dict:
+    """What would change this problem's status: each monitored series with its threshold and where it stands."""
+    rows = []
+    for t in ctx["trends"]:
+        crossed = t.get("ref_range_crossing")
+        moved = t["delta_pct"] is not None and abs(t["delta_pct"]) >= TRIPWIRE_PCT
+        rows.append({"code": t["code"], "name": t["name"], "latest": t["latest"], "threshold": f"±{TRIPWIRE_PCT}% over the window, or outside range",
+                     "state": "outside range" if crossed else "moved" if moved else "quiet", "tripped": bool(crossed or moved),
+                     "ids": [i for i in (t.get("evidence_ids") or {}).values() if i]})
+    rows.sort(key=lambda r: (not r["tripped"], r["name"]))
+    next_review = expectation["by"] if expectation else (today + timedelta(days=REVIEW_DAYS)).isoformat()
+    return {"rows": rows, "next_review": next_review, "expected": expectation}
+
+
 def problem_card(patient: dict, problem_id: str, window="1y", *, proposed_dir: Path = PROPOSED_DIR, today: date | None = None) -> dict:
     today = today or date.today()
     problem = next((p for p in patient["problems"] if p["id"] == problem_id), None)
@@ -390,8 +431,14 @@ def problem_card(patient: dict, problem_id: str, window="1y", *, proposed_dir: P
     epistemic, why = _epistemic(problem)
     brief = deterministic_brief(patient, problem_id, "90d", proposed_dir=proposed_dir, today=today)
     ledger = ledger_for_problem(patient, problem_id, proposed_dir)
+    cl = cluster_of(patient, problem_id)
+    members = [{"id": m["id"], "name": m["name"], "onset_date": m.get("onset_date")} for m in (cl["members"] if cl else [])]
     return {
         "patient_id": patient["patient"]["id"], "problem_id": problem_id, "window": win, "as_of": today.isoformat(),
+        "members": members,
+        "linked": _linked(patient, problem, ctx),
+        "surveillance": _surveillance(patient, problem, ctx, expectation, today),
+        "steward": {"name": "Dr. Chen", "role": "PCP"},
         "problem": {k: problem.get(k) for k in ("id", "name", "status", "onset_date", "code", "provenance")},
         "kind": "problem" if problem.get("code") else "concern",
         "epistemic": {"value": epistemic, "computed": True, "why": why},

@@ -32,6 +32,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from ehr.card import problem_card
+from ehr.focus import clusters
 from ehr.extract import PROPOSED_DIR
 from ehr.reason import _accepted, monitored_codes
 from ehr.review import list_queues
@@ -65,24 +66,6 @@ def _since(patient: dict, today: date) -> dict:
         return {"date": last["time"][:10], "baseline": baseline, "why": f"your last routine visit before {_dmy(newest['time'])} ({last['type']})", "encounter_id": last["id"]}
     since = (today - timedelta(days=90)).isoformat()
     return {"date": since, "baseline": (today - timedelta(days=180)).isoformat(), "why": "no earlier routine visit; last 90 days"}
-
-
-def clusters(patient: dict) -> list[dict]:
-    """Active problems grouped by identical monitored-series sets; the newest entry represents the group."""
-    groups: dict[str, list[dict]] = {}
-    codes_of: dict[str, list[str]] = {}
-    for p in patient["problems"]:
-        if p["status"] != "active":
-            continue
-        codes = sorted(monitored_codes(patient, p["id"]))
-        key = ",".join(codes) if codes else p["id"]
-        groups.setdefault(key, []).append(p)
-        codes_of[key] = codes
-    out = []
-    for key, members in groups.items():
-        members.sort(key=lambda p: p.get("onset_date") or "", reverse=True)
-        out.append({"problem": members[0], "members": members[1:], "codes": codes_of[key]})
-    return out
 
 
 def _linked_meds(patient: dict, problem_ids: list[str], codes: list[str]) -> set[str]:

@@ -45,7 +45,7 @@ export const api = {
   undo: (pid: string, stem: string, ids: string[]) =>
     req<{ done: string[] }>(`/api/patients/${pid}/queue/${stem}/undo`, { method: "POST", body: JSON.stringify({ ids }) }),
   signNote: (pid: string, note_id: string) => req<{ note_id: string; signed_at: string; by: string; done: string[] }>(`/api/patients/${pid}/notes/${note_id}/sign`, { method: "POST", body: JSON.stringify({}) }),
-  record: (pid: string, note_id?: string) => req<RecordEvent[]>(`/api/patients/${pid}/record${note_id ? `?note_id=${note_id}` : ""}`),
+  record: (pid: string, note_id?: string, problem_id?: string) => req<RecordEvent[]>(`/api/patients/${pid}/record${note_id ? `?note_id=${note_id}` : problem_id ? `?problem_id=${problem_id}` : ""}`),
   reset: (pid: string) => req<{ restored: string; queues_cleared: string[] }>(`/api/patients/${pid}/reset`, { method: "POST" }),
   reason: (pid: string, problem_id: string, mode: "live" | "rules" | "replay", window: string) =>
     req<QueueBatch>(`/api/patients/${pid}/reason`, { method: "POST", body: JSON.stringify({ problem_id, mode, window }) }),

@@ -24,7 +24,8 @@ from pathlib import Path
 
 from ehr.card import problem_card
 from ehr.extract import PROPOSED_DIR
-from ehr.overview import _pending_for, _pending_loops, _since, clusters
+from ehr.focus import clusters
+from ehr.overview import _pending_for, _pending_loops, _since
 from ehr.reason import _accepted
 from ehr.review import list_queues
 from ehr.trend import DATA_DIR, load_patient
