@@ -13,7 +13,7 @@ from ehr.draft import draft_note, stem_for
 from ehr.extract import PROPOSED_DIR, load_note_file, save_patient
 from ehr.review import DEFAULT_REVIEWER, accept_item, list_queues, open_encounter, review_record
 from ehr.trend import DATA_DIR, load_patient
-from v2.monitor import problem_list, problem_view
+from v2.monitor import attest, manifest, problem_list, problem_view, unattested
 
 router = APIRouter(prefix="/v2/api")
 ROOT = Path(__file__).resolve().parent.parent
@@ -61,15 +61,14 @@ def _next_action(patient: dict, listing: dict) -> dict:
             return {"kind": "read", "label": "Read the note", "hint": f"{here['author']}'s note from this visit has not been read", "note_id": here["id"]}
         waiting = sum(1 for k, items in b["proposed"].items() for it in items if it.get("status") == "proposed") + sum(1 for c in b.get("medication_changes", []) if c["status"] == "proposed")
         if waiting:
-            return {"kind": "review", "label": f"Review the note · {waiting}", "hint": "decide what it proposed, then sign it", "note_id": here["id"]}
+            return {"kind": "review", "label": f"Review what the note found · {waiting}", "hint": "accept or reject the decisions; the rest is accepted with the review", "note_id": here["id"]}
         if here.get("status") != "signed":
-            return {"kind": "sign", "label": "Sign the note", "hint": "everything it proposed is decided", "note_id": here["id"]}
+            return {"kind": "sign", "label": "Close the review", "hint": "everything the note found is decided; the visit note is where you sign", "note_id": here["id"]}
     if enc and here and here.get("status") == "signed":
         signed = any(d.get("kind") == "encounter_note" and d.get("encounter_id") == enc["id"] for d in patient.get("documents", []))
         if not signed:
             draft = queues.get(stem_for(enc["id"]))
-            return {"kind": "sign-draft" if draft else "draft", "label": "Finish the visit note" if draft else "Assemble the visit note",
-                    "hint": "assembled from what was decided at this visit; edit, add, then sign", "encounter_id": enc["id"]}
+            return {"kind": "sign-draft" if draft else "draft", "label": "Sign the visit note", "hint": "the one signature: it attests everything accepted at this visit", "encounter_id": enc["id"]}
     return {"kind": "done", "label": "Nothing owed", "hint": "the visit is documented"}
 
 
@@ -79,6 +78,7 @@ def problems(pid: str):
     out = problem_list(p, proposed_dir=PROPOSED_DIR)
     _attach_note(pid, p, out)
     out["next_action"] = _next_action(p, out)
+    out["unattested"] = unattested(p)
     return out
 
 
@@ -126,7 +126,7 @@ def note(pid: str):
     draft = json.loads(qp.read_text())["proposed"]["documents"][0] if qp.exists() else None
     compiled = draft_note(p, enc, proposed_dir=PROPOSED_DIR)["proposed"]["documents"][0]
     e = next(x for x in p["encounters"] if x["id"] == enc)
-    return {"encounter": e, "signed": signed, "draft": draft, "compiled": compiled}
+    return {"encounter": e, "signed": signed, "draft": draft, "compiled": compiled, "manifest": manifest(p, enc, proposed_dir=PROPOSED_DIR)}
 
 
 class NoteSignBody(BaseModel):
@@ -159,6 +159,7 @@ def sign_note_v2(pid: str, body: NoteSignBody):
     qp = PROPOSED_DIR / pid / f"{stem_for(enc)}.json"
     qp.parent.mkdir(parents=True, exist_ok=True)
     done = accept_item(p, batch, doc["id"], review=review_record("accepted", body.by, encounter_id=enc))
+    stamped = attest(p, enc, doc["id"])
     save_patient(p, DATA_DIR)
     qp.write_text(json.dumps(batch, indent=2, ensure_ascii=False))
-    return {"document_id": doc["id"], "signed_at": doc["review"]["at"], "by": body.by, "done": done}
+    return {"document_id": doc["id"], "signed_at": doc["review"]["at"], "by": body.by, "done": done, "attested": stamped}

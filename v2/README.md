@@ -22,6 +22,15 @@ what `ehr/card.py`, `ehr/overview.py` and `ehr/draft.py` already compute.
    then per problem an assessment and a plan compiled from what was decided at this visit, every
    sentence citing the record. A box for the clinician's own words. Sign to freeze it.
 
+## One signature
+
+Providers sign notes. Nothing else here is called a signature. A proposal from the reading is **accepted**
+or **rejected**; an insight is **agreed** or **dismissed**; a change the rules detected is **noted**; a
+plan line is **added**. All of it is accepted into the visit, and the visit note is the one place a
+signature happens. Above its text the note lists exactly what that signature attests, by kind, with every
+item, and the text is compiled from that list; on signing, every accepted item is stamped with the note
+that attested it, and the gate shows what is accepted and not yet attested.
+
 One button in the header names the next thing owed: read the note, review it (decisions one at a
 time, the rest signs with the note), sign it, assemble the visit note, sign it.
 

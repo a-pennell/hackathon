@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from ehr.trend import load_patient  # noqa: E402
-from v2.monitor import problem_list, problem_view  # noqa: E402
+from v2.monitor import attest, manifest, problem_list, problem_view, unattested  # noqa: E402
 
 PROPOSED = ROOT / "data" / "proposed"
 
@@ -29,3 +29,22 @@ def test_seven_answers_are_all_present_for_hypertension():
     assert a["changed"]["lines"] and all(d["acknowledged"] is False for d in a["changed"]["detected"])
     assert "tripwires" in a["change_course"] and a["change_course"]["tripwires"]
     assert v["problem"]["standing"] == "off_course"
+
+
+def test_manifest_and_attestation_on_a_scratch_visit(tmp_path):
+    from tests.test_draft import _visit
+    from ehr.trend import load_patient as lp
+    from ehr.extract import save_patient
+    d = _visit(tmp_path)
+    p = lp("pt_002", d)
+    m = manifest(p, "enc_c002", proposed_dir=d.parent / "proposed")
+    kinds = {g["kind"]: g for g in m}
+    assert kinds["problems"]["count"] == 2 and kinds["causes"]["count"] >= 1 and kinds["rejected"]["count"] == 1
+    assert kinds["plans"]["count"] >= 9 and kinds["courses"]["count"] >= 3
+    assert all(not it["attested"] for g in m if g["kind"] != "rejected" for it in g["items"])  # None counts as not attested
+    assert unattested(p) > 0
+    n = attest(p, "enc_c002", "doc_enc_c002_note")
+    save_patient(p, d)
+    assert n > 0 and unattested(lp("pt_002", d)) == 0
+    m2 = manifest(lp("pt_002", d), "enc_c002", proposed_dir=d.parent / "proposed")
+    assert all(it["attested"] in (True, None) for g in m2 for it in g["items"])

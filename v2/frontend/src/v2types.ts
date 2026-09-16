@@ -10,7 +10,7 @@ export type NextAction = { kind: "read" | "review" | "sign" | "draft" | "sign-dr
 export type Listing = {
   patient: { id: string; name: string; dob: string; sex: string }; as_of: string; since: { date: string; why: string };
   here_for: { encounter: { id: string; time: string; type: string; summary: string } | null; note: { id: string; file: string; author: string; time: string; has_queue: boolean; has_replay: boolean; status?: string } | null };
-  problems: ProblemRow[]; counts: Record<Standing, number>; next_action: NextAction;
+  problems: ProblemRow[]; counts: Record<Standing, number>; next_action: NextAction; unattested: number;
 };
 export type Line = { text: string; detail?: string; ids: string[]; source?: string; kind?: string; valence?: string };
 export type Detected = { id: string; text: string; ids: string[]; code: string | null; acknowledged: boolean };
@@ -30,4 +30,5 @@ export type ProblemView = {
 };
 export type NoteSection = { heading: string; text: string; cites: string[]; source?: string; edited?: boolean; collapsed?: boolean; problem_id?: string };
 export type NoteDoc = { id: string; title: string; sections: NoteSection[]; status: string; problems_addressed?: string[]; review?: { by: string; at: string }; created_at: string };
-export type NoteView = { encounter: { id: string; time: string; type: string; summary: string }; signed: NoteDoc | null; draft: NoteDoc | null; compiled: NoteDoc };
+export type ManifestGroup = { kind: string; label: string; count: number; items: { id: string; text: string; attested: boolean | null }[] };
+export type NoteView = { encounter: { id: string; time: string; type: string; summary: string }; signed: NoteDoc | null; draft: NoteDoc | null; compiled: NoteDoc; manifest: ManifestGroup[] };

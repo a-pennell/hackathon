@@ -235,6 +235,9 @@ Two shapes the build needs that the schema doc does not define. Both are additiv
 10. **Clinician provenance** (`ehr/intent.py`): `provenance.source: "clinician"` with `by`, on plan items, orders
    (`from_plan` names the intent) and medication changes the clinician makes directly. Signed as made; the
    review record carries the encounter.
+11. **`attested_in` on the review record** (`v2/monitor.py`): the visit note's signature is the one legal act.
+    Everything accepted at the visit (problems, results, links, insights, plan lines, orders, the dictated note)
+    is stamped with the document that attested it; the gate counts what is accepted and not yet attested.
 
 ## Things the team should know
 

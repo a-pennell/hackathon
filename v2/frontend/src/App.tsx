@@ -32,9 +32,9 @@ export default function App() {
     if (!next || !listing) return;
     const note = listing.here_for.note;
     switch (next.kind) {
-      case "read": return note && run("read", () => api.readNote(PID, note.file), "The note was read; nothing has touched the chart yet").then(() => go("#/review"));
+      case "read": return note && run("read", () => api.readNote(PID, note.file), "The note was read; nothing has touched the chart yet. Accept or reject what it found.").then(() => go("#/review"));
       case "review": return go("#/review");
-      case "sign": return note && run("sign", () => api.signNote(PID, note.id), "Note signed; what it proposed is on the record");
+      case "sign": return note && run("sign", () => api.signNote(PID, note.id), "Review closed; what was left is accepted");
       case "draft": case "sign-draft": return go("#/note");
       default: return;
     }
@@ -46,7 +46,7 @@ export default function App() {
   return (
     <div className="v2">
       <header className="top">
-        <span className="who">{pt.name}<small>{age(pt.dob)} · {pt.sex === "F" ? "she/her" : "he/him"} · {listing.counts.off_course} off course · {listing.counts.watch} to watch · {listing.counts.good} in good standing</small></span>
+        <span className="who">{pt.name}<small>{age(pt.dob)} · {pt.sex === "F" ? "she/her" : "he/him"} · {listing.counts.off_course} off course · {listing.counts.watch} to watch · {listing.counts.good} in good standing{listing.unattested > 0 ? ` · ${listing.unattested} accepted, not yet attested` : ""}</small></span>
         <nav>
           <a href="#/" className={view === "problems" ? "on" : ""}>Problems</a>
           <a href="#/note" className={view === "note" ? "on" : ""}>Visit note</a>

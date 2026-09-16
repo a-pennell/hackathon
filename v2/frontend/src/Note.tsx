@@ -23,7 +23,20 @@ export default function Note({ pid, listing, busy, run, refreshKey }: Ctx) {
   return (
     <div>
       <h1>{doc.title}</h1>
-      <p className="lede">{signed ? `Signed by ${n.signed!.review?.by} on ${dmy(n.signed!.review?.at ?? "")}.` : ready ? "Assembled from what was decided at this visit. Every compiled sentence cites the record. Edit anything, add your own words at the end, then sign." : "The dictated note has to be signed before the visit note can be assembled; the button in the header takes you there."}</p>
+      <p className="lede">{signed ? `Signed by ${n.signed!.review?.by} on ${dmy(n.signed!.review?.at ?? "")}. Everything below was attested by that signature.` : ready ? "This is the one signature of the visit. It attests everything you accepted, agreed, noted and added; the list says exactly what, and the text is compiled from that list. Edit anything, add your own words, then sign." : "Close the review of the dictated note first; the button in the header takes you there."}</p>
+      {n.manifest.length > 0 && (
+        <section className="manifest">
+          <h2>{signed ? "What the signature attested" : "What you are signing"}</h2>
+          <div className="mgrid">
+            {n.manifest.map((g) => (
+              <details key={g.kind} className="mgrp">
+                <summary><b>{g.count}</b> {g.label}{g.items.some((i) => i.attested === true) ? <span className="pill ok">attested</span> : null}</summary>
+                <ul>{g.items.map((it) => <li key={it.id + it.text}>{it.text}</li>)}</ul>
+              </details>
+            ))}
+          </div>
+        </section>
+      )}
       {doc.sections.map((s, i) => (
         <section key={i} className={`note-sec ${s.source ?? "compiled"}`}>
           <h2>{s.heading} <span className="pill">{s.source === "transcript" ? "as dictated" : s.source === "authored" ? "your words" : s.edited ? "compiled · edited" : "compiled from the record"}</span></h2>
@@ -37,7 +50,7 @@ export default function Note({ pid, listing, busy, run, refreshKey }: Ctx) {
           <textarea value={authored} rows={3} placeholder="Anything the record does not know: the history as you heard it, your judgment, what you told the patient." onChange={(e) => setAuthored(e.target.value)} aria-label="Your own words" />
         </section>
       )}
-      {!signed && ready && <div className="addplan"><button className="btn primary" disabled={!!busy} onClick={() => run("sign", () => api.signVisitNote(pid, doc.sections.map((s, i) => ({ heading: s.heading, text: val(i) })), authored), "Visit note signed")}>Sign the visit note</button><span className="pill">freezes it as a document of the visit; the chart wrote it, you attested it</span></div>}
+      {!signed && ready && <div className="addplan"><button className="btn primary" disabled={!!busy} onClick={() => run("sign", () => api.signVisitNote(pid, doc.sections.map((s, i) => ({ heading: s.heading, text: val(i) })), authored), "Visit note signed")}>Sign the visit note</button><span className="pill">one signature, on the note, attests everything in the list above</span></div>}
     </div>
   );
 }

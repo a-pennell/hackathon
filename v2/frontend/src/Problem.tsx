@@ -29,8 +29,8 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey }: C
   const hover = (ids: string[] | null) => setHi(new Set(ids ?? []));
   const reasonStem = `reason_${problemId}`;
   const reasonBatch = queues.find((b) => b.stem === reasonStem);
-  const signInsight = (id: string) => reasonBatch && run("sign", () => api.review(pid, reasonStem, { accept: [id] }), "Insight signed: its first sentence goes to the note");
-  const rejectInsight = (id: string) => reasonBatch && run("sign", () => api.review(pid, reasonStem, { reject: [id], reason_code: "disagree" }), "Insight rejected");
+  const signInsight = (id: string) => reasonBatch && run("agree", () => api.review(pid, reasonStem, { accept: [id] }), "Agreed: its first sentence goes into the visit note");
+  const rejectInsight = (id: string) => reasonBatch && run("dismiss", () => api.review(pid, reasonStem, { reject: [id], reason_code: "disagree" }), "Dismissed");
   const Q = ({ n, ask, sub, children }: { n: number; ask: string; sub?: string; children: React.ReactNode }) => (
     <section className="q" id={`q${n}`}><div className="ask"><span className="n">{n}</span><h2>{ask}</h2>{sub && <div className="sub">{sub}</div>}</div><div className="ans">{children}</div></section>
   );
@@ -53,38 +53,38 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey }: C
         <div style={{ fontSize: 11.5, color: "var(--graphite)" }}>Courses are drawn as bands under the series they are linked to, so a medication's effect on a value is read off the same axis.</div>
       </Q>
 
-      <Q n={2} ask="What do we think it means?" sub="the working summary, the causes on the record, the reasoning">
+      <Q n={2} ask="What do we think it means?" sub="the working summary, the causes on the record, what the reasoning found">
         <p className="serif" onMouseEnter={() => hover(a.means.cites)} onMouseLeave={() => hover(null)}>{a.means.text}</p>
         {a.means.causes.map((c, i) => <Line key={i} x={{ ...c, source: c.signed ? "signed" : "rejected" }} v={c.signed ? "for" : "against"} />)}
         {a.means.insights.map((i) => (
           <div key={i.id} className="line" onMouseEnter={() => hover(i.ids)} onMouseLeave={() => hover(null)}>
             <span className="v">{i.status === "signed" ? "✓" : "?"}</span>
             <span>{i.text}{i.action && <span className="d">Suggests: {i.action}</span>}</span>
-            {i.status === "proposed" ? <span className="acts"><button className="btn small primary" disabled={!!busy} onClick={() => signInsight(i.id)}>Sign</button> <button className="btn small ghost" disabled={!!busy} onClick={() => rejectInsight(i.id)}>Reject</button></span> : <span className="src">{i.source === "rules" ? "seen by you" : "signed insight"}</span>}
+            {i.status === "proposed" ? <span className="acts"><button className="btn small primary" disabled={!!busy} onClick={() => signInsight(i.id)}>Agree</button> <button className="btn small ghost" disabled={!!busy} onClick={() => rejectInsight(i.id)}>Dismiss</button></span> : <span className="src">{i.source === "rules" ? "noted by you" : "agreed"}</span>}
           </div>
         ))}
-        {!a.means.insights.some((i) => i.status === "proposed") && <div className="addplan"><button className="btn small" disabled={!!busy || !!reasonBatch} title={reasonBatch ? "the reasoning has run for this problem; its insights are above" : undefined} onClick={() => run("reason", () => api.reason(pid, problemId), "The reasoning ran; its insights wait for your signature")}>Ask what changed</button><span className="pill">the model reads the trends and the course events; nothing is written until you sign</span></div>}
+        {!a.means.insights.some((i) => i.status === "proposed") && <div className="addplan"><button className="btn small" disabled={!!busy || !!reasonBatch} title={reasonBatch ? "the reasoning has run for this problem; its insights are above" : undefined} onClick={() => run("reason", () => api.reason(pid, problemId), "The reasoning ran; agree or dismiss what it found")}>Ask what changed</button><span className="pill">the model reads the trends and the course events; nothing is written until you agree</span></div>}
       </Q>
 
-      <Q n={3} ask="What changed?" sub={`since ${dmy(a.changed.since)} · detected by rules, signed by you`}>
+      <Q n={3} ask="What changed?" sub={`since ${dmy(a.changed.since)} · detected by rules, noted by you`}>
         {a.changed.lines.map((x, i) => <Line key={i} x={x} />)}
         {a.changed.detected.map((d) => (
           <div key={d.id} className={`det ${d.acknowledged ? "ack" : ""}`} onMouseEnter={() => hover(d.ids)} onMouseLeave={() => hover(null)}>
             <span className="grow">{d.text}</span>
-            {d.acknowledged ? <span className="pill">seen · in the note</span> : <button className="btn small primary" disabled={!!busy} onClick={() => run("ack", () => api.acknowledge(pid, problemId, d.text, d.ids), "Acknowledged: it is on the record and will be in the note")}>Acknowledge</button>}
+            {d.acknowledged ? <span className="pill">noted · in the visit note</span> : <button className="btn small primary" disabled={!!busy} onClick={() => run("ack", () => api.acknowledge(pid, problemId, d.text, d.ids), "Noted: it is on the record and goes into the visit note")}>Noted</button>}
           </div>
         ))}
         {a.changed.lines.length + a.changed.detected.length === 0 && <div className="quiet">Nothing has moved. Quiet is a valid answer.</div>}
       </Q>
 
-      <Q n={4} ask="What are we doing?" sub="the plan on the record, the courses, the loops open">
+      <Q n={4} ask="What are we doing?" sub="the plan on the record, the courses, the loops open; add your own line">
         {a.doing.linked.map((l, i) => <Line key={i} x={{ text: `${l.rel}: ${l.text}`, detail: l.detail, ids: l.ids }} />)}
         {a.doing.plan.map((p) => <Line key={p.id} x={{ text: p.text, detail: `${p.plan_kind.replace("_", " ")} · ${p.detail}`, ids: p.ids, source: p.status }} />)}
         {a.doing.loops.map((l) => <Line key={l.id} x={{ text: l.text, detail: l.detail, ids: [l.id], source: l.status }} />)}
-        <form className="addplan" onSubmit={(e) => { e.preventDefault(); if (text.trim()) run("intent", () => api.intent(pid, problemId, kind, text.trim()), "Signed and added to the plan").then(() => setText("")); }}>
+        <form className="addplan" onSubmit={(e) => { e.preventDefault(); if (text.trim()) run("intent", () => api.intent(pid, problemId, kind, text.trim()), "Added to the plan").then(() => setText("")); }}>
           <select value={kind} onChange={(e) => setKind(e.target.value)} aria-label="Kind">{KINDS.map((k) => <option key={k} value={k}>{k.replace("_", " ")}</option>)}</select>
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Your own line for the plan; signed as you add it" aria-label="Plan item" />
-          <button className="btn small primary" disabled={!!busy || !text.trim()} type="submit">Add to plan</button>
+          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Your own line for the plan" aria-label="Plan item" />
+          <button className="btn small primary" disabled={!!busy || !text.trim()} type="submit">Add</button>
         </form>
       </Q>
 

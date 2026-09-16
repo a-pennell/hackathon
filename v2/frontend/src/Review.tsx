@@ -31,24 +31,24 @@ export default function Review({ pid, listing, busy, run, go, refreshKey }: Ctx)
   return (
     <div className="rv">
       <button className="link" onClick={() => go("#/")}>← Problems</button>
-      <h1 style={{ marginTop: 6 }}>{note.author}'s note · what it changes</h1>
-      <p className="lede">{items.filter((x) => x.it.status === "proposed" && isDecision(x.kind, x.it)).length + changes.length} decisions to make, one at a time: problems raised, causes asserted, courses changed. The other {items.filter((x) => !isDecision(x.kind, x.it)).length} proposals sign with the note. Every line carries the passage it was read from.</p>
+      <h1 style={{ marginTop: 6 }}>{note.author}’s note · what it found</h1>
+      <p className="lede">{items.filter((x) => x.it.status === "proposed" && isDecision(x.kind, x.it)).length + changes.length} decisions to make, one at a time: problems raised, causes asserted, courses changed. The other {items.filter((x) => !isDecision(x.kind, x.it)).length} findings are accepted when you close the review. Nothing here is a signature; the visit note is where you sign.</p>
       {changes.map((c, i) => (
         <div key={i} className="item"><span className="k">course change</span><span>{labelOf(c.med_id)}: {c.change.replace("_", " ")} effective {c.effective}{c.provenance?.quote && <span className="q">“{c.provenance.quote}”</span>}</span>
-          <span className="acts"><button className="btn small primary" disabled={!!busy} onClick={() => run("review", () => api.review(pid, b.stem, { accept_changes: true }), "Course change signed")}>Sign</button></span></div>
+          <span className="acts"><button className="btn small primary" disabled={!!busy} onClick={() => run("review", () => api.review(pid, b.stem, { accept_changes: true }), "Accepted")}>Accept</button></span></div>
       ))}
       {items.filter((x) => isDecision(x.kind, x.it) || showRest).map(({ kind, it }) => (
         <div key={it.id} className="item">
           <span className="k">{it.type === "suspected_cause" ? "cause" : KIND_WORD[kind]}</span>
           <span>{summary(kind, it)}{it.provenance?.quote && <span className="q">“{it.provenance.quote}”</span>}</span>
           {it.status === "proposed" ? (
-            <span className="acts"><button className="btn small primary" disabled={!!busy} onClick={() => run("review", () => api.review(pid, b.stem, { accept: [it.id] }), "Signed")}>Sign</button><button className="btn small ghost" disabled={!!busy} onClick={() => { const reason = prompt("Why? One line, in your words.") ?? ""; run("review", () => api.review(pid, b.stem, { reject: [it.id], reason_code: "disagree", reason }), "Rejected, with your reason on the record"); }}>Reject</button></span>
+            <span className="acts"><button className="btn small primary" disabled={!!busy} onClick={() => run("review", () => api.review(pid, b.stem, { accept: [it.id] }), "Accepted")}>Accept</button><button className="btn small ghost" disabled={!!busy} onClick={() => { const reason = prompt("Why? One line, in your words.") ?? ""; run("review", () => api.review(pid, b.stem, { reject: [it.id], reason_code: "disagree", reason }), "Rejected; your reason is on the record"); }}>Reject</button></span>
           ) : <span className="done">{it.status}</span>}
         </div>
       ))}
       {!showRest && <div className="addplan"><button className="btn small ghost" onClick={() => setShowRest(true)}>Show the {items.filter((x) => !isDecision(x.kind, x.it)).length} routine items: results, courses, links, plan lines</button></div>}
       <div className="addplan" style={{ marginTop: 16 }}>
-        <button className="btn primary" disabled={!!busy || note.status === "signed"} onClick={() => run("sign", () => api.signNote(pid, note.id), "Note signed; everything left was signed with it").then(() => go("#/"))}>{note.status === "signed" ? "Note signed" : `Sign the note${open.length + changes.length ? ` · signs the ${open.length + changes.length} left` : ""}`}</button>
+        <button className="btn primary" disabled={!!busy || note.status === "signed"} onClick={() => run("sign", () => api.signNote(pid, note.id), "Review closed; what was left is accepted").then(() => go("#/"))}>{note.status === "signed" ? "Review closed" : `Close the review${open.length + changes.length ? ` · accepts the ${open.length + changes.length} left` : ""}`}</button>
       </div>
     </div>
   );

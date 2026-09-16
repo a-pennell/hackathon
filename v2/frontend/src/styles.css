@@ -1023,3 +1023,12 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .note-sec .cite { font-family: var(--mono); font-size: 10.5px; padding: 0 6px; border: 1px solid var(--rule); border-radius: 3px; color: var(--graphite); }
 .toast2 { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: var(--r-md); font-size: 12.5px; }
 .err2 { background: var(--flag-wash); color: var(--flag); padding: 8px 12px; border-radius: var(--r-md); margin-bottom: 12px; font-size: 12.5px; }
+
+.manifest { border: 1px solid var(--rule-strong); background: var(--paper-2); border-radius: var(--r-md); padding: calc(var(--u) * 3) calc(var(--u) * 4); margin: 0 0 calc(var(--u) * 5); }
+.manifest h2 { font-family: var(--sans); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--graphite); margin: 0 0 8px; }
+.mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 16px; }
+.mgrp summary { cursor: pointer; font-size: 13px; list-style: none; padding: 3px 0; }
+.mgrp summary::-webkit-details-marker { display: none; }
+.mgrp summary b { font-family: var(--mono); font-weight: 600; margin-right: 4px; }
+.mgrp ul { margin: 2px 0 6px; padding-left: 18px; font-size: 12px; color: var(--ink-2); }
+.pill.ok { border-color: var(--accepted); color: var(--accepted); margin-left: 6px; }

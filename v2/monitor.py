@@ -153,3 +153,88 @@ def problem_view(patient: dict, problem_id: str, *, proposed_dir: Path = PROPOSE
             "window": card["window"], "as_of": today.isoformat(),
             "answers": {"happening": happening, "means": means, "changed": changed, "doing": doing, "uncertain": uncertain, "next": nxt, "change_course": change_course},
             "decisions": card.get("decisions", 0), "pending": card.get("pending", 0)}
+
+
+# ---------------------------------------------------------------- what you are signing
+
+def _mine(x: dict, enc_id: str, note_id: str | None) -> bool:
+    r = x.get("review") or {}
+    if r.get("encounter_id"):
+        return r["encounter_id"] == enc_id
+    return bool(note_id) and (x.get("provenance") or {}).get("note_id") == note_id
+
+
+def _att(x: dict):
+    """True once the visit note attested it; None for an imported course whose change carries no review of its own."""
+    r = x.get("review")
+    return bool(r.get("attested_in")) if r else None
+
+
+def manifest(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSED_DIR) -> list[dict]:
+    """Everything accepted at this visit, by kind, each line naming its item: the answer to 'what am I signing'.
+    The visit note's prose is compiled from exactly these, so the list and the text cannot disagree."""
+    names = {p["id"]: p["name"] for p in patient["problems"]}
+    names.update({m["id"]: m["name"] for m in patient["medications"]})
+    note = next((n for n in patient.get("notes", []) if n.get("encounter_id") == encounter_id), None)
+    note_id = note["id"] if note else None
+    enc = next((e for e in patient["encounters"] if e["id"] == encounter_id), None)
+    day = enc["time"][:10] if enc else ""
+    queues = list_queues(patient["patient"]["id"], proposed_dir)
+    mine = lambda x: _mine(x, encounter_id, note_id)  # noqa: E731
+    groups: list[dict] = []
+
+    def group(kind, label, items):
+        items = [i for i in items if i]
+        if items:
+            groups.append({"kind": kind, "label": label, "count": len(items), "items": items})
+
+    group("problems", "problems raised", [{"id": p["id"], "text": p["name"], "attested": bool((p.get("review") or {}).get("attested_in"))} for p in patient["problems"] if p["status"] == "active" and mine(p)])
+    links = [l for l in _accepted(patient["links"]) if mine(l)]
+    group("causes", "causes asserted", [{"id": l["id"], "text": f"{names.get(l['from'], l['from'])} → {names.get(l['to'], l['to'])}", "attested": bool((l.get("review") or {}).get("attested_in"))} for l in links if l["type"] == "suspected_cause"])
+    group("rejected", "rejected, with your reason", [{"id": l["id"], "text": f"{names.get(l['from'], l['from'])} → {names.get(l['to'], l['to'])}: {(l.get('review') or {}).get('reason') or 'no reason given'}", "attested": None}
+                                                   for b in queues for l in b["proposed"].get("links", []) if l.get("status") == "rejected" and mine(l)])
+    group("results", "results recorded", [{"id": o["id"], "text": f"{o['name']} {o['value']} {o.get('unit') or ''}".strip(), "attested": bool((o.get("review") or {}).get("attested_in"))} for o in _accepted(patient["observations"]) if mine(o)])
+    ins = [i for i in patient.get("insights", []) if i.get("status") == "accepted" and mine(i)]
+    group("insights", "insights agreed", [{"id": i["id"], "text": i["statement"][:120], "attested": bool((i.get("review") or {}).get("attested_in"))} for i in ins if (i.get("provenance") or {}).get("source") != "rules"])
+    group("noted", "changes noted", [{"id": i["id"], "text": i["statement"][:120], "attested": bool((i.get("review") or {}).get("attested_in"))} for i in ins if (i.get("provenance") or {}).get("source") == "rules"])
+    group("plans", "plan lines", [{"id": pl["id"], "text": pl["text"], "attested": bool((pl.get("review") or {}).get("attested_in"))} for pl in patient.get("plans", []) if mine(pl)])
+    group("orders", "orders placed", [{"id": o["id"], "text": o["name"], "attested": bool((o.get("review") or {}).get("attested_in"))} for o in patient.get("orders", []) if mine(o) and not (o.get("provenance") or {}).get("from_plan")])
+    courses = []
+    for m in _accepted(patient["medications"]):
+        for i, seg in enumerate(m.get("segments") or []):
+            prev = (m["segments"][i - 1] if i else None)
+            if seg.get("start") == day:
+                courses.append({"id": m["id"], "text": f"{m['name']} {prev.get('dose') or '?'} → {seg.get('dose') or '?'}" if prev and prev.get("end") == day else f"{m['name']} {seg.get('dose') or ''} started".replace("  ", " "), "attested": _att(m)})
+            if seg.get("end") == day and not (i + 1 < len(m["segments"]) and m["segments"][i + 1].get("start") == day):
+                courses.append({"id": m["id"], "text": f"{m['name']} {seg.get('dose') or ''} stopped".replace("  ", " "), "attested": _att(m)})
+    group("courses", "courses changed", courses)
+    return groups
+
+
+def attest(patient: dict, encounter_id: str, document_id: str) -> int:
+    """FLAGGED schema addition: `attested_in` on the review record. The visit note's signature is the one legal act;
+    everything accepted at the visit is stamped with the note that attested it. Returns how many were stamped."""
+    note = next((n for n in patient.get("notes", []) if n.get("encounter_id") == encounter_id), None)
+    note_id = note["id"] if note else None
+    n = 0
+    for k in ("problems", "observations", "medications", "links", "insights", "plans", "orders"):
+        for x in patient.get(k, []):
+            r = x.get("review")
+            if r and r.get("decision") == "accepted" and not r.get("attested_in") and _mine(x, encounter_id, note_id):
+                r["attested_in"] = document_id
+                n += 1
+    if note and note.get("review") and not note["review"].get("attested_in"):
+        note["review"]["attested_in"] = document_id
+        n += 1
+    return n
+
+
+def unattested(patient: dict) -> int:
+    """Accepted at some visit, not yet attested by a signed visit note: the gate shows this count."""
+    n = 0
+    for k in ("problems", "observations", "links", "insights", "plans", "orders"):
+        for x in patient.get(k, []):
+            r = x.get("review")
+            if r and r.get("decision") == "accepted" and r.get("encounter_id") and not r.get("attested_in"):
+                n += 1
+    return n
