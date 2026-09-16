@@ -215,12 +215,12 @@ Two shapes the build needs that the schema doc does not define. Both are additiv
    E/M level follows the 2021 MDM rule (level met by two of three elements) over what was signed that
    day, and the ICD-10 codes come from a small demo table. Nothing is ever generated to justify a code.
 
-7. **`encounter_id` on the review record** (`ehr/review.py`): the visit a signature happened in, stamped on
+8. **`encounter_id` on the review record** (`ehr/review.py`): the visit a signature happened in, stamped on
    every accept and reject. It is what lets the visit note be compiled from one encounter's decisions.
-8. **Visit note as a Document** (`ehr/draft.py`): `kind: "encounter_note"`, `encounter_id`,
+9. **Visit note as a Document** (`ehr/draft.py`): `kind: "encounter_note"`, `encounter_id`,
    `problems_addressed[]`, `problem_id: null`; sections carry `source` (`transcript` | `compiled`) and
    `edited`. Queued as `visitnote_<encounter_id>`, signed into `documents` like the referral letter.
-9. **Clinician provenance** (`ehr/intent.py`): `provenance.source: "clinician"` with `by`, on plan items, orders
+10. **Clinician provenance** (`ehr/intent.py`): `provenance.source: "clinician"` with `by`, on plan items, orders
    (`from_plan` names the intent) and medication changes the clinician makes directly. Signed as made; the
    review record carries the encounter.
 
