@@ -7,8 +7,9 @@ import NoteView from "./NoteView";
 import Shell, { type Tab, type View } from "./Shell";
 import About from "./About";
 import { ChartTab, TimelineTab } from "./ChartTab";
+import CareTab from "./CareTab";
 import { nextAction } from "./next";
-import type { Card as CardT, ChartData, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientRow, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry } from "./types";
+import type { Card as CardT, CareData, ChartData, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientRow, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry } from "./types";
 
 const PID = new URLSearchParams(window.location.search).get("patient") ?? "pt_002";
 const WINDOWS = ["3m", "6m", "1y", "2y", "5y", "all"];
@@ -22,6 +23,7 @@ export default function App() {
   const [card, setCard] = useState<CardT | null>(null);
   const [overview, setOverview] = useState<OverviewT | null>(null);
   const [chart, setChart] = useState<ChartData | null>(null);
+  const [care, setCare] = useState<CareData | null>(null);
   const [view, setView] = useState<View>("overview");
   const [tab, setTab] = useState<Tab>("overview");
   const [noteId, setNoteId] = useState<string | null>(null);
@@ -77,6 +79,7 @@ export default function App() {
   useEffect(() => {
     let live = true;
     if (view === "chart") api.chart(PID).then((c) => live && setChart(c)).catch(() => live && setChart(null));
+    if (view === "care") api.care(PID).then((c) => live && setCare(c)).catch(() => live && setCare(null));
     if (view === "timeline") {
       api.chart(PID).then((c) => live && setChart(c)).catch(() => live && setChart(null));
       api.record(PID).then((r) => live && setPatientRecord(r)).catch(() => live && setPatientRecord([]));
@@ -285,12 +288,7 @@ export default function App() {
         ) : <div className="empty">Computing the overview…</div>)}
         {view === "timeline" && (chart ? <TimelineTab record={patientRecord} encounters={chart.encounters} /> : <div className="empty">Loading the timeline…</div>)}
         {view === "chart" && (chart ? <ChartTab data={chart} onOpenProblem={openProblem} /> : <div className="empty">Loading the chart…</div>)}
-        {view === "care" && (
-          <div className="care">
-            <ProblemList problems={summary.problems} selected={problem} onSelect={openProblem} proposedNames={proposedProblemNames} />
-            <div className="care-hint quiet">Pick a problem to open its workspace. Problem cards grouped by concern land here next.</div>
-          </div>
-        )}
+        {view === "care" && (care ? <CareTab data={care} highlight={highlight} onHover={hover} onOpen={openProblem} /> : <div className="empty">Loading care…</div>)}
         {view === "problem" && (
           <>
             <ProblemList problems={summary.problems} selected={problem} onSelect={(id) => { setProblem(id); window.scrollTo(0, 0); }} proposedNames={proposedProblemNames} />

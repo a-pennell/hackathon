@@ -322,7 +322,7 @@ export type OverviewConcern = {
 };
 export type OverviewLoop = { id: string; kind: string; text: string; detail: string; status: string; problem_id: string; problem_name: string };
 export type Overview = {
-  patient: Patient; as_of: string; since: { date: string; why: string; encounter_id?: string };
+  patient: Patient; as_of: string; since: { date: string; baseline?: string; why: string; encounter_id?: string };
   here_for: { encounter: { id: string; time: string; type: string; summary: string } | null; note: { id: string; file: string; author: string; time: string; has_queue: boolean; has_replay: boolean; status?: "received" | "signed" } | null };
   changes: OverviewChange[]; other_changes: number; concerns: OverviewConcern[]; more_concerns: number; pending: OverviewLoop[];
 };
@@ -335,3 +335,21 @@ export type ChartData = {
   encounters: { id: string; time: string; type: string; summary: string }[];
 };
 export type PatientRow = { id: string; name: string; dob: string; sex: string; problems_active: number };
+
+/* Care tab (ehr/care.py): one card per concern with its plan, measures and open loops; the same objects by kind. */
+export type CarePlanRow = { id: string; kind: string; text: string; status: string; source: string; at: string; problem_id: string; problem_name: string };
+export type CareMeasure = { text: string; detail: string; ids: string[]; latest_time: string | null; problem_id: string; problem_name: string };
+export type CareCard = {
+  id: string; name: string; code: { system: string; value: string } | null; status: string; onset_date: string | null;
+  members: { id: string; name: string }[]; epistemic: string; qualifiers: string[]; one_liner: string | null; assessment: null;
+  plan: { id: string; kind: string; text: string; status: string; source: string; at: string }[];
+  measures: { text: string; detail: string; ids: string[]; latest_time: string | null }[];
+  loops: OverviewLoop[]; pending: number; expected: { statement: string; by: string; status: string } | null; decisions: number;
+};
+export type CareData = {
+  patient_id: string; as_of: string; since: { date: string; baseline: string; why: string };
+  cards: CareCard[];
+  kinds: { plans: CarePlanRow[]; orders: CarePlanRow[]; referrals: CarePlanRow[]; follow_ups: CarePlanRow[]; measures: CareMeasure[] };
+  due: { code: string; name: string; last: string; due: string; overdue_days: number; problem_id: string; problem_name: string }[];
+  loops: OverviewLoop[];
+};

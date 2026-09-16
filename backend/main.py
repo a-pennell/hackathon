@@ -25,6 +25,7 @@ from ehr.billing import code_visit  # noqa: E402
 from ehr.brief import deterministic_brief, run_live_brief  # noqa: E402
 from ehr.card import problem_card  # noqa: E402
 from ehr.overview import patient_overview  # noqa: E402
+from ehr.care import care_view  # noqa: E402
 from ehr.orders import run_orders  # noqa: E402
 from ehr.compose import run_compose  # noqa: E402
 from ehr.review import REASON_CODES, apply_review, ledger_for_problem, list_queues, sign_note, undo_review  # noqa: E402
@@ -113,6 +114,13 @@ def overview(pid: str, since: str | None = None):
                 "status": (on_chart or {}).get("status", "received")}
     o["here_for"]["note"] = note
     return o
+
+
+@app.get("/api/patients/{pid}/care")
+def care(pid: str):
+    """Care: problem cards with plan, measures and open loops, and the same objects pivoted by kind. Computed, never stored."""
+    d = _patient(pid)
+    return care_view(d, proposed_dir=PROPOSED_DIR)
 
 
 @app.get("/api/patients/{pid}/chart")
