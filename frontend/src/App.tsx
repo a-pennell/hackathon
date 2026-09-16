@@ -5,7 +5,8 @@ import Overview from "./Overview";
 import NoteView from "./NoteView";
 import Shell, { type Tab, type View } from "./Shell";
 import About from "./About";
-import { ChartTab, TimelineTab } from "./ChartTab";
+import { ChartTab } from "./ChartTab";
+import TimelineTab from "./TimelineTab";
 import CareTab from "./CareTab";
 import { nextAction } from "./next";
 import { labelOf } from "./labels";
@@ -13,7 +14,7 @@ import NotesTab from "./NotesTab";
 import { waitingIn } from "./next";
 
 const LINK_WORD: Record<string, string> = { relevant_to: "bears on", evidence_for: "is evidence for", treats: "treats", suspected_cause: "is a suspected cause of", monitors: "monitors" };
-import type { Card as CardT, CareData, ChartData, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientRow, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry } from "./types";
+import type { Card as CardT, CareData, ChartData, Coding as CodingT, Document, NoteFile, Overview as OverviewT, PatientRow, PatientSummary, QueueBatch, RecordEvent, Timeline as TL, TrailEntry, TimelineData } from "./types";
 
 const PID = new URLSearchParams(window.location.search).get("patient") ?? "pt_002";
 const WINDOWS = ["3m", "6m", "1y", "2y", "5y", "all"];
@@ -32,7 +33,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("overview");
   const [noteId, setNoteId] = useState<string | null>(null);
   const [record, setRecord] = useState<RecordEvent[]>([]);
-  const [patientRecord, setPatientRecord] = useState<RecordEvent[]>([]);
+  const [tlTab, setTlTab] = useState<TimelineData | null>(null);
   const [problemRecord, setProblemRecord] = useState<RecordEvent[]>([]);
   const [trail, setTrail] = useState<TrailEntry[]>([]);
   const [coding, setCoding] = useState<CodingT | null>(null);
@@ -88,10 +89,7 @@ export default function App() {
     if (view === "chart") api.chart(PID).then((c) => live && setChart(c)).catch(() => live && setChart(null));
     if (view === "care" || view === "note") api.care(PID).then((c) => live && setCare(c)).catch(() => live && setCare(null));
     if (view === "note") api.chart(PID).then((c) => live && setChart(c)).catch(() => live && setChart(null));
-    if (view === "timeline") {
-      api.chart(PID).then((c) => live && setChart(c)).catch(() => live && setChart(null));
-      api.record(PID).then((r) => live && setPatientRecord(r)).catch(() => live && setPatientRecord([]));
-    }
+    if (view === "timeline") api.timelineTab(PID).then((t) => live && setTlTab(t)).catch(() => live && setTlTab(null));
     return () => {
       live = false;
     };
@@ -305,7 +303,7 @@ export default function App() {
         {view === "overview" && (overview ? (
           <Overview data={overview} problems={summary.problems} highlight={highlight} onHover={hover} onOpen={openProblem} />
         ) : <div className="empty">Computing the overview…</div>)}
-        {view === "timeline" && (chart ? <TimelineTab record={patientRecord} encounters={chart.encounters} /> : <div className="empty">Loading the timeline…</div>)}
+        {view === "timeline" && (tlTab ? <TimelineTab data={tlTab} highlight={highlight} onHover={hover} /> : <div className="empty">Loading the timeline…</div>)}
         {view === "chart" && (chart ? <ChartTab data={chart} onOpenProblem={openProblem} /> : <div className="empty">Loading the chart…</div>)}
         {view === "care" && (care ? <CareTab data={care} highlight={highlight} onHover={hover} onOpen={openProblem} /> : <div className="empty">Loading care…</div>)}
         {view === "notes" && <NotesTab notes={notes} pid={PID} patients={patients} scope={notesScope} onScope={setNotesScope} queues={queues} onOpen={openNote} onRead={(n) => { openNote(n.id); if (n.file && (mode === "live" || n.has_replay)) runExtract(n, mode); }} busy={busy} />}

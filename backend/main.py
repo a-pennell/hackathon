@@ -29,7 +29,8 @@ from ehr.care import care_view  # noqa: E402
 from ehr.orders import run_orders  # noqa: E402
 from ehr.compose import run_compose  # noqa: E402
 from ehr.review import REASON_CODES, apply_review, ledger_for_problem, list_queues, sign_note, undo_review  # noqa: E402
-from ehr.record import record_events  # noqa: E402
+from ehr.record import record_events
+from ehr.timeline import patient_timeline  # noqa: E402
 from ehr.trend import DATA_DIR, load_patient, trend_from_patient  # noqa: E402
 
 NOTES_DIR = ROOT / "data" / "notes"
@@ -370,6 +371,12 @@ def sign(pid: str, note_id: str, body: SignBody):
         raise HTTPException(404, f"no queue for {note_id}; read the note first")
     except KeyError as e:
         raise HTTPException(404, str(e))
+
+
+@app.get("/api/patients/{pid}/timeline")
+def timeline_tab(pid: str):
+    """The Timeline tab: sessions, results, documents, changes and reasoning on one list. Computed, never stored."""
+    return patient_timeline(_patient(pid), proposed_dir=PROPOSED_DIR)
 
 
 @app.get("/api/patients/{pid}/record")

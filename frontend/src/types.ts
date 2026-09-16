@@ -357,3 +357,8 @@ export type CareData = {
   due: { code: string; name: string; last: string; due: string; overdue_days: number; problem_id: string; problem_name: string }[];
   loops: OverviewLoop[];
 };
+
+/* Timeline tab (ehr/timeline.py): everything that happened, in five lanes. */
+export type TimelineLane = "sessions" | "results" | "documents" | "changes" | "reasoning";
+export type TimelineItem = { lane: TimelineLane; at: string; day: string; kind: string; text: string; detail: string; by: string | null; ids: string[]; tag: string | null };
+export type TimelineData = { patient_id: string; as_of: string; lanes: Record<TimelineLane, number>; items: TimelineItem[] };

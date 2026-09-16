@@ -556,6 +556,17 @@ svg.tl .today { stroke: var(--graphite); stroke-dasharray: 2 3; }
 .tl-row .tag { text-align: center; }
 .tl-row .quote { display: block; font-family: var(--serif); font-style: italic; color: var(--ink-2); font-size: 12.5px; }
 .tl-row .meta { color: var(--graphite); font-size: 11.5px; }
+.tl-row .detail { display: block; color: var(--graphite); font-size: 12px; }
+.tl-row .detail.mono { font-family: var(--mono); font-size: 11.5px; }
+.tl-row.hi { background: var(--select-wash); }
+.tl-row .meta .tag { margin-right: 6px; }
+.tag.chg { border-color: var(--select); color: var(--select); }
+.tag.pencil { border-color: var(--pending); color: var(--pending); border-style: dashed; }
+.tl-chips { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; letter-spacing: 0; text-transform: none; }
+.tl-chip { font: 11.5px var(--sans); padding: 2px 9px; border: 1px solid var(--rule-strong); border-radius: 999px; background: transparent; color: var(--graphite); cursor: pointer; }
+.tl-chip .n { font-family: var(--mono); font-size: 10.5px; }
+.tl-chip.on { background: var(--select-wash); border-color: var(--select); color: var(--select); }
+.tl-chip:focus-visible { outline: 2px solid var(--select); outline-offset: 1px; }
 /* explanations, now behind a door */
 details.explain { margin-top: calc(var(--u) * 4); padding: 0; background: transparent; border: none; }
 details.explain summary { cursor: pointer; font-size: 12px; color: var(--graphite); padding: calc(var(--u) * 2) 0; list-style: none; }

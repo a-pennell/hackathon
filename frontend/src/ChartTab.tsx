@@ -1,4 +1,4 @@
-import type { ChartData, RecordEvent } from "./types";
+import type { ChartData } from "./types";
 
 const fmt = (s?: string | null) => (s ? s.slice(0, 10) : "");
 const nice = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2)).replace(/\.?0+$/, "");
@@ -65,40 +65,3 @@ export function ChartTab({ data, onOpenProblem }: { data: ChartData; onOpenProbl
   );
 }
 
-const KIND_WORD: Record<string, string> = {
-  "note.received": "note", "note.signed": "signed", "observation.recorded": "result", "problem.raised": "problem", "medication.course_opened": "course",
-  "medication.dose_changed": "dose", "medication.segment_closed": "stopped", "edge.asserted": "link", "plan.set": "plan", "insight.raised": "insight",
-  "order.placed": "order", "document.signed": "document", "proposal.rejected": "rejected",
-};
-
-/** Timeline: what happened. Visits and the record's events on one list, newest first. */
-export function TimelineTab({ record, encounters }: { record: RecordEvent[]; encounters: { id: string; time: string; type: string; summary: string }[] }) {
-  const items = [
-    ...encounters.map((e) => ({ at: e.time, kind: "visit", text: `${e.type[0].toUpperCase() + e.type.slice(1)} · ${e.summary}`, by: null as string | null, quote: null as string | null })),
-    ...record.map((e) => ({ at: e.at, kind: KIND_WORD[e.kind] ?? e.kind, text: e.text, by: e.by, quote: e.quote })),
-  ].sort((a, b) => b.at.localeCompare(a.at));
-  let lastDay = "";
-  return (
-    <div className="tabpage timeline-tab">
-      <section className="group">
-        <h3>Timeline <span className="cnt">{encounters.length} visits · {record.length} record events</span></h3>
-        <div className="rows">
-          {items.map((x, i) => {
-            const day = x.at.slice(0, 10);
-            const head = day !== lastDay;
-            lastDay = day;
-            return (
-              <div key={i} className={`tl-row ${head ? "day" : ""}`}>
-                <span className="when">{head ? day : ""}</span>
-                <span className={`tag ${x.kind === "visit" ? "ep" : x.kind === "signed" || x.kind === "plan" ? "ok" : x.kind === "rejected" ? "warn" : "soft"}`}>{x.kind}</span>
-                <span className="grow">{x.text}{x.quote && <span className="quote">{x.quote}</span>}</span>
-                <span className="meta">{x.by ?? ""}</span>
-              </div>
-            );
-          })}
-          {items.length === 0 && <div className="quiet">Nothing on the timeline yet.</div>}
-        </div>
-      </section>
-    </div>
-  );
-}

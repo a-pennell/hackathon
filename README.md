@@ -52,6 +52,12 @@ The visit chip in the header ("office visit · 15 Sep · note in progress") open
   the active concerns by what they need; the open loops. "Since" is the signed-in clinician's
   last visit with a note of their own, not a global last visit: a visit by someone else in
   between is news to them, not a baseline.
+- **Timeline** is the record on one list, newest first, in five lanes a chip can hide: sessions
+  (visits, with the note that documented them), results (one row per day, the monitored series
+  called out, out-of-range counted), documents (notes and letters: signed, unsigned, imported),
+  changes (courses opened, changed and closed on their clinical dates; problems raised; plan
+  items; orders) and reasoning (insights, causes asserted, rejections with their reasons). The
+  first lane alone is the old visit log; all five are the record. `ehr/timeline.py` computes it.
 - **Care** is what we are doing: one card per concern with its plan, its measures and its open
   loops, chips that pivot the same objects by kind (plans, orders and requests, referrals,
   follow-ups, measures), and a due strip for monitored measures past their interval. Opening a
