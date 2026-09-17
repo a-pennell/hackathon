@@ -6,11 +6,11 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from ehr.timeline import LANES, patient_timeline  # noqa: E402
-from ehr.trend import load_patient  # noqa: E402
+from ehr.trend import DATA_DIR, load_patient  # noqa: E402
 
 
 def test_timeline_folds_five_lanes_on_the_golden_chart():
-    t = patient_timeline(load_patient("pt_002"), proposed_dir=ROOT / "data" / "proposed", today=date(2026, 9, 16))
+    t = patient_timeline(load_patient("pt_002"), proposed_dir=DATA_DIR.parent / "proposed", today=date(2026, 9, 16))
     assert set(t["lanes"]) == set(LANES)
     lanes = {x["lane"] for x in t["items"]}
     assert {"sessions", "results", "documents", "changes"} <= lanes

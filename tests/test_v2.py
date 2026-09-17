@@ -8,7 +8,9 @@ sys.path.insert(0, str(ROOT))
 from ehr.trend import load_patient  # noqa: E402
 from v2.monitor import attest, manifest, problem_list, problem_view, unattested  # noqa: E402
 
-PROPOSED = ROOT / "data" / "proposed"
+from ehr.trend import DATA_DIR  # noqa: E402
+
+PROPOSED = DATA_DIR.parent / "proposed"  # the clean copy built by conftest.py, never the live demo state
 
 
 def test_gate_sorts_problems_by_standing_on_jeane():

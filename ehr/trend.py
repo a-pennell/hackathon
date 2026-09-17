@@ -17,12 +17,14 @@ CLI:  python3 -m ehr.trend pt_001 38483-4 2025-09-01 2026-09-09
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from datetime import date, timedelta
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "patients"
+# EHR_DATA_DIR lets the test suite read a clean copy instead of the charts the demo is running on (tests/conftest.py).
+DATA_DIR = Path(os.environ.get("EHR_DATA_DIR") or Path(__file__).resolve().parent.parent / "data" / "patients")
 
 # |delta_pct| below this is reported as "stable".
 STABLE_PCT = 10.0

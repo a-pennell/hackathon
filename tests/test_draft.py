@@ -9,14 +9,15 @@ sys.path.insert(0, str(ROOT))
 from ehr.draft import run_draft, sign_draft  # noqa: E402
 from ehr.extract import run_extraction  # noqa: E402
 from ehr.review import apply_review, sign_note  # noqa: E402
+from ehr.trend import DATA_DIR  # noqa: E402
 
 
 def _visit(tmp_path: Path) -> Path:
     """A scratch copy of the golden data, taken through the note's review and signature."""
     data = tmp_path / "data"
-    shutil.copytree(ROOT / "data" / "patients", data / "patients")
+    shutil.copytree(DATA_DIR, data / "patients")  # the clean copy built by conftest.py
     (data / "proposed" / "pt_002").mkdir(parents=True)
-    for f in (ROOT / "data" / "proposed" / "pt_002").glob("*.raw.json"):
+    for f in (DATA_DIR.parent / "proposed" / "pt_002").glob("*.raw.json"):
         shutil.copy(f, data / "proposed" / "pt_002" / f.name)
     run_extraction("pt_002", ROOT / "data" / "notes" / "note_demo_102.json", replay=data / "proposed" / "pt_002" / "note_demo_102.raw.json", data_dir=data / "patients")
     apply_review("pt_002", "note_demo_102", reject=["lnk_demo_102_20"], reason="Non-adherence is the cause, not the drug.", reason_code="disagree", data_dir=data / "patients")
