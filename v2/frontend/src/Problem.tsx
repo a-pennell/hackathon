@@ -6,6 +6,7 @@ import type { ProblemView } from "./v2types";
 import Timeline from "./Timeline";
 
 const KINDS = ["therapeutic", "diagnostic", "monitoring", "referral", "follow_up", "education"];
+const nice = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? String(+v.toFixed(1)) : String(+v.toFixed(2)));
 const dmy = (iso: string) => { const d = new Date(iso.slice(0, 10) + "T00:00:00"); return `${d.getDate()} ${d.toLocaleString("en", { month: "short" })} ${d.getFullYear()}`; };
 
 /** One problem as seven answers. Everything on this page is computed from the record; the buttons are the only
@@ -137,7 +138,7 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey }: C
           <p className="serif">On the current plan ({a.change_course.projection.labels.join("; ").toLowerCase()}), {a.change_course.projection_of.name.toLowerCase()} is projected at <b className="num">{a.change_course.projection.at_full_effect.low} to {a.change_course.projection.at_full_effect.high}</b> by {dmy(a.change_course.projection.full_effect_by)}{a.change_course.projection.reaches_goal_by ? `, under goal by about ${dmy(a.change_course.projection.reaches_goal_by)}` : ", not to goal"}. A value above that band after that date is a miss, and the plan is what changes.{a.change_course.projection.observed ? ` Observed ${a.change_course.projection.observed.value} on ${dmy(a.change_course.projection.observed.time)}: ${a.change_course.projection.observed.status}.` : ""}</p>
         )}
         {a.change_course.reconsider_if.map((r, i) => <Line key={`r${i}`} x={{ text: `Reassess if ${r}`, ids: [] }} v="unx" />)}
-        {a.change_course.tripwires.map((t, i) => <Line key={i} x={{ text: `${t.name} ${t.latest.value} · ${t.state}`, detail: `tripwire: ${t.threshold}`, ids: t.ids }} />)}
+        {a.change_course.tripwires.map((t, i) => <Line key={i} x={{ text: `${t.name} ${nice(t.latest.value)} · ${t.state}`, detail: `tripwire: ${t.threshold}`, ids: t.ids }} />)}
       </Q>
     </div>
   );

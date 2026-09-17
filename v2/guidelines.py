@@ -55,6 +55,18 @@ def guidelines(patient: dict, problem: dict, *, today: date | None = None) -> li
         if diabetes and sbp:
             rule("htn_dm_goal", "With diabetes, the pressure goal is under 130/80 if it can be reached safely.", "ADA Standards of Care 2024 §10", sbp["value"] < 130, [sbp["id"]], None)
 
+    if "kidney" in name:
+        egfr = _latest(patient, "33914-3")
+        metformin = _on(patient, "metformin")
+        if egfr and egfr["value"] < 30:
+            rule("ckd_metformin", "eGFR under 30: metformin is contraindicated.", "FDA metformin labeling 2016; KDIGO 2022 diabetes in CKD", not metformin or _plan_has(patient, "stop metformin"),
+                 [egfr["id"]] + [m["id"] for m in metformin], {"kind": "therapeutic", "text": "Stop metformin"})
+            rule("ckd_nephrology", "eGFR under 30: refer to nephrology.", "KDIGO 2012 CKD guideline §5.1", _plan_has(patient, "nephrology"), [egfr["id"]],
+                 {"kind": "referral", "text": "Nephrology referral"})
+        if nsaid:
+            rule("ckd_nsaid", "Chronic kidney disease: avoid NSAIDs.", "KDIGO 2012 CKD guideline §4.4", _plan_has(patient, "stop naproxen", "stop ibuprofen"), [m["id"] for m in nsaid],
+                 {"kind": "therapeutic", "text": "Stop the NSAID; acetaminophen instead"})
+
     if "diabetes" in name:
         if a1c and a1c["value"] >= 7.0:
             age_days = (today - date.fromisoformat(a1c["effective_time"][:10])).days

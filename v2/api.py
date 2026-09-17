@@ -155,7 +155,7 @@ def acknowledge(pid: str, prob: str, body: AckBody):
 
 
 @router.get("/patients/{pid}/note")
-def note(pid: str):
+def note(pid: str, as_of: str | None = None):
     """The visit note as assembled right now for the open encounter, unsaved, plus what is already signed."""
     p = _patient(pid)
     enc = open_encounter(p)
@@ -164,7 +164,7 @@ def note(pid: str):
     signed = next((d for d in p.get("documents", []) if d.get("kind") == "encounter_note" and d.get("encounter_id") == enc), None)
     qp = PROPOSED_DIR / pid / f"{stem_for(enc)}.json"
     draft = json.loads(qp.read_text())["proposed"]["documents"][0] if qp.exists() else None
-    compiled = draft_note(p, enc, proposed_dir=PROPOSED_DIR)["proposed"]["documents"][0]
+    compiled = draft_note(p, enc, proposed_dir=PROPOSED_DIR, today=_today(as_of))["proposed"]["documents"][0]
     e = next(x for x in p["encounters"] if x["id"] == enc)
     return {"encounter": e, "signed": signed, "draft": draft, "compiled": compiled, "manifest": manifest(p, enc, proposed_dir=PROPOSED_DIR)}
 

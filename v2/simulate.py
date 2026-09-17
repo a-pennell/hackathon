@@ -103,6 +103,8 @@ def simulate(patient: dict, problem_id: str, codes: list[str], *, today: date | 
     v0 = float(latest["value"])
     rr = latest.get("reference_range") or {}
     goal = GOALS.get(code) or rr.get("high")
+    if goal is not None and v0 < goal:
+        return None  # at or under goal: nothing to project toward, and a low value is not helped by lowering it
     ctx = _context(patient, {problem_id})
     options = []
     for e in EFFECTS:

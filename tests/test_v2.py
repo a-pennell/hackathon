@@ -75,3 +75,13 @@ def test_current_plan_projection_after_the_visit(tmp_path):
     assert rules["htn_second_agent"] == "covered" and rules["acei_bmp"] == "covered"
     row = next(r for r in problem_list(lp("pt_002", d), proposed_dir=d.parent / "proposed", today=date(2026, 9, 17))["problems"] if r["id"] == "prob_0007")
     assert "projected under 140" in row["forecast"]
+
+
+def test_willie_kidney_guidelines_and_no_projection_for_a_low_pressure():
+    p = load_patient("pt_001")
+    v = problem_view(p, "prob_0057", proposed_dir=PROPOSED, today=date(2026, 9, 17))
+    rules = {g["id"]: g for g in v["answers"]["guidelines"]}
+    assert rules["ckd_metformin"]["status"] == "gap" and rules["ckd_nephrology"]["status"] == "gap"
+    assert rules["ckd_metformin"]["source"].startswith("FDA")
+    rows = {r["name"]: r for r in problem_list(p, proposed_dir=PROPOSED, today=date(2026, 9, 17))["problems"]}
+    assert rows["Essential hypertension"]["forecast"] is None  # his pressure is low; lowering it further is not a projection
