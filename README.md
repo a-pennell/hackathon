@@ -95,7 +95,27 @@ A simpler front on the same chart: the problem list as a gate (which problems ar
 and which are not), one problem as the seven questions, and the visit note assembled from what was
 decided. `v2/README.md` describes it; it is served at `/v2/?patient=pt_002` by the same server.
 
-## Demo runbook
+## Demo runbook (v2)
+
+Open `http://localhost:8000/v2/?patient=pt_002` from a clean chart, Claude on saved. Three claims, about three minutes.
+
+| When | Do | Say |
+|---|---|---|
+| 0:00 | **Problems** | "Jeane, 55. The system watches every problem all the time: two are off course, by rules, with the reason on the row. Nothing here was typed." |
+| 0:20 | **Read the note** | "Dr. Chen's dictation is read. It found 46 things. Six need a decision; the rest are accepted when I close the review. None of this is a signature." |
+| 0:40 | **Accept** ibuprofen as a suspected cause | "Beat one: a medication linked to a vital sign. Ibuprofen since May, asserted as a cause of the pressure." |
+| 0:55 | **Reject** metformin as a cause, with a reason | "Beat two: the system is wrong here. Adherence is the driver, not the drug. One line, and it is on the record." |
+| 1:10 | Accept the rest · **Close the review** | "Forty-odd items accepted, not yet attested: the header says so." |
+| 1:20 | Open **Essential hypertension** | "Seven questions, in order. What is happening: the pressure with the courses drawn under it, ibuprofen beside the rise." |
+| 1:40 | **What changed** · Noted · **Ask what changed** · Agree | "Rules detected it; I note it. The model reads the trend; I agree with what it found." |
+| 2:00 | **What should happen next** | "Three kinds of suggestion, kept apart: best practice with its source, the reasoning, and a projection. Stopping the NSAID and adding lisinopril project systolic to 133 to 140 by mid October. That is the corridor on the chart." |
+| 2:20 | **Sign the visit note** | "One signature. The list says exactly what it attests, and the text is compiled from that list. I add a sentence of my own and sign." |
+| 2:40 | **Two weeks later** | "The home log lands at 138. Projected 133 to 140, observed 138: within. The system predicted, watched, and would have told me if it were wrong." |
+
+Reset demo restores the chart. The follow-up results are a curated file, `data/followups/pt_002.json`, written as
+accepted results and read as of 30 Sep; reset removes them.
+
+## Demo runbook (v1)
 
 Every Claude call in the demo (extraction, reasoning, orders, referral, brief) is run live once
 (`claude-opus-5`) and the responses are saved as `data/proposed/<patient>/*.raw.json`, so the demo

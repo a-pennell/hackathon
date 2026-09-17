@@ -17,6 +17,8 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey }: C
   const [hi, setHi] = useState<Set<string>>(new Set());
   const [kind, setKind] = useState("monitoring");
   const [text, setText] = useState("");
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const first = (t: string) => { const m = t.match(/^(.*?[a-z0-9%)\]])\.\s+(?=[A-Z])/s); return m ? m[1] + "." : t; };
   useEffect(() => {
     let live = true;
     api.problem(pid, problemId).then((x) => live && setV(x)).catch(() => live && setV(null));
@@ -63,7 +65,7 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey }: C
         {a.means.insights.map((i) => (
           <div key={i.id} className="line" onMouseEnter={() => hover(i.ids)} onMouseLeave={() => hover(null)}>
             <span className="v">{i.status === "signed" ? "✓" : "?"}</span>
-            <span>{i.text}{i.action && <span className="d">Suggests: {i.action}</span>}</span>
+            <span>{open.has(i.id) ? i.text : first(i.text)}{first(i.text) !== i.text && <button className="link more" onClick={() => setOpen((s) => { const n = new Set(s); if (n.has(i.id)) n.delete(i.id); else n.add(i.id); return n; })}>{open.has(i.id) ? " less" : " more"}</button>}{i.action && <span className="d">Suggests: {i.action}</span>}</span>
             {i.status === "proposed" ? <span className="acts"><button className="btn small primary" disabled={!!busy} onClick={() => signInsight(i.id)}>Agree</button> <button className="btn small ghost" disabled={!!busy} onClick={() => rejectInsight(i.id)}>Dismiss</button></span> : <span className="src">{i.source === "rules" ? "noted by you" : "agreed"}</span>}
           </div>
         ))}

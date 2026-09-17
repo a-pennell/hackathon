@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -72,10 +72,50 @@ def _next_action(patient: dict, listing: dict) -> dict:
     return {"kind": "done", "label": "Nothing owed", "hint": "the visit is documented"}
 
 
-@router.get("/patients/{pid}/problems")
-def problems(pid: str):
+FOLLOWUPS = ROOT / "data" / "followups"
+
+
+def _today(as_of: str | None) -> date | None:
+    return date.fromisoformat(as_of) if as_of else None
+
+
+def _followup(pid: str, patient: dict) -> dict | None:
+    f = FOLLOWUPS / f"{pid}.json"
+    if not f.exists():
+        return None
+    spec = json.loads(f.read_text())
+    applied = any((o.get("provenance") or {}).get("followup") for o in patient.get("observations", []))
+    return {"label": spec["label"], "as_of": spec["as_of"], "applied": applied}
+
+
+@router.post("/patients/{pid}/advance")
+def advance(pid: str):
+    """The demo's clock: the results that land two weeks after the visit (a curated file), written as accepted results,
+    and the date to read the chart as of. Reset removes them with everything else."""
     p = _patient(pid)
-    out = problem_list(p, proposed_dir=PROPOSED_DIR)
+    f = FOLLOWUPS / f"{pid}.json"
+    if not f.exists():
+        raise HTTPException(404, "no follow-up is curated for this patient")
+    spec = json.loads(f.read_text())
+    if not any((o.get("provenance") or {}).get("followup") for o in p["observations"]):
+        n = 0
+        for row in spec["observations"]:
+            like = next((o for o in reversed(p["observations"]) if o["code"]["value"] == row["code"]), None)
+            if not like:
+                continue
+            n += 1
+            p["observations"].append({"id": f"obs_f{n:03d}", "patient_id": pid, "code": like["code"], "name": like["name"], "value": row["value"], "unit": like.get("unit"),
+                                      "reference_range": like.get("reference_range"), "effective_time": row["effective_time"], "status": "accepted",
+                                      "provenance": {"source": "curated", "followup": True, "note": row.get("note")}})
+        save_patient(p, DATA_DIR)
+    return {"as_of": spec["as_of"], "label": spec["label"]}
+
+
+@router.get("/patients/{pid}/problems")
+def problems(pid: str, as_of: str | None = None):
+    p = _patient(pid)
+    out = problem_list(p, proposed_dir=PROPOSED_DIR, today=_today(as_of))
+    out["followup"] = _followup(pid, p)
     _attach_note(pid, p, out)
     out["next_action"] = _next_action(p, out)
     out["unattested"] = unattested(p)
@@ -83,11 +123,11 @@ def problems(pid: str):
 
 
 @router.get("/patients/{pid}/problems/{prob}")
-def problem(pid: str, prob: str):
+def problem(pid: str, prob: str, as_of: str | None = None):
     p = _patient(pid)
     if not any(x["id"] == prob for x in p["problems"]):
         raise HTTPException(404, f"no problem {prob}")
-    return problem_view(p, prob, proposed_dir=PROPOSED_DIR)
+    return problem_view(p, prob, proposed_dir=PROPOSED_DIR, today=_today(as_of))
 
 
 class AckBody(BaseModel):

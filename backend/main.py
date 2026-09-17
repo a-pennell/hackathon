@@ -41,7 +41,7 @@ from ehr.trend import DATA_DIR, load_patient, trend_from_patient  # noqa: E402
 NOTES_DIR = ROOT / "data" / "notes"
 app = FastAPI(title="Problem-Oriented EHR", version="0.1")
 
-SPANS = {"3m": 91, "6m": 182, "1y": 365, "2y": 730, "5y": 1826}
+SPANS = {"3m": 91, "6m": 182, "9m": 274, "1y": 365, "2y": 730, "5y": 1826}
 
 
 def _patient(pid: str) -> dict:
@@ -51,8 +51,8 @@ def _patient(pid: str) -> dict:
         raise HTTPException(404, f"no patient {pid}")
 
 
-def _window(patient: dict, span: str) -> dict:
-    end = date.today()
+def _window(patient: dict, span: str, as_of: str | None = None) -> dict:
+    end = date.fromisoformat(as_of) if as_of else date.today()
     if span == "all":
         firsts = [e["time"][:10] for e in patient["encounters"]] + [o["effective_time"][:10] for o in patient["observations"]]
         start = min(firsts) if firsts else end.isoformat()
@@ -154,12 +154,12 @@ def chart_tab(pid: str):
 
 
 @app.get("/api/patients/{pid}/problems/{prob}/timeline")
-def timeline(pid: str, prob: str, window: str = "1y", all_meds: bool = True):
+def timeline(pid: str, prob: str, window: str = "1y", all_meds: bool = True, as_of: str | None = None):
     d = _patient(pid)
     problem = next((p for p in d["problems"] if p["id"] == prob), None)
     if not problem:
         raise HTTPException(404, f"no problem {prob}")
-    win = _window(d, window)
+    win = _window(d, window, as_of)
     start, end = win["start"], win["end"]
     codes = monitored_codes(d, prob)
 
@@ -687,7 +687,8 @@ def _is_clean(chart: dict) -> bool:
     (Jeane's January note) is curated and fine; a note signed during it brings accepted nlp items with it."""
     return not chart.get("documents") and not chart.get("orders") and not chart.get("plans") and not chart.get("note_plan_items") and all(
         x["provenance"]["source"] in ("fhir_import", "curated")
-        for k in ("problems", "observations", "medications", "links", "insights") for x in chart.get(k, []))
+        for k in ("problems", "observations", "medications", "links", "insights") for x in chart.get(k, [])
+    ) and not any((o.get("provenance") or {}).get("followup") for o in chart.get("observations", []))
 
 
 def _mid_demo(pid: str) -> bool:

@@ -1,0 +1,11 @@
+{
+  "patient_id": "pt_002",
+  "label": "Two weeks later: the home blood pressure log and the basic metabolic panel",
+  "as_of": "2026-09-30",
+  "observations": [
+    {"code": "8480-6", "value": 138.0, "effective_time": "2026-09-29T08:00:00-05:00", "note": "home log, mean of the last week"},
+    {"code": "8462-4", "value": 86.0, "effective_time": "2026-09-29T08:00:00-05:00", "note": "home log, mean of the last week"},
+    {"code": "6298-4", "value": 4.4, "effective_time": "2026-09-29T09:15:00-05:00", "note": "BMP, two weeks after lisinopril"},
+    {"code": "38483-4", "value": 0.9, "effective_time": "2026-09-29T09:15:00-05:00", "note": "BMP, two weeks after lisinopril"}
+  ]
+}

@@ -11,6 +11,8 @@ export default function Review({ pid, listing, busy, run, go, refreshKey }: Ctx)
   const [b, setB] = useState<QueueBatch | null>(null);
   const [labels, setLabels] = useState<Record<string, string>>({});
   const [showRest, setShowRest] = useState(false);
+  const [rejecting, setRejecting] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
   const note = listing.here_for.note;
   useEffect(() => { if (!note) return; api.queue(pid).then((q) => { setB(q.batches.find((x) => x.note_id === note.id) ?? null); setLabels(q.labels); }).catch(() => setB(null)); }, [pid, note, refreshKey]);
   if (!note) return <div className="lede">No note from this visit.</div>;
@@ -42,8 +44,14 @@ export default function Review({ pid, listing, busy, run, go, refreshKey }: Ctx)
           <span className="k">{it.type === "suspected_cause" ? "cause" : KIND_WORD[kind]}</span>
           <span>{summary(kind, it)}{it.provenance?.quote && <span className="q">“{it.provenance.quote}”</span>}</span>
           {it.status === "proposed" ? (
-            <span className="acts"><button className="btn small primary" disabled={!!busy} onClick={() => run("review", () => api.review(pid, b.stem, { accept: [it.id] }), "Accepted")}>Accept</button><button className="btn small ghost" disabled={!!busy} onClick={() => { const reason = prompt("Why? One line, in your words.") ?? ""; run("review", () => api.review(pid, b.stem, { reject: [it.id], reason_code: "disagree", reason }), "Rejected; your reason is on the record"); }}>Reject</button></span>
+            <span className="acts"><button className="btn small primary" disabled={!!busy} onClick={() => run("review", () => api.review(pid, b.stem, { accept: [it.id] }), "Accepted")}>Accept</button><button className="btn small ghost" disabled={!!busy} onClick={() => { setRejecting(rejecting === it.id ? null : it.id); setReason(""); }}>{rejecting === it.id ? "Cancel" : "Reject"}</button></span>
           ) : <span className="done">{it.status}</span>}
+          {rejecting === it.id && (
+            <form className="why" onSubmit={(e) => { e.preventDefault(); run("review", () => api.review(pid, b.stem, { reject: [it.id], reason_code: "disagree", reason }), "Rejected; your reason is on the record").then(() => setRejecting(null)); }}>
+              <input autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why? One line, in your words. It goes on the record and into the visit note." aria-label="Reason for rejecting" />
+              <button className="btn small primary" type="submit" disabled={!!busy}>Reject with this reason</button>
+            </form>
+          )}
         </div>
       ))}
       {!showRest && <div className="addplan"><button className="btn small ghost" onClick={() => setShowRest(true)}>Show the {items.filter((x) => !isDecision(x.kind, x.it)).length} routine items: results, courses, links, plan lines</button></div>}

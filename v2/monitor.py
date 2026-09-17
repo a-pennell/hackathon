@@ -22,6 +22,7 @@ from ehr.review import list_queues
 from v2.guidelines import guidelines
 from v2.simulate import simulate
 
+DEFAULT_RANGES = {"14959-1": {"low": None, "high": 30.0}}  # urine albumin/creatinine, mg/g
 STANDING_WORD = {"off_course": "off course", "watch": "watch", "good": "in good standing", "unmonitored": "not monitored"}
 
 
@@ -73,13 +74,45 @@ def _forecast(patient: dict, problem_id: str, codes: list[str], today: date) -> 
     plan = sim.get("current_plan")
     if not plan:
         return "nothing on the plan is projected to move it"
+    if plan.get("observed"):
+        o = plan["observed"]
+        word = {"within": "within the projection", "better": "better than projected", "missed": "above the projection: a miss"}[o["status"]]
+        return f"projected {plan['at_full_effect']['low']:g} to {plan['at_full_effect']['high']:g} by {plan['full_effect_by']}; observed {o['value']:g} on {o['time']}: {word}"
     if plan.get("reaches_goal_by"):
         return f"on the current plan, projected under {sim['goal']:g} by about {plan['reaches_goal_by']}"
     return f"on the current plan, projected {plan['at_full_effect']['low']:g} to {plan['at_full_effect']['high']:g} by {plan['full_effect_by']}: not to goal"
 
 
+def _with_inferred_monitors(patient: dict, today: date) -> dict:
+    """A problem raised from a note has results linked to it and nothing watching them. Until a steward says otherwise,
+    the series those results belong to are what it is watched by. Computed for the view; nothing is written. Results
+    dated after `today` (a follow-up not yet reached) are left out of the view."""
+    out = dict(patient)
+    # A series imported without a reference range still has one in practice; the view supplies it so the rules can see.
+    out["observations"] = [({**o, "reference_range": DEFAULT_RANGES[o["code"]["value"]]} if not o.get("reference_range") and o["code"]["value"] in DEFAULT_RANGES else o)
+                           for o in patient["observations"] if o["effective_time"][:10] <= today.isoformat()]
+    obs = {o["id"]: o for o in out["observations"]}
+    links = list(patient["links"])
+    watched = {l["to"] for l in links if l["type"] == "monitors" and l.get("status") == "accepted"}
+    for p in patient["problems"]:
+        if p["status"] != "active" or p["id"] in watched:
+            continue
+        codes = []
+        for l in links:
+            if l["type"] == "relevant_to" and l.get("status") == "accepted" and l["to"] == p["id"] and l["from"] in obs:
+                c = obs[l["from"]]["code"]["value"]
+                if c not in codes:
+                    codes.append(c)
+        for c in codes:
+            links.append({"id": f"lnk_inferred_{p['id']}_{c}", "from": f"LOINC:{c}", "to": p["id"], "type": "monitors", "status": "accepted",
+                          "provenance": {"source": "rules", "inferred": True}, "created_at": today.isoformat()})
+    out["links"] = links
+    return out
+
+
 def problem_list(patient: dict, *, proposed_dir: Path = PROPOSED_DIR, today: date | None = None) -> dict:
     today = today or date.today()
+    patient = _with_inferred_monitors(patient, today)
     win = _window(today)
     ov = patient_overview(patient, proposed_dir=proposed_dir, today=today)
     queues = list_queues(patient["patient"]["id"], proposed_dir)
@@ -130,6 +163,7 @@ def _detected(card: dict) -> list[dict]:
 
 def problem_view(patient: dict, problem_id: str, *, proposed_dir: Path = PROPOSED_DIR, today: date | None = None) -> dict:
     today = today or date.today()
+    patient = _with_inferred_monitors(patient, today)
     win = _window(today)
     card = problem_card(patient, problem_id, win, proposed_dir=proposed_dir, today=today)
     queues = list_queues(patient["patient"]["id"], proposed_dir)

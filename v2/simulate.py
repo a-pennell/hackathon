@@ -58,8 +58,9 @@ def _context(patient: dict, problem_ids: set[str]) -> dict:
             "dose_changed": lambda name: any(len(m["segments"]) > 1 for m in segs(name))}
 
 
-def _latest(patient: dict, code: str) -> dict | None:
-    pts = [o for o in _accepted(patient["observations"]) if o["code"]["value"] == code and isinstance(o.get("value"), (int, float))]
+def _latest(patient: dict, code: str, on_or_before: str | None = None) -> dict | None:
+    pts = [o for o in _accepted(patient["observations"]) if o["code"]["value"] == code and isinstance(o.get("value"), (int, float))
+           and (on_or_before is None or o["effective_time"][:10] <= on_or_before)]
     if not pts:
         return None
     newest = max(o["effective_time"] for o in pts)
@@ -88,15 +89,17 @@ def simulate(patient: dict, problem_id: str, codes: list[str], *, today: date | 
     code = next((c for c in ("8480-6", "4548-4") if c in codes), None)
     if not code:
         return None
-    latest = _latest(patient, code)
-    if not latest:
-        return None
     enc_id = open_encounter(patient)
     enc = next((e for e in patient.get("encounters", []) if e["id"] == enc_id), None)
-    # A projection starts when the action starts: the open visit if it is recent, otherwise today.
-    latest_day = date.fromisoformat(latest["effective_time"][:10])
+    # A projection starts when the action starts: the visit, while it is recent (its horizon), otherwise today. The
+    # starting value is the last one on or before that day, so a result that lands later tests the band, not moves it.
     enc_day = date.fromisoformat(enc["time"][:10]) if enc else None
-    t0 = enc_day if enc_day and enc_day >= latest_day and (today - enc_day).days <= 14 else max(latest_day, today)
+    recent = bool(enc_day) and 0 <= (today - enc_day).days <= HORIZON_WEEKS * 7
+    latest = _latest(patient, code, enc_day.isoformat() if recent else None)
+    if not latest:
+        return None
+    latest_day = date.fromisoformat(latest["effective_time"][:10])
+    t0 = enc_day if recent and enc_day >= latest_day else max(latest_day, today)
     v0 = float(latest["value"])
     rr = latest.get("reference_range") or {}
     goal = GOALS.get(code) or rr.get("high")
@@ -125,7 +128,7 @@ def simulate(patient: dict, problem_id: str, codes: list[str], *, today: date | 
         plan = {"options": [o["id"] for o in chosen], "labels": [o["label"] for o in chosen], "points": pts, "weeks": weeks,
                 "full_effect_by": (t0 + timedelta(weeks=weeks)).isoformat(), "at_full_effect": {"low": full["low"], "high": full["high"]},
                 "reaches_goal_by": _reaches(pts, goal) if goal else None}
-        later = [o for o in _accepted(patient["observations"]) if o["code"]["value"] == code and o["effective_time"][:10] > t0.isoformat()]
+        later = [o for o in _accepted(patient["observations"]) if o["code"]["value"] == code and t0.isoformat() < o["effective_time"][:10] <= today.isoformat()]
         if later:
             last = max(later, key=lambda o: o["effective_time"])
             band = min(pts, key=lambda p: abs((date.fromisoformat(p["t"]) - date.fromisoformat(last["effective_time"][:10])).days))

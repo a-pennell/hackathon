@@ -1043,3 +1043,13 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .opt .srcline { grid-column: 1 / -1; color: var(--graphite); font-size: 11px; }
 .opt .btn, .opt .pill { grid-row: 1 / 3; grid-column: 3; align-self: center; }
 .simnote { font-size: 11.5px; color: var(--graphite); margin-top: 8px; max-width: 72ch; }
+
+.v2 .top { flex-wrap: nowrap; }
+.v2 .top .who { white-space: nowrap; }
+.v2 .top .chips { display: flex; gap: 6px; flex-wrap: nowrap; overflow: hidden; }
+.v2 .top nav { flex: none; }
+.v2 .top .btn { flex: none; white-space: nowrap; }
+@media (max-width: 900px) { .v2 .top { flex-wrap: wrap; } }
+.rv .item .why { grid-column: 2 / -1; display: flex; gap: 6px; margin-top: 6px; }
+.rv .item .why input { flex: 1; font: 13px var(--sans); padding: 5px 8px; border: 1px solid var(--rule-strong); border-radius: var(--r-sm); background: var(--paper-2); color: var(--ink); }
+.link.more { color: var(--select); font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }

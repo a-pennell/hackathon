@@ -10,7 +10,7 @@ export type NextAction = { kind: "read" | "review" | "sign" | "draft" | "sign-dr
 export type Listing = {
   patient: { id: string; name: string; dob: string; sex: string }; as_of: string; since: { date: string; why: string };
   here_for: { encounter: { id: string; time: string; type: string; summary: string } | null; note: { id: string; file: string; author: string; time: string; has_queue: boolean; has_replay: boolean; status?: string } | null };
-  problems: ProblemRow[]; counts: Record<Standing, number>; next_action: NextAction; unattested: number;
+  problems: ProblemRow[]; counts: Record<Standing, number>; next_action: NextAction; unattested: number; followup: { label: string; as_of: string; applied: boolean } | null;
 };
 export type Line = { text: string; detail?: string; ids: string[]; source?: string; kind?: string; valence?: string };
 export type Detected = { id: string; text: string; ids: string[]; code: string | null; acknowledged: boolean };

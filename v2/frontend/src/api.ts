@@ -12,11 +12,17 @@ async function req<T>(url: string, init?: RequestInit): Promise<T> {
 }
 const post = (body?: unknown) => ({ method: "POST", body: JSON.stringify(body ?? {}) });
 
+// The date the chart is read as of: null is today; the demo's follow-up sets it two weeks on.
+let AS_OF: string | null = null;
+export const setAsOf = (d: string | null) => { AS_OF = d; };
+const q = (first = true) => (AS_OF ? `${first ? "?" : "&"}as_of=${AS_OF}` : "");
+
 export const api = {
   patients: () => req<{ id: string; name: string }[]>("/api/patients"),
-  problems: (pid: string) => req<Listing>(`/v2/api/patients/${pid}/problems`),
-  problem: (pid: string, prob: string) => req<ProblemView>(`/v2/api/patients/${pid}/problems/${prob}`),
-  trajectory: (pid: string, prob: string) => req<Timeline>(`/api/patients/${pid}/problems/${prob}/timeline?window=1y`),
+  problems: (pid: string) => req<Listing>(`/v2/api/patients/${pid}/problems${q()}`),
+  problem: (pid: string, prob: string) => req<ProblemView>(`/v2/api/patients/${pid}/problems/${prob}${q()}`),
+  trajectory: (pid: string, prob: string) => req<Timeline>(`/api/patients/${pid}/problems/${prob}/timeline?window=9m${q(false)}`),
+  advance: (pid: string) => req<{ as_of: string; label: string }>(`/v2/api/patients/${pid}/advance`, post()),
   acknowledge: (pid: string, prob: string, text: string, ids: string[]) => req<{ insight_id: string }>(`/v2/api/patients/${pid}/problems/${prob}/acknowledge`, post({ text, ids })),
   intent: (pid: string, prob: string, kind: string, text: string) => req<{ plan_id: string }>(`/api/patients/${pid}/problems/${prob}/intents`, post({ kind, text })),
   note: (pid: string) => req<NoteView>(`/v2/api/patients/${pid}/note`),

@@ -53,6 +53,18 @@ A projection is computed on demand and never stored, like a TrendSummary. It is 
 specific to the patient until the patient's own responses say how well it held. Choosing an option is an ordinary
 plan line.
 
+## Two weeks later
+
+The header offers **Two weeks later** once the visit is documented. It writes a curated follow-up
+(`data/followups/pt_002.json`: a home blood pressure log and the basic metabolic panel) as accepted results and reads
+the chart as of 30 Sep. The projection is then tested rather than asserted: "projected 133 to 140 by 13 Oct; observed
+138 on 29 Sep: better than projected", the expectation reads *met*, and hypertension moves from off course to watch.
+Reset removes the follow-up with everything else.
+
+A problem raised from a note has results linked to it and nothing watching them, so the view treats the series of
+those results as what it is watched by (albuminuria is watched by the albumin/creatinine ratio). Computed for the
+view; the merge into a real monitoring link stays a steward's decision.
+
 ## The three claims the demo makes
 
 - **The system watches every problem all the time.** The gate is recomputed on every request from
