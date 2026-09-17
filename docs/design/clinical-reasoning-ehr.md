@@ -580,6 +580,38 @@ referral) plays through the card unchanged.
 
 ---
 
+## 21. v2: what the build taught the design (17 September 2026)
+
+The first build followed this document screen for screen and came out heavier than a clinician would tolerate. v2
+(`v2/README.md`, served at `/v2/`) keeps the model and drops most of the surface. What changed, and why:
+
+- **The gate comes before the card.** §7's Level 1 was "what changed". In use, the first question is simpler: which
+  problems are in good standing and which are not. Standing is computed by rules on every request (off course, watch,
+  in good standing, not monitored), with one line of why and one of what is next. The seven questions of §19 are then
+  the problem page itself, in order, rather than a test the page is scored against.
+- **One signature.** §12 asked for observation and attribution to be separately signable, and the build asked for a
+  signature on proposals, insights, acknowledged changes and plan lines. Providers sign notes. Everything else is now
+  accepted, agreed, noted or added, and the visit note is the one signature; it lists what it attests, its text is
+  compiled from that list, and each accepted item is stamped with the note that attested it (`attested_in`).
+- **The chart writes the note.** §14 said documents come from the model. The visit note is compiled from the
+  encounter's decisions: the dictated history verbatim, the dictated assessment and plan folded, then per problem an
+  assessment and a plan, each sentence citing the record. The clinician edits, adds their own words, and signs.
+- **Three kinds of suggestion, kept apart** (§11, §13): best practice as sourced rules with a gap or covered state;
+  the model's reasoning; and projection, which is §2.3's expectation with a magnitude and a band, generated for
+  options before one is chosen. The current plan's projection is the corridor of §10, and the next value tests it:
+  within, better, or missed. Ranges from published average effects, never probabilities (§12).
+- **Vocabulary is the provider's.** Problem, summary, your assessment, what we are watching, related on the chart.
+  Concern, representation, epistemic state, surveillance and ledger remain the model's words in this document and do
+  not appear on screen.
+- **Decisions are few.** A problem raised, a cause asserted, a change to a course on the chart. Everything else the
+  reading found is accepted when the review is closed.
+
+Still not built, and still wanted: alternatives with discriminators (§2.2), the impression before the reveal (§12),
+goals as first-class objects (they are constants in three places), and calibration of projections to the patient's
+own responses.
+
+---
+
 ## Appendix: schema additions to flag (for `schema-v2-proposal.md`)
 
 All additive. None adopted until the team agrees.
