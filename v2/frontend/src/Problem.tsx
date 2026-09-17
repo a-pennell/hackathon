@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import type { Ctx } from "./App";
 import type { Timeline as TL, QueueBatch } from "./types";
@@ -8,6 +8,25 @@ import Timeline from "./Timeline";
 const KINDS = ["therapeutic", "diagnostic", "monitoring", "referral", "follow_up", "education"];
 const nice = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? String(+v.toFixed(1)) : String(+v.toFixed(2)));
 const dmy = (iso: string) => { const d = new Date(iso.slice(0, 10) + "T00:00:00"); return `${d.getDate()} ${d.toLocaleString("en", { month: "short" })} ${d.getFullYear()}`; };
+
+const HoverCtx = createContext<(ids: string[] | null) => void>(() => {});
+
+function Q({ n, ask, sub, children }: { n: number; ask: string; sub?: string; children: React.ReactNode }) {
+  return (
+    <section className="q" id={`q${n}`}><div className="ask"><span className="n">{n}</span><h2>{ask}</h2>{sub && <div className="sub">{sub}</div>}</div><div className="ans">{children}</div></section>
+  );
+}
+
+function Line({ x, v: mark }: { x: { text: string; detail?: string; ids: string[]; source?: string; valence?: string }; v?: string }) {
+  const hover = useContext(HoverCtx);
+  return (
+    <div className="line" onMouseEnter={() => hover(x.ids)} onMouseLeave={() => hover(null)}>
+      <span className={`v ${mark ?? x.valence ?? ""}`}>{mark === "for" || x.valence === "for" ? "+" : mark === "against" || x.valence === "against" ? "−" : x.valence === "unx" ? "○" : "·"}</span>
+      <span>{x.text}{x.detail && <span className="d">{x.detail}</span>}</span>
+      <span className="src">{x.source ?? ""}</span>
+    </div>
+  );
+}
 
 /** One problem as seven answers. Everything on this page is computed from the record; the buttons are the only
  *  places a signature happens: acknowledging a detected change, signing an insight, adding to the plan. */
@@ -27,28 +46,24 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey }: C
     api.queue(pid).then((q) => live && setQueues(q.batches)).catch(() => live && setQueues([]));
     return () => { live = false; };
   }, [pid, problemId, refreshKey]);
+  const hover = useCallback((ids: string[] | null) => setHi((prev) => { const next = ids ?? []; return prev.size === next.length && next.every((i) => prev.has(i)) ? prev : new Set(next); }), []);
+  const hoverOne = useCallback((id: string | null) => hover(id ? [id] : null), [hover]);
+  // Stable across hovers, so the chart is not handed a new corridor object (and redrawn) every time the highlight changes.
+  const corridor = useMemo(() => {
+    const cc = v?.answers.change_course;
+    const pj = cc?.projection, po = cc?.projection_of;
+    if (pj && po) return { code: po.code, direction: "falling", since: po.from.time, by: pj.full_effect_by, status: pj.observed?.status === "missed" ? "missed" : "not_yet", ref_value: po.from.value, target_value: (pj.at_full_effect.low + pj.at_full_effect.high) / 2 };
+    return cc?.expected ?? null;
+  }, [v]);
   if (!v) return <div className="lede">Reading the record for this problem…</div>;
   const a = v.answers;
-  const hover = (ids: string[] | null) => setHi(new Set(ids ?? []));
   // The corridor on the trajectory: the current plan's projection when there is one, otherwise the card's expectation.
-  const pj = a.change_course.projection, po = a.change_course.projection_of;
-  const corridor = pj && po ? { code: po.code, direction: "falling" as const, since: po.from.time, by: pj.full_effect_by, status: (pj.observed?.status === "missed" ? "missed" : "not_yet") as "missed" | "not_yet",
-    ref_value: po.from.value, target_value: (pj.at_full_effect.low + pj.at_full_effect.high) / 2 } : a.change_course.expected;
   const reasonStem = `reason_${problemId}`;
   const reasonBatch = queues.find((b) => b.stem === reasonStem);
   const signInsight = (id: string) => reasonBatch && run("agree", () => api.review(pid, reasonStem, { accept: [id] }), "Agreed: its first sentence goes into the visit note");
   const rejectInsight = (id: string) => reasonBatch && run("dismiss", () => api.review(pid, reasonStem, { reject: [id], reason_code: "disagree" }), "Dismissed");
-  const Q = ({ n, ask, sub, children }: { n: number; ask: string; sub?: string; children: React.ReactNode }) => (
-    <section className="q" id={`q${n}`}><div className="ask"><span className="n">{n}</span><h2>{ask}</h2>{sub && <div className="sub">{sub}</div>}</div><div className="ans">{children}</div></section>
-  );
-  const Line = ({ x, v: mark }: { x: { text: string; detail?: string; ids: string[]; source?: string; valence?: string }; v?: string }) => (
-    <div className="line" onMouseEnter={() => hover(x.ids)} onMouseLeave={() => hover(null)}>
-      <span className={`v ${mark ?? x.valence ?? ""}`}>{mark === "for" || x.valence === "for" ? "+" : mark === "against" || x.valence === "against" ? "−" : x.valence === "unx" ? "○" : "·"}</span>
-      <span>{x.text}{x.detail && <span className="d">{x.detail}</span>}</span>
-      <span className="src">{x.source ?? ""}</span>
-    </div>
-  );
   return (
+    <HoverCtx.Provider value={hover}>
     <div>
       <button className="link" onClick={() => go("#/")}>← Problems</button>
       <h1 style={{ marginTop: 6 }}>{v.problem.name} <span className={`dot ${v.problem.standing}`} style={{ display: "inline-block", marginLeft: 8 }} /> <span className="tag">{v.problem.standing_word}</span> <span className="tag ep" title={v.problem.epistemic.why}>{v.problem.epistemic.value}</span></h1>
@@ -56,7 +71,7 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey }: C
 
       <Q n={1} ask="What is happening?" sub="the monitored series, the courses on board, what the patient reported">
         {a.happening.map((x, i) => <Line key={i} x={x} />)}
-        {tl && <div className="chart"><Timeline data={tl} highlight={hi} onHover={(id) => hover(id ? [id] : null)} corridor={corridor} /></div>}
+        {tl && <div className="chart"><Timeline data={tl} highlight={hi} onHover={hoverOne} corridor={corridor as never} /></div>}
         <div style={{ fontSize: 11.5, color: "var(--graphite)" }}>Courses are drawn as bands under the series they are linked to, so a medication's effect on a value is read off the same axis.</div>
       </Q>
 
@@ -141,5 +156,6 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey }: C
         {a.change_course.tripwires.map((t, i) => <Line key={i} x={{ text: `${t.name} ${nice(t.latest.value)} · ${t.state}`, detail: `tripwire: ${t.threshold}`, ids: t.ids }} />)}
       </Q>
     </div>
+    </HoverCtx.Provider>
   );
 }
