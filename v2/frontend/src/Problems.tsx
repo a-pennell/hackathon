@@ -28,11 +28,13 @@ export default function Problems({ listing, go }: Ctx) {
                 <div>
                   <div className="name">{p.name}{p.members.length > 0 && <span className="pill" style={{ marginLeft: 8 }} title={p.members.map((m) => m.name).join(" · ")}>+{p.members.length} related</span>}</div>
                   <div className="why">{p.why}</div>
+                  {p.forecast && <div className="next">{p.forecast}</div>}
                   {p.next && <div className="next">next: {p.next}</div>}
                 </div>
                 <div className="right">
                   <span className="tag ep">{p.epistemic}</span><br />
                   {p.pending > 0 && <span className="tag pend">{p.pending} waiting</span>}
+                  {p.gaps > 0 && <span className="tag soft" title="best-practice rules the plan does not cover yet">{p.gaps} guideline gap{p.gaps > 1 ? "s" : ""}</span>}
                   {p.last_change && <div>last value {dmy(p.last_change)}</div>}
                 </div>
               </div>

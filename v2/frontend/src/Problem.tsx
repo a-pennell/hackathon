@@ -27,6 +27,10 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey }: C
   if (!v) return <div className="lede">Reading the record for this problem…</div>;
   const a = v.answers;
   const hover = (ids: string[] | null) => setHi(new Set(ids ?? []));
+  // The corridor on the trajectory: the current plan's projection when there is one, otherwise the card's expectation.
+  const pj = a.change_course.projection, po = a.change_course.projection_of;
+  const corridor = pj && po ? { code: po.code, direction: "falling" as const, since: po.from.time, by: pj.full_effect_by, status: (pj.observed?.status === "missed" ? "missed" : "not_yet") as "missed" | "not_yet",
+    ref_value: po.from.value, target_value: (pj.at_full_effect.low + pj.at_full_effect.high) / 2 } : a.change_course.expected;
   const reasonStem = `reason_${problemId}`;
   const reasonBatch = queues.find((b) => b.stem === reasonStem);
   const signInsight = (id: string) => reasonBatch && run("agree", () => api.review(pid, reasonStem, { accept: [id] }), "Agreed: its first sentence goes into the visit note");
@@ -49,7 +53,7 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey }: C
 
       <Q n={1} ask="What is happening?" sub="the monitored series, the courses on board, what the patient reported">
         {a.happening.map((x, i) => <Line key={i} x={x} />)}
-        {tl && <div className="chart"><Timeline data={tl} highlight={hi} onHover={(id) => hover(id ? [id] : null)} corridor={a.change_course.expected} /></div>}
+        {tl && <div className="chart"><Timeline data={tl} highlight={hi} onHover={(id) => hover(id ? [id] : null)} corridor={corridor} /></div>}
         <div style={{ fontSize: 11.5, color: "var(--graphite)" }}>Courses are drawn as bands under the series they are linked to, so a medication's effect on a value is read off the same axis.</div>
       </Q>
 
@@ -93,15 +97,43 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey }: C
         {a.uncertain.length === 0 && <div className="quiet">Nothing on the chart argues against the current reading.</div>}
       </Q>
 
-      <Q n={6} ask="What should happen next?" sub="loops to close, actions the reasoning suggested, the next review">
+      <Q n={6} ask="What should happen next?" sub="loops to close, what best practice recommends, and what each option is projected to do">
         {a.next.map((x, i) => <Line key={i} x={x} />)}
-        {a.next.length === 0 && <div className="quiet">Nothing is owed on this problem.</div>}
+        {a.guidelines.length > 0 && <h3 className="sub3">Best practice <span className="n">rules checked against the chart, each with its source</span></h3>}
+        {a.guidelines.map((g) => (
+          <div key={g.id} className="line" onMouseEnter={() => hover(g.ids)} onMouseLeave={() => hover(null)}>
+            <span className={`v ${g.status === "gap" ? "unx" : "for"}`}>{g.status === "gap" ? "○" : "✓"}</span>
+            <span>{g.text}<span className="d">{g.source} · {g.status === "gap" ? "not on the plan" : "covered by the plan"}</span></span>
+            {g.action ? <button className="btn small" disabled={!!busy} onClick={() => run("intent", () => api.intent(pid, problemId, g.action!.kind, g.action!.text), "Added to the plan")}>Add</button> : <span className="src" />}
+          </div>
+        ))}
+        {a.options.length > 0 && a.change_course.projection_of && (
+          <>
+            <h3 className="sub3">Options, projected <span className="n">{a.change_course.projection_of.name} from {a.change_course.projection_of.from.value}{a.change_course.projection_of.goal ? ` · goal under ${a.change_course.projection_of.goal}` : ""}</span></h3>
+            <div className="opts">
+              {a.options.map((o) => (
+                <div key={o.id} className={`opt ${o.on_plan ? "on" : ""}`}>
+                  <span className="lab">{o.label}</span>
+                  <span className="eff num">{o.effect.low} to {o.effect.high}</span>
+                  <span className="by">full effect by {dmy(o.full_effect_by)}{o.reaches_goal_by ? ` · to goal about ${dmy(o.reaches_goal_by)}` : " · alone, not to goal"}</span>
+                  {o.on_plan ? <span className="pill ok">on the plan</span> : <button className="btn small" disabled={!!busy} onClick={() => run("intent", () => api.intent(pid, problemId, o.kind, o.text), "Added to the plan")}>Add</button>}
+                  <span className="srcline">{o.source}</span>
+                </div>
+              ))}
+            </div>
+            <div className="simnote">{a.change_course.projection_of.note}</div>
+          </>
+        )}
+        {a.next.length + a.guidelines.length + a.options.length === 0 && <div className="quiet">Nothing is owed on this problem.</div>}
       </Q>
 
       <Q n={7} ask="What would make us change course?" sub="the expectation, and the thresholds the rules watch">
         {a.change_course.expected ? (
           <p className="serif">{a.change_course.expected.statement}, by {dmy(a.change_course.expected.by)} · <b>{a.change_course.expected.status.replace("_", " ")}</b>.</p>
-        ) : <p className="serif">No expectation is set. One is written when a suspected cause is stopped.</p>}
+        ) : !a.change_course.projection && <p className="serif">No expectation is set. One is written when something on the plan is projected to move the value.</p>}
+        {a.change_course.projection && a.change_course.projection_of && (
+          <p className="serif">On the current plan ({a.change_course.projection.labels.join("; ").toLowerCase()}), {a.change_course.projection_of.name.toLowerCase()} is projected at <b className="num">{a.change_course.projection.at_full_effect.low} to {a.change_course.projection.at_full_effect.high}</b> by {dmy(a.change_course.projection.full_effect_by)}{a.change_course.projection.reaches_goal_by ? `, under goal by about ${dmy(a.change_course.projection.reaches_goal_by)}` : ", not to goal"}. A value above that band after that date is a miss, and the plan is what changes.{a.change_course.projection.observed ? ` Observed ${a.change_course.projection.observed.value} on ${dmy(a.change_course.projection.observed.time)}: ${a.change_course.projection.observed.status}.` : ""}</p>
+        )}
         {a.change_course.reconsider_if.map((r, i) => <Line key={`r${i}`} x={{ text: `Reassess if ${r}`, ids: [] }} v="unx" />)}
         {a.change_course.tripwires.map((t, i) => <Line key={i} x={{ text: `${t.name} ${t.latest.value} · ${t.state}`, detail: `tripwire: ${t.threshold}`, ids: t.ids }} />)}
       </Q>

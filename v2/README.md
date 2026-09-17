@@ -34,6 +34,25 @@ that attested it, and the gate shows what is accepted and not yet attested.
 One button in the header names the next thing owed: read the note, review it (decisions one at a
 time, the rest signs with the note), sign it, assemble the visit note, sign it.
 
+## Three kinds of suggestion, kept apart
+
+Under *what should happen next* a suggestion says where it comes from:
+
+- **Best practice** (`v2/guidelines.py`): rules checked against the chart, each with its source (ACC/AHA 2017,
+  ADA Standards of Care 2024, KDIGO), marked *covered by the plan* or *not on the plan*, with an **Add** that puts
+  the recommended line on the plan. The gate counts the gaps per problem.
+- **Reasoning**: what the model reads from this patient's trends and courses, agreed or dismissed.
+- **Projection** (`v2/simulate.py`): for each candidate action, what it is projected to do to the monitored value,
+  as a range with the date of full effect and whether it reaches goal, from a small table of published average
+  effects (Law 2009, Johnson 1994, DASH-Sodium, Hirst 2012, ADA). Options already on the plan are combined into
+  *the current plan's* projection, which is drawn as the corridor on the trajectory, stated under *what would make
+  us change course*, and summarised on the gate ("on the current plan, projected under 140 by about 13 Oct").
+  When the next value lands it is compared with the band: within, better, or missed.
+
+A projection is computed on demand and never stored, like a TrendSummary. It is a range, not a probability, and not
+specific to the patient until the patient's own responses say how well it held. Choosing an option is an ordinary
+plan line.
+
 ## The three claims the demo makes
 
 - **The system watches every problem all the time.** The gate is recomputed on every request from

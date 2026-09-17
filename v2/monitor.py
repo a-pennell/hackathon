@@ -19,6 +19,8 @@ from ehr.focus import clusters
 from ehr.overview import _pending_loops, _since, patient_overview
 from ehr.reason import _accepted
 from ehr.review import list_queues
+from v2.guidelines import guidelines
+from v2.simulate import simulate
 
 STANDING_WORD = {"off_course": "off course", "watch": "watch", "good": "in good standing", "unmonitored": "not monitored"}
 
@@ -64,6 +66,18 @@ def _next_for(card: dict | None, loops: list[dict]) -> str | None:
     return None
 
 
+def _forecast(patient: dict, problem_id: str, codes: list[str], today: date) -> str | None:
+    sim = simulate(patient, problem_id, codes, today=today) if codes else None
+    if not sim:
+        return None
+    plan = sim.get("current_plan")
+    if not plan:
+        return "nothing on the plan is projected to move it"
+    if plan.get("reaches_goal_by"):
+        return f"on the current plan, projected under {sim['goal']:g} by about {plan['reaches_goal_by']}"
+    return f"on the current plan, projected {plan['at_full_effect']['low']:g} to {plan['at_full_effect']['high']:g} by {plan['full_effect_by']}: not to goal"
+
+
 def problem_list(patient: dict, *, proposed_dir: Path = PROPOSED_DIR, today: date | None = None) -> dict:
     today = today or date.today()
     win = _window(today)
@@ -91,6 +105,8 @@ def problem_list(patient: dict, *, proposed_dir: Path = PROPOSED_DIR, today: dat
             "lead": (concern or {}).get("lead"), "pending": (concern or {}).get("pending", 0) if concern else 0,
             "expected": {k: card["expected"][k] for k in ("statement", "by", "status")} if card and card.get("expected") else None,
             "next": _next_for(card, my_loops), "last_change": last, "onset": p.get("onset_date"),
+            "forecast": _forecast(patient, p["id"], cl["codes"], today),
+            "gaps": sum(1 for g in guidelines(patient, p, today=today) if g["status"] == "gap"),
         })
     order = {"off_course": 0, "watch": 1, "good": 2, "unmonitored": 3}
     rows.sort(key=lambda r: (order[r["standing"]], r["name"]))
@@ -145,13 +161,17 @@ def problem_view(patient: dict, problem_id: str, *, proposed_dir: Path = PROPOSE
            + [{"text": i["suggested_action"].removeprefix("Consider ").capitalize(), "detail": "from a signed insight", "ids": [i["id"]], "kind": "insight"} for i in insights if i.get("suggested_action")])
     if card["surveillance"].get("next_review"):
         nxt.append({"text": f"Next review {card['surveillance']['next_review']}", "detail": "from the monitoring interval", "ids": [], "kind": "review"})
-    change_course = {"expected": card["expected"], "tripwires": [{"name": r["name"], "code": r["code"], "threshold": r["threshold"], "state": r["state"], "latest": r["latest"], "ids": r["ids"]} for r in card["surveillance"]["rows"]],
+    problem = next(p for p in patient["problems"] if p["id"] == problem_id)
+    sim = simulate(patient, problem_id, [r["code"] for r in card["surveillance"]["rows"]], today=today)
+    rules = guidelines(patient, problem, today=today)
+    change_course = {"expected": card["expected"], "projection": (sim or {}).get("current_plan"), "projection_of": {k: sim[k] for k in ("code", "name", "unit", "from", "goal", "note")} if sim else None, "tripwires": [{"name": r["name"], "code": r["code"], "threshold": r["threshold"], "state": r["state"], "latest": r["latest"], "ids": r["ids"]} for r in card["surveillance"]["rows"]],
                      "reconsider_if": [f"{r['trigger']} → {r['then']}" if isinstance(r, dict) else str(r) for r in ((card.get("expected") or {}).get("reconsider_if") or [])]}
     return {"problem": {"id": problem_id, "name": card["problem"]["name"], "standing": standing, "standing_word": STANDING_WORD[standing], "why": why,
                         "epistemic": card["epistemic"], "qualifiers": card["qualifiers"], "steward": card.get("steward"), "onset": card["problem"].get("onset_date"),
                         "members": card.get("members", [])},
             "window": card["window"], "as_of": today.isoformat(),
-            "answers": {"happening": happening, "means": means, "changed": changed, "doing": doing, "uncertain": uncertain, "next": nxt, "change_course": change_course},
+            "answers": {"happening": happening, "means": means, "changed": changed, "doing": doing, "uncertain": uncertain, "next": nxt,
+                        "options": (sim or {}).get("options", []), "guidelines": rules, "change_course": change_course},
             "decisions": card.get("decisions", 0), "pending": card.get("pending", 0)}
 
 
