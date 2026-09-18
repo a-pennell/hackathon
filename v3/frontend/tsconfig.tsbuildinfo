@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/note.tsx","./src/problem.tsx","./src/problems.tsx","./src/review.tsx","./src/timeline.tsx","./src/visit.tsx","./src/api.ts","./src/main.tsx","./src/types.ts","./src/v2types.ts"],"errors":true,"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/note.tsx","./src/problem.tsx","./src/problems.tsx","./src/review.tsx","./src/timeline.tsx","./src/visit.tsx","./src/api.ts","./src/main.tsx","./src/types.ts","./src/v2types.ts"],"version":"5.9.3"}

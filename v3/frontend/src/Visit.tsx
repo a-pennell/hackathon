@@ -16,8 +16,6 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
-  useEffect(() => { if (saved) { if (typeof saved.cursor === "number") setCursor(saved.cursor); if (saved.selected) setSelected(saved.selected); } }, []);  // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { try { sessionStorage.setItem(KEY, JSON.stringify({ cursor, decisions, reasons, authored, selected })); } catch { /* per-viewer convenience only */ } }, [KEY, cursor, decisions, reasons, authored, selected]);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const KEY = `visit:${pid}`;
@@ -26,6 +24,8 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
   const [reasons, setReasons] = useState<Record<string, string>>(saved?.reasons ?? {});
   const [authored, setAuthored] = useState(saved?.authored ?? "");
   const [signed, setSigned] = useState<{ attested: number } | null>(null);
+  useEffect(() => { if (saved) { if (typeof saved.cursor === "number") setCursor(saved.cursor); if (saved.selected) setSelected(saved.selected); } }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { try { sessionStorage.setItem(KEY, JSON.stringify({ cursor, decisions, reasons, authored, selected })); } catch { /* per-viewer convenience only */ } }, [KEY, cursor, decisions, reasons, authored, selected]);
   const [tick, setTick] = useState(0);
   const timer = useRef<number | null>(null);
   const load = useCallback(() => api.visit(pid).then(setV).catch(() => setV(null)), [pid]);
