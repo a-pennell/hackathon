@@ -8,7 +8,7 @@ const PACE_MS = 2200;
 function Watch({ w, go }: { w: Commitment; go: (h: string) => void }) {
   const answered = w.observed || w.status === "unanswered";
   return (
-    <div className={`wrow ${w.kind} ${w.status}`}>
+    <div className={`wrow k-${w.kind} s-${w.status}`}>
       <span className="wkind">{w.kind === "set_aside" ? "set aside" : w.kind}</span>
       <span className="wwhat">
         <b>{w.text}</b>
@@ -234,7 +234,7 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
           ...revealed.filter((x) => x.kind === "problem" && !v.problems.some((p) => p.name === x.text)).map((x) => ({ id: x.id, name: x.text, standing: "proposed", why: "raised at this visit; not on the chart until accepted", isNew: true }))].map((p) => (
           <button key={p.id} className={`gchip ${selected === p.id ? "on" : ""} ${touched.has(p.id) ? "touched" : ""} ${p.isNew ? "new" : ""}`} onClick={() => { setSelected(p.id); setPinned(true); }} title={p.why}>
             <span className={`dot ${p.standing}`} />{p.name}{p.isNew && <span className="pill">new</span>}
-            {heardPer.get(p.id) ? <span className="tag heard" title="findings from this dictation that landed on this problem">{heardPer.get(p.id)}</span> : null}
+            {heardPer.get(p.id) ? <span className="tag heardcount" title="findings from this dictation that landed on this problem">{heardPer.get(p.id)}</span> : null}
             {unanswered.filter((x) => x.problems.includes(p.id)).length > 0 && <span className="tag pend" title="the reading added this; say yes or no">{unanswered.filter((x) => x.problems.includes(p.id)).length}</span>}
           </button>
         ))}
@@ -259,7 +259,7 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
 
         <main className="work">
           {isSigned && commit && (
-            <section className="watch">
+            <section className="handoff">
               <span className="eyebrow">The visit is signed · what the chart is waiting for</span>
               <p className="muted">Signing ended the visit, not the problem. Each line below has a date and something that answers it.</p>
               {commit.watching.map((w, i) => <Watch key={`${w.kind}${i}`} w={w} go={go} />)}
@@ -323,16 +323,16 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
                 <span className="dcount">{stated} stated{inferred.length > 0 && <> · {inferred.length} added{unanswered.length ? <span className="warn">, unanswered</span> : ", answered"}</>}</span>
               </div>
               {(draft?.document.sections ?? []).filter((sec) => sec.source !== "authored").map((sec) => sec.source === "transcript" ? (
-                sec.collapsed ? null : <div key={sec.key} data-key={sec.key} className="dsec transcript"><h3>{sec.heading}</h3><p className="dtr">as you dictated it · shown in the transcript</p></div>
+                sec.collapsed ? null : <div key={sec.key} data-key={sec.key} className="nc-sec is-tr"><h3>{sec.heading}</h3><p className="dtr">as you dictated it · shown in the transcript</p></div>
               ) : (
-                <div key={sec.key} data-key={sec.key} className={`dsec ${sec.key === "not_addressed" ? "open" : ""} ${fresh.has(sec.key) ? "fresh" : ""} ${edits[sec.key] != null ? "edited" : ""}`}>
+                <div key={sec.key} data-key={sec.key} className={`nc-sec ${sec.key === "not_addressed" ? "is-open" : ""} ${fresh.has(sec.key) ? "is-fresh" : ""} ${edits[sec.key] != null ? "is-edited" : ""}`}>
                   <h3>{sec.heading}{done && sec.key !== "not_addressed" && editing !== sec.key && <button className="link small" onClick={() => setEditing(sec.key)}>{edits[sec.key] != null ? "edited · change" : "edit"}</button>}</h3>
                   {editing === sec.key
                     ? <textarea autoFocus value={edits[sec.key] ?? sec.text} onChange={(e) => setEdits((x) => ({ ...x, [sec.key]: e.target.value }))} onBlur={() => setEditing(null)} aria-label={sec.heading} />
                     : <p>{edits[sec.key] ?? sec.text}</p>}
                 </div>
               ))}
-              <div className="dsec own">
+              <div className="nc-sec is-own">
                 <h3>In your words</h3>
                 <textarea value={authored} rows={2} placeholder="Anything the record cannot say. Optional." onChange={(e) => setAuthored(e.target.value)} aria-label="In your words" />
               </div>
@@ -371,7 +371,7 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
             <div className="pv-body">
               <div className="pv-manifest">{(draft ?? preview).manifest.map((g) => <span key={g.kind} className="pill">{g.count} {g.label}</span>)}</div>
               {(draft ?? preview).document.sections.map((sec) => (
-                <section key={sec.key} className={`note-sec ${sec.source ?? "compiled"}`}>
+                <section key={sec.key} className={`note-sec src-${sec.source ?? "compiled"}`}>
                   <h2>{sec.heading} {sec.source !== "transcript" && <span className="pill">{sec.source === "authored" ? "your words" : edits[sec.key] != null ? "compiled · edited" : "compiled from the record"}</span>}</h2>
                   {sec.source === "transcript" || sec.source === "authored" ? <p className="ro">{sec.text}</p>
                     : <textarea value={edits[sec.key] ?? sec.text} rows={Math.max(2, Math.ceil((edits[sec.key] ?? sec.text).length / 70))} onChange={(e) => setEdits((x) => ({ ...x, [sec.key]: e.target.value }))} aria-label={sec.heading} />}

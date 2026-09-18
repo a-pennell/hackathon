@@ -1016,8 +1016,8 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .note-sec { padding: calc(var(--u) * 4) 0; border-top: 1px solid var(--rule-soft); }
 .note-sec h2 { font-family: var(--sans); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--graphite); margin: 0 0 6px; display: flex; gap: 8px; align-items: baseline; }
 .note-sec textarea, .note-sec .ro { width: 100%; font-family: var(--serif); font-size: 14.5px; line-height: 1.6; color: var(--ink); border: 1px dashed var(--pending); background: var(--pending-wash); border-radius: var(--r-sm); padding: 10px 12px; max-width: 72ch; display: block; }
-.note-sec.transcript textarea, .note-sec.transcript .ro { border: 1px solid var(--rule); background: var(--paper-inset); color: var(--ink-2); white-space: pre-wrap; }
-.note-sec.authored textarea { border: 1px solid var(--select); background: var(--paper); }
+.note-sec.src-transcript textarea, .note-sec.src-transcript .ro { border: 1px solid var(--rule); background: var(--paper-inset); color: var(--ink-2); white-space: pre-wrap; }
+.note-sec.src-authored textarea { border: 1px solid var(--select); background: var(--paper); }
 .note-sec .ro { white-space: pre-wrap; margin: 0; }
 .note-sec .cites { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .note-sec .cite { font-family: var(--mono); font-size: 10.5px; padding: 0 6px; border: 1px solid var(--rule); border-radius: 3px; color: var(--graphite); }
@@ -1098,7 +1098,6 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .visit .q { grid-template-columns: 220px 1fr; }
 .visit .chart { max-width: none; }
 @media (max-width: 1100px) { .vgrid { grid-template-columns: 1fr; } }
-.vnote .own { width: 100%; font-family: var(--serif); font-size: 13px; line-height: 1.5; border: 1px solid var(--rule-strong); border-radius: var(--r-sm); background: var(--paper); padding: 8px; resize: vertical; }
 .hline.accept .kind, .hline.accept .tag { color: var(--accepted); }
 .hline .d { display: block; font-size: 11.5px; color: var(--graphite); }
 .link.small { font-size: 11px; color: var(--select); text-decoration: underline; text-underline-offset: 2px; }
@@ -1144,9 +1143,9 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .emove-foot .pill.ok { border-color: var(--rule-strong); }
 
 /* The handoff: signing ends the visit, not the problem. */
-.watch { border: 1px solid var(--rule); border-radius: var(--r-md); background: var(--paper-2); padding: 12px 14px; margin-bottom: calc(var(--u) * 4); }
-.watch .muted { font-size: 12px; color: var(--graphite); margin: 2px 0 10px; }
-.watch .btn { margin-top: 10px; }
+.handoff { border: 1px solid var(--rule); border-radius: var(--r-md); background: var(--paper-2); padding: 12px 14px; margin-bottom: calc(var(--u) * 4); }
+.handoff .muted { font-size: 12px; color: var(--graphite); margin: 2px 0 10px; }
+.handoff .btn { margin-top: 10px; }
 .wrow { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--rule-soft); }
 .wrow:first-of-type { border-top: none; }
 .wkind { font-family: var(--mono); font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--graphite); }
@@ -1156,8 +1155,8 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .wprob:hover { text-decoration: underline; }
 .wby { font-family: var(--mono); font-size: 11px; color: var(--graphite); white-space: nowrap; }
 .wby.done { color: var(--accepted); }
-.wrow.beyond .wby, .wrow.missed .wby { color: var(--flag); }
-.wrow.set_aside .wkind { color: var(--pending); }
+.wrow.s-beyond .wby, .wrow.s-missed .wby { color: var(--flag); }
+.wrow.k-set_aside .wkind { color: var(--pending); }
 
 /* A value landing in the flowsheet as it is spoken. It arrives from just below the line it will occupy — the same
    direction the eye is already travelling down the gutter — and settles in about the time it takes to say it. */
@@ -1175,7 +1174,7 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
    moment worth noticing, and it eases in once rather than twitching on every finding. */
 .gchip { transition: border-color 200ms cubic-bezier(0.16, 1, 0.3, 1), color 200ms cubic-bezier(0.16, 1, 0.3, 1); }
 .gchip.touched { animation: chip-touched 300ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-.gchip .tag.heard { font-family: var(--mono); font-size: 10px; color: var(--graphite); border: none; padding: 0 0 0 2px; }
+.gchip .tag.heardcount { font-family: var(--mono); font-size: 10px; color: var(--graphite); border: none; padding: 0 0 0 2px; }
 @keyframes chip-touched {
   from { box-shadow: 0 0 0 3px var(--select-wash); }
   to   { box-shadow: 0 0 0 0 transparent; }
@@ -1206,16 +1205,16 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .dstate { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; }
 .dstate .dcount { font-family: var(--mono); font-size: 11px; color: var(--graphite); }
 .dstate .warn, .dfoot .warn { color: var(--pending); }
-.dsec { border-top: 1px solid var(--rule-soft); padding-top: 8px; border-radius: var(--r-sm); transition: background-color 900ms cubic-bezier(0.16, 1, 0.3, 1); }
-.dsec h3 { font-family: var(--sans); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--graphite); font-weight: 600; margin: 0 0 4px; display: flex; gap: 8px; align-items: baseline; }
-.dsec h3 .link { text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: auto; }
-.dsec p { font-family: var(--serif); font-size: 13.5px; line-height: 1.5; margin: 0; color: var(--ink); }
-.dsec.transcript .dtr { font-family: var(--sans); font-size: 11.5px; color: var(--graphite); }
-.dsec.fresh { background: var(--pending-wash); transition-duration: 120ms; }
-.dsec.edited p { border-left: 2px solid var(--select); padding-left: 8px; }
-.dsec.open { border: 1px dashed var(--rule-strong); padding: 8px 10px; }
-.dsec.open h3 { color: var(--pending); }
-.dsec textarea { width: 100%; field-sizing: content; min-height: 3lh; resize: vertical; font-family: var(--serif); font-size: 13.5px; line-height: 1.5; border: 1px solid var(--rule-strong); border-radius: var(--r-sm); background: var(--paper); padding: 6px 8px; }
+.nc-sec { border-top: 1px solid var(--rule-soft); padding-top: 8px; border-radius: var(--r-sm); transition: background-color 900ms cubic-bezier(0.16, 1, 0.3, 1); }
+.nc-sec h3 { font-family: var(--sans); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--graphite); font-weight: 600; margin: 0 0 4px; display: flex; gap: 8px; align-items: baseline; }
+.nc-sec h3 .link { text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: auto; }
+.nc-sec p { font-family: var(--serif); font-size: 13.5px; line-height: 1.5; margin: 0; color: var(--ink); }
+.nc-sec.is-tr .dtr { font-family: var(--sans); font-size: 11.5px; color: var(--graphite); }
+.nc-sec.is-fresh { background: var(--pending-wash); transition-duration: 120ms; }
+.nc-sec.is-edited p { border-left: 2px solid var(--select); padding-left: 8px; }
+.nc-sec.is-open { border: 1px dashed var(--rule-strong); padding: 8px 10px; }
+.nc-sec.is-open h3 { color: var(--pending); }
+.nc-sec textarea { width: 100%; field-sizing: content; min-height: 3lh; resize: vertical; font-family: var(--serif); font-size: 13.5px; line-height: 1.5; border: 1px solid var(--rule-strong); border-radius: var(--r-sm); background: var(--paper); padding: 6px 8px; }
 .dfoot { display: flex; flex-direction: column; gap: 6px; align-items: stretch; position: sticky; bottom: -12px; background: var(--paper-2); padding: 10px 0 12px; border-top: 1px solid var(--rule); }
 .dfoot .btn.ghost { align-self: flex-start; }
 
@@ -1223,4 +1222,4 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .pcov { font-size: 12px; color: var(--accepted); }
 .popen { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; }
 .popen .ptext { flex: 1; }
-@media (prefers-reduced-motion: reduce) { .dsec { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .nc-sec { transition: none; } }

@@ -38,14 +38,14 @@ export default function Note({ pid, listing, busy, run, refreshKey }: Ctx) {
         </section>
       )}
       {doc.sections.map((s, i) => (
-        <section key={i} className={`note-sec ${s.source ?? "compiled"}`}>
+        <section key={i} className={`note-sec src-${s.source ?? "compiled"}`}>
           <h2>{s.heading} <span className="pill">{s.source === "transcript" ? "as dictated" : s.source === "authored" ? "your words" : s.edited ? "compiled · edited" : "compiled from the record"}</span></h2>
           {signed || s.collapsed ? <p className="ro">{s.text}</p> : <textarea value={val(i)} rows={Math.max(2, Math.ceil(val(i).length / 90) + (val(i).match(/\n/g)?.length ?? 0))} onChange={(e) => setText((t) => ({ ...t, [i]: e.target.value }))} aria-label={s.heading} />}
           {s.cites.length > 0 && <div className="cites">{s.cites.slice(0, 12).map((c) => <span key={c} className="cite" title={c}>{c}</span>)}{s.cites.length > 12 && <span className="cite">+{s.cites.length - 12}</span>}</div>}
         </section>
       ))}
       {!signed && ready && (
-        <section className="note-sec authored">
+        <section className="note-sec src-authored">
           <h2>In your own words <span className="pill">optional</span></h2>
           <textarea value={authored} rows={3} placeholder="Anything the record does not know: the history as you heard it, your judgment, what you told the patient." onChange={(e) => setAuthored(e.target.value)} aria-label="Your own words" />
         </section>
