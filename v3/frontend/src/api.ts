@@ -21,6 +21,7 @@ export const api = {
   patients: () => req<{ id: string; name: string }[]>("/api/patients"),
   problems: (pid: string) => req<Listing>(`/v2/api/patients/${pid}/problems${q()}`),
   visit: (pid: string) => req<VisitData>(`/v3/api/patients/${pid}/visit${q()}`),
+  signVisit: (pid: string, body: { decisions: Record<string, string>; reasons: Record<string, string>; authored: string }) => req<{ document_id: string; attested: number }>(`/v3/api/patients/${pid}/visit/sign${q()}`, post(body)),
   problem: (pid: string, prob: string) => req<ProblemView>(`/v2/api/patients/${pid}/problems/${prob}${q()}`),
   trajectory: (pid: string, prob: string) => req<Timeline>(`/api/patients/${pid}/problems/${prob}/timeline?window=9m${q(false)}`),
   advance: (pid: string) => req<{ as_of: string; label: string }>(`/v2/api/patients/${pid}/advance`, post()),

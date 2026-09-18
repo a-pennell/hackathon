@@ -41,7 +41,7 @@ export type NoteView = { encounter: { id: string; time: string; type: string; su
 
 /* v3: the visit as one surface */
 export type Utterance = { i: number; start: number; end: number; text: string };
-export type Proposal = { id: string; kind: string; text: string; problems: string[]; quote: string | null; offset: number | null; decision: boolean; status: string; link_ids: string[]; stem: string; change?: boolean };
+export type Proposal = { id: string; kind: string; text: string; problems: string[]; quote: string | null; offset: number | null; decision: boolean; origin: "stated" | "inferred"; status: string; link_ids: string[]; cause_link_ids?: string[]; stem: string; change?: boolean };
 export type VisitData = {
   note: { id: string; author: string; time: string; status?: string; read: boolean; file: string };
   encounter: { id: string; time: string; type: string; summary: string } | null;

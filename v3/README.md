@@ -15,6 +15,23 @@ replaces the relay with one screen, the **Visit**:
 - **The note grows the whole time.** The right pane counts what is accepted, what is heard and not yet accepted, and
   what is to attest. **Close the visit** accepts what is left; **Sign the visit note** is then the one signature.
 
+## Two acts: dictate, sign
+
+Providers dictate and are done, and this keeps that. Every finding the reading takes from the dictation is marked
+**stated** when its passage makes the claim ("daily NSAID use since May, likely contributing" states the cause;
+"with new albuminuria" states the problem) or **inferred** when the reading added a relation the passage does not
+say (metformin as a cause of the diabetes, inferred from "adherence the main driver"). Stated findings need no
+click: the signature accepts them. Inferred ones, usually none or one, take a yes or a no with a reason. Anything
+inferred and unanswered is set aside as unconfirmed, on the record and undoable, not taken into the note.
+
+**Sign the visit note** is then the one act: it accepts what was stated, takes what was said yes to, closes the
+dictated note, compiles the visit note from the record as it now stands, adds the clinician's own words, and
+signs. On Jeane that is 45 items attested by one signature and two clicks after the dictation. The problem page,
+the reasoning and the projections are there to think with, and none of them is owed.
+
+`POST /v3/api/patients/{pid}/visit/sign` does all of it. The visit's working state (where the transcript is, the
+answers given, the clinician's words) survives navigating to Problems and back within the session.
+
 API: `GET /v3/api/patients/{pid}/visit` returns the utterances with character offsets and every proposal of the
 visit's note positioned in the transcript (`v3/api.py`). All actions reuse the v1 review endpoints and the v2
 note endpoints; no new model call is made.

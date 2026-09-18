@@ -12,12 +12,20 @@ const dmy = (iso: string) => { const d = new Date(iso.slice(0, 10) + "T00:00:00"
  *  accepted when the visit closes. The note grows the whole time; there is no separate review and no assemble step. */
 export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) {
   const [v, setV] = useState<VisitData | null>(null);
-  const [cursor, setCursor] = useState(-1);          // index of the utterance being spoken; -1 before the visit starts
+  const [cursor, setCursor] = useState(-1);          // index of the utterance being spoken; -1 before the visit starts (restored below)
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
+  useEffect(() => { if (saved) { if (typeof saved.cursor === "number") setCursor(saved.cursor); if (saved.selected) setSelected(saved.selected); } }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { try { sessionStorage.setItem(KEY, JSON.stringify({ cursor, decisions, reasons, authored, selected })); } catch { /* per-viewer convenience only */ } }, [KEY, cursor, decisions, reasons, authored, selected]);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [reason, setReason] = useState("");
+  const KEY = `visit:${pid}`;
+  const saved = (() => { try { return JSON.parse(sessionStorage.getItem(KEY) ?? "null"); } catch { return null; } })() as { cursor?: number; decisions?: Record<string, "accept" | "reject">; reasons?: Record<string, string>; authored?: string; selected?: string | null } | null;
+  const [decisions, setDecisions] = useState<Record<string, "accept" | "reject">>(saved?.decisions ?? {});
+  const [reasons, setReasons] = useState<Record<string, string>>(saved?.reasons ?? {});
+  const [authored, setAuthored] = useState(saved?.authored ?? "");
+  const [signed, setSigned] = useState<{ attested: number } | null>(null);
   const [tick, setTick] = useState(0);
   const timer = useRef<number | null>(null);
   const load = useCallback(() => api.visit(pid).then(setV).catch(() => setV(null)), [pid]);
@@ -38,8 +46,9 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
   const perUtterance = useMemo(() => { const m = new Map<number, number>(); for (const p of v?.proposals ?? []) { const i = utteranceOf(p); m.set(i, (m.get(i) ?? 0) + 1); } return m; }, [v, utteranceOf]);
   const touched = useMemo(() => new Set(revealed.flatMap((p) => p.problems)), [revealed]);
   useEffect(() => { if (!selected && revealed.length) { const first = revealed.find((p) => p.problems.length); if (first) setSelected(first.problems[0]); } }, [revealed, selected]);
-  const pendingDecisions = revealed.filter((p) => p.decision && p.status === "proposed");
-  const accepted = (v?.proposals ?? []).filter((p) => p.status === "accepted").length;
+  const inferred = revealed.filter((p) => p.origin === "inferred" && p.status === "proposed");
+  const unanswered = inferred.filter((p) => !decisions[p.id]);
+  const stated = revealed.filter((p) => p.origin === "stated" && p.status === "proposed").length;
   const forSelected = revealed.filter((p) => selected && p.problems.includes(selected));
 
   const start = async () => {
@@ -48,13 +57,16 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
     await load();
     setCursor(0); setPlaying(true);
   };
-  const act = (p: Proposal, decision: "accept" | "reject") => run("review", async () => {
-    if (p.change) await api.review(pid, p.stem, { accept_changes: true });
-    else if (decision === "accept") await api.review(pid, p.stem, { accept: [p.id] });
-    else await api.review(pid, p.stem, { reject: [p.id, ...p.link_ids.filter((l) => l !== p.id)], reason_code: "disagree", reason });
-    await load(); setTick((t) => t + 1);
-  }, decision === "accept" ? "Accepted" : "Rejected; your reason is on the record").then(() => { setRejecting(null); setReason(""); });
-  const close = () => v && run("sign", () => api.signNote(pid, v.note.id), "Visit closed: what was left is accepted; sign the visit note when you are ready").then(() => { load(); setTick((t) => t + 1); });
+  // Decisions are answers, not writes: nothing reaches the chart until the one signature.
+  const act = (p: Proposal, decision: "accept" | "reject") => {
+    setDecisions((d) => ({ ...d, [p.id]: decision }));
+    if (decision === "reject") setReasons((r) => ({ ...r, [p.id]: reason }));
+    setRejecting(null); setReason("");
+  };
+  const sign = () => v && run("sign", async () => {
+    const r = await api.signVisit(pid, { decisions, reasons, authored });
+    setSigned({ attested: r.attested }); try { sessionStorage.removeItem(KEY); } catch { /* ignore */ } await load(); setTick((t) => t + 1);
+  }, "Signed. The dictation's findings are on the record; the visit note attests them.");
 
   if (!v) return <div className="lede">Opening the visit…</div>;
   const note = v.note;
@@ -65,7 +77,7 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
           ...revealed.filter((x) => x.kind === "problem" && !v.problems.some((p) => p.name === x.text)).map((x) => ({ id: x.id, name: x.text, standing: "proposed", why: "raised at this visit; not on the chart until accepted", isNew: true }))].map((p) => (
           <button key={p.id} className={`gchip ${selected === p.id ? "on" : ""} ${touched.has(p.id) ? "touched" : ""} ${p.isNew ? "new" : ""}`} onClick={() => setSelected(p.id)} title={p.why}>
             <span className={`dot ${p.standing}`} />{p.name}{p.isNew && <span className="pill">new</span>}
-            {revealed.filter((x) => x.problems.includes(p.id) && x.decision && x.status === "proposed").length > 0 && <span className="tag pend">{revealed.filter((x) => x.problems.includes(p.id) && x.decision && x.status === "proposed").length}</span>}
+            {unanswered.filter((x) => x.problems.includes(p.id)).length > 0 && <span className="tag pend" title="the reading added this; say yes or no">{unanswered.filter((x) => x.problems.includes(p.id)).length}</span>}
           </button>
         ))}
       </div>
@@ -94,20 +106,21 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
                 <span className="eyebrow">Heard at this visit · {v.problems.find((p) => p.id === selected)?.name ?? revealed.find((x) => x.id === selected)?.text}</span>
                 {forSelected.length === 0 && <div className="quiet">{cursor < 0 ? "Nothing yet. Start the visit." : "Nothing said about this problem so far."}</div>}
                 {forSelected.map((p) => (
-                  <div key={p.id} className={`hline ${p.decision ? "decision" : ""} ${p.status}`}>
-                    <span className="kind">{p.kind}</span>
-                    <span className="what">{p.text}{p.quote && <span className="q">“{p.quote}”</span>}</span>
+                  <div key={p.id} className={`hline ${p.origin === "inferred" ? "decision" : ""} ${p.status} ${decisions[p.id] ?? ""}`}>
+                    <span className="kind">{p.origin === "inferred" ? "added" : p.kind}</span>
+                    <span className="what">{p.text}{p.quote && <span className="q">“{p.quote}”</span>}{p.origin === "inferred" && <span className="d">The reading inferred this; the passage does not say it.</span>}</span>
                     {p.status !== "proposed" ? <span className={`tag ${p.status === "accepted" ? "ok" : "warn"}`}>{p.status}</span>
-                      : p.decision ? (
-                        <span className="acts">
-                          <button className="btn small primary" disabled={!!busy} onClick={() => act(p, "accept")}>Accept</button>
-                          <button className="btn small ghost" disabled={!!busy} onClick={() => { setRejecting(rejecting === p.id ? null : p.id); setReason(""); }}>{rejecting === p.id ? "Cancel" : "Reject"}</button>
+                      : p.origin === "inferred" ? (
+                        decisions[p.id] ? <span className={`tag ${decisions[p.id] === "accept" ? "ok" : "warn"}`}>{decisions[p.id] === "accept" ? "yes, take it" : "no"}<button className="link small" onClick={() => setDecisions((d) => { const n = { ...d }; delete n[p.id]; return n; })}> undo</button></span>
+                        : <span className="acts">
+                          <button className="btn small primary" disabled={!!busy} onClick={() => act(p, "accept")}>Yes</button>
+                          <button className="btn small ghost" disabled={!!busy} onClick={() => { setRejecting(rejecting === p.id ? null : p.id); setReason(""); }}>{rejecting === p.id ? "Cancel" : "No"}</button>
                         </span>
-                      ) : <span className="pill">accepted at close</span>}
+                      ) : <span className="pill" title="the passage states it; your signature accepts it">stated</span>}
                     {rejecting === p.id && (
                       <form className="why" onSubmit={(e) => { e.preventDefault(); act(p, "reject"); }}>
-                        <input autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why? One line; it goes on the record and into the note." aria-label="Reason" />
-                        <button className="btn small primary" type="submit" disabled={!!busy}>Reject with this reason</button>
+                        <input autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why not? One line; it goes on the record and into the note." aria-label="Reason" />
+                        <button className="btn small primary" type="submit" disabled={!!busy}>No, with this reason</button>
                       </form>
                     )}
                   </div>
@@ -121,15 +134,24 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
 
         <aside className="vnote">
           <span className="eyebrow">Visit note</span>
-          <div className="big">{accepted}<small> accepted</small></div>
-          <div className="small">{revealed.length - accepted - revealed.filter((p) => p.status === "rejected").length} heard, not yet accepted · {pendingDecisions.length} decision{pendingDecisions.length === 1 ? "" : "s"} waiting · {v.unattested} to attest</div>
-          <p className="muted">The note is the visit's record rendered. Every accepted line is already a sentence in it; nothing is typed twice.</p>
-          {note.status !== "signed" ? (
-            <button className="btn primary" disabled={!!busy || cursor < 0 || pendingDecisions.length > 0} title={pendingDecisions.length ? "decide the chips first" : "accepts everything heard, then the note is yours to sign"} onClick={close}>Close the visit{revealed.length - accepted > 0 ? ` · accepts ${revealed.length - accepted - revealed.filter((p) => p.status === "rejected").length}` : ""}</button>
+          {signed || note.status === "signed" ? (
+            <>
+              <div className="big">signed</div>
+              <p className="muted">{signed ? `${signed.attested} items attested by one signature.` : "The dictation and the visit note are signed."}</p>
+              <button className="btn primary" onClick={() => go("#/note")}>Open the visit note</button>
+            </>
           ) : (
-            <button className="btn primary" onClick={() => go("#/note")}>Sign the visit note</button>
+            <>
+              <div className="big">{stated}<small> stated</small></div>
+              <p className="muted">What the dictation states is accepted by your signature. Nothing to click.</p>
+              <div className="big">{inferred.length}<small> added by the reading</small></div>
+              <p className="muted">{inferred.length === 0 ? "Nothing the passage does not say." : unanswered.length ? `${unanswered.length} without an answer: left out of the note unless you say yes.` : "All answered."}</p>
+              <textarea className="own" value={authored} rows={3} placeholder="Your own words, if any. The rest is compiled from what was said and decided." onChange={(e) => setAuthored(e.target.value)} aria-label="Your own words" />
+              <button className="btn primary" disabled={!!busy || cursor < 0} title="accepts everything the dictation stated, takes what you said yes to, and signs the visit note" onClick={sign}>Sign the visit note</button>
+              {!done && cursor >= 0 && <div className="muted">Signing before the end takes what has been heard so far; the rest is still in the dictation.</div>}
+              <div className="muted">{v.unattested > 0 ? `${v.unattested} to attest from earlier.` : ""}</div>
+            </>
           )}
-          {!done && cursor >= 0 && <div className="muted">Closing before the end accepts what has been heard so far; the rest is still in the dictation.</div>}
         </aside>
       </div>
     </div>
