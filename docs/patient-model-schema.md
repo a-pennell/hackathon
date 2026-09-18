@@ -160,6 +160,18 @@ Relationships are first-class rows, not foreign keys. This is deliberate: one la
 
 The problem-scoped timeline view = "give me everything linked to `prob_ckd`, plotted on one axis."
 
+### 4.1 Extraction shape — a course is a name and a segment
+
+What the extractor is asked to emit for a medication mirrors §4 rather than flattening it: `{ref, quote, name,
+segment: {dose, route, frequency, start, end}, existing_med_id, change, treats_problem_refs}`. This is not only
+tidiness. A strict output schema compiles to a grammar whose cost is dominated by the object with the most
+properties — roughly `2^n` for an object whose properties may arrive in any order — and twelve flat properties on one
+course was large enough for the API to refuse the request outright (*"the compiled grammar is too large"*). Nesting
+turns one `2^12` into a `2^7` plus a `2^5`.
+
+Readers accept both shapes: every extraction recorded before this change is flat
+(`ehr/extract.py::_flatten_segment`).
+
 ### 7.1 `provenance.asserted` — did the passage say it, or did we?
 
 An extracted item's provenance may carry `"asserted": true | false`: the extractor's own answer, given while it had the

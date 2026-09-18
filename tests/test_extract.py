@@ -1,5 +1,6 @@
 import copy
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -318,3 +319,37 @@ def test_undated_earlier_half_of_a_comparison_attaches_or_drops(patient, note):
     assert [o["value"] for o in p["observations"]] == [5.7]
     assert any(l["from"] == "obs_may" and l["to"] == "prob_ckd3" for l in p["links"])
     assert [r["reason"] for r in batch["rejected"]] == ["earlier value of a comparison, undated and not on the chart"]
+
+
+def test_a_course_is_read_whether_its_interval_is_nested_or_flat(tmp_path):
+    """The schema asks for dose/route/frequency/start/end under `segment`, because twelve properties on one object was
+    the largest term in the compiled grammar and made the request too large to compile. Every extraction recorded
+    before that change is flat, and the demo replays those, so both shapes have to read the same."""
+    import copy
+    import json
+    from ehr.extract import run_extraction
+    from ehr.trend import DATA_DIR
+
+    def course(raw_path):
+        d = tmp_path / raw_path.stem
+        (d / "patients").mkdir(parents=True)
+        (d / "proposed" / "pt_002").mkdir(parents=True)
+        for f in (DATA_DIR).glob("pt_*.json"):
+            shutil.copy(f, d / "patients" / f.name)
+        shutil.copy(raw_path, d / "proposed" / "pt_002" / "note_demo_102.raw.json")
+        b = run_extraction("pt_002", ROOT / "data" / "notes" / "note_demo_102.json",
+                           replay=d / "proposed" / "pt_002" / "note_demo_102.raw.json", data_dir=d / "patients")
+        return next(m for m in b["proposed"]["medications"] if "buprofen" in m["name"])["segments"]
+
+    flat_raw = DATA_DIR.parent / "proposed" / "pt_002" / "note_demo_102.raw.json"
+    flat = course(flat_raw)
+    assert flat[0]["dose"] == "400 mg" and flat[0]["start"] == "2026-05-01" and flat[0]["end"] == "2026-09-15"
+
+    # the same response written the way the schema now asks for it
+    raw = json.loads(flat_raw.read_text())
+    nested = copy.deepcopy(raw)
+    for m in nested["parsed"]["medications"]:
+        m["segment"] = {k: m.pop(k, None) for k in ("dose", "route", "frequency", "start", "end")}
+    nested_path = tmp_path / "nested.raw.json"
+    nested_path.write_text(json.dumps(nested))
+    assert course(nested_path) == flat

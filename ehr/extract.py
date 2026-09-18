@@ -68,7 +68,7 @@ Rules
   propose the new stage as a new problem and set `supersedes_problem_id`.
 - Medications: `change` is "new" (not in the chart), "confirm" (chart med the note says the
   patient is still taking), "stop", "dose_change" or "frequency_change" (existing med, set
-  `existing_med_id`). Give dose/route/frequency as written. Dates: absolute YYYY-MM-DD when the
+  `existing_med_id`). Put dose/route/frequency/start/end in `segment`, as written. Dates: absolute YYYY-MM-DD when the
   note gives one; for phrases like "since around April" use the first of that month relative to
   the note date; otherwise null.
 - `suspected_causes`: only when the note itself raises the causal link (e.g. NSAID use and
@@ -129,21 +129,29 @@ OUTPUT_SCHEMA = {
             }}},
         "medications": {"type": "array", "items": {
             "type": "object", "additionalProperties": False,
-            "required": ["ref", "quote", "name", "dose", "route", "frequency", "start", "end",
-                         "existing_med_id", "change", "treats_problem_refs", "confidence"],
+            # The interval fields sit in `segment` rather than flat on the course. Twelve properties on one object is
+            # the largest single term in the compiled grammar (roughly 2^n states for an object whose properties may
+            # arrive in any order), and it is what made the request too large to compile. Nesting splits one 2^12 into
+            # a 2^7 and a 2^5. It also matches the model the schema doc has always described: a course is a name and a
+            # list of segments (§4). Flat responses are still accepted — every recording in data/proposed is flat.
+            "required": ["ref", "quote", "name", "segment", "existing_med_id", "change", "treats_problem_refs"],
             "properties": {
                 "ref": {"type": "string"},
                 "quote": {"type": "string"},
                 "name": {"type": "string"},
-                "dose": {"type": ["string", "null"]},
-                "route": {"type": ["string", "null"]},
-                "frequency": {"type": ["string", "null"]},
-                "start": {"type": ["string", "null"]},
-                "end": {"type": ["string", "null"]},
+                "segment": {
+                    "type": "object", "additionalProperties": False,
+                    "required": ["dose", "route", "frequency", "start", "end"],
+                    "properties": {
+                        "dose": {"type": ["string", "null"]},
+                        "route": {"type": ["string", "null"]},
+                        "frequency": {"type": ["string", "null"]},
+                        "start": {"type": ["string", "null"]},
+                        "end": {"type": ["string", "null"]},
+                    }},
                 "existing_med_id": {"type": ["string", "null"]},
                 "change": {"type": "string", "enum": ["new", "confirm", "stop", "dose_change", "frequency_change"]},
                 "treats_problem_refs": {"type": "array", "items": {"type": "string"}},
-                "confidence": {"type": "number"},
             }}},
         "plans": {"type": "array", "items": {
             "type": "object", "additionalProperties": False,
@@ -435,9 +443,16 @@ class Validator:
             if not linked:
                 self.reject("finding", it, "no resolvable problem to link the finding to")
 
+    @staticmethod
+    def _flatten_segment(it: dict) -> dict:
+        """Accept a course either way: `segment` as the schema now asks for it, or the interval fields flat on the item,
+        which is how every extraction recorded before the change reads."""
+        seg = it.get("segment")
+        return {**it, **{k: seg.get(k) for k in ("dose", "route", "frequency", "start", "end")}} if isinstance(seg, dict) else it
+
     def medications(self, items: list[dict]):
         pid_of_patient = self.patient["patient"]["id"]
-        for it in items:
+        for it in (self._flatten_segment(x) for x in items):
             q = self.quote_of("medication", it)
             if q is None:
                 continue
@@ -629,10 +644,10 @@ def run_extraction(patient_id: str, note_file: str | Path, *, model: str = DEFAU
     note, encounter = load_note_file(note_file)
     patient = load_patient(patient_id, data_dir)
     changes = ingest(patient, note, encounter)
+    raw = json.loads(Path(replay).read_text()) if replay else None
+    batch, raw = extract_note(patient, note, model=model, raw=raw)   # before the write: a failure leaves no visit behind
     if changes and save:
         save_patient(patient, data_dir)
-    raw = json.loads(Path(replay).read_text()) if replay else None
-    batch, raw = extract_note(patient, note, model=model, raw=raw)
     batch["ingest"] = changes
     qp = queue_path(patient_id, note["id"], data_dir.parent / "proposed")
     if save:
@@ -697,12 +712,12 @@ def main(argv: list[str]) -> int:
     patient = load_patient(pid, data_dir)
 
     changes = ingest(patient, note, encounter)
-    if changes and not args.no_ingest:
-        save_patient(patient, data_dir)
-        print("ingest:", "; ".join(changes))
-    elif changes:
+    # The encounter and note are held back until the extraction succeeds. Writing them first left a failed live run
+    # with a visit on the chart and no queue behind it — which is what the rest of the app reads as "the current
+    # visit", so one 400 from the API broke the demo.
+    if changes and args.no_ingest:
         print("ingest (not saved, --no-ingest):", "; ".join(changes))
-    else:
+    elif not changes:
         print("ingest: note and encounter already in chart")
 
     if args.dry_run:
@@ -722,6 +737,14 @@ def main(argv: list[str]) -> int:
     except RuntimeError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
+    except Exception as e:  # an API error leaves the chart as it was, so the run can simply be repeated
+        print(f"error: {type(e).__name__}: {e}", file=sys.stderr)
+        print("the chart was not changed; fix the cause and run it again", file=sys.stderr)
+        return 1
+
+    if changes and not args.no_ingest:
+        save_patient(patient, data_dir)
+        print("ingest:", "; ".join(changes))
 
     qp = queue_path(pid, note["id"], data_dir.parent / "proposed")
     qp.parent.mkdir(parents=True, exist_ok=True)
