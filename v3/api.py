@@ -31,7 +31,12 @@ ROOT = Path(__file__).resolve().parent.parent
 NOTES_DIR = ROOT / "data" / "notes"
 
 DECISION_LINKS = ("suspected_cause",)
-CAUSAL_CUES = ("contribut", "cause", "caus", "due to", "secondary to", "because of", "attribut", "driver", "driven", "from the", "worsen", "raise", "raising", "induced", "related to")
+CAUSAL_CUES = ("contribut", "cause", "caus", "due to", "secondary to", "because of", "attribut", "driver", "driven", "from the", "worsen", "raise", "raising", "induced", "related to",
+               "explain", "blame", "aggravat", "exacerbat", "precipitat", "trigger", "responsible for", "accounts for", "account for", "on the back of", "culprit", "the result of", "provoked")
+# A dictation says what is not so as often as what is. The cue words above appear in both, so a passage carrying any of
+# these is never read as asserting a relation: it falls to "inferred", which asks. The asymmetry is the whole point —
+# a wrong "inferred" costs one click, a wrong "stated" attests a claim the clinician did not make.
+NEGATION = re.compile(r"\b(no|not|n't|never|none|negative|without|denies|denied|doubt|doubtful|unlikely|ruled? out|rules out|excluded?|absent|rather than|resolved|against|nothing|neither|nor)\b", re.I)
 ALIASES = {"ibuprofen": ("nsaid", "advil", "motrin"), "naproxen": ("nsaid", "aleve"), "hydrochlorothiazide": ("hctz", "thiazide"), "lisinopril": ("ace inhibitor", "acei"),
            "metformin": ("metformin",), "acetaminophen": ("tylenol", "acetaminophen")}
 
@@ -53,9 +58,13 @@ def _states_problem(quote: str, name: str) -> bool:
 
 def _origin(kind: str, quote: str | None, *, cause_name: str | None = None, problem_name: str | None = None) -> str:
     """'stated': the passage itself makes the claim, so the dictation already decided it and the note's signature covers
-    it. 'inferred': the reading added a relation the passage does not state; that one needs a look."""
+    it. 'inferred': the reading went past what the passage says, or the passage is not plainly asserting it; that one is
+    put to the clinician. Only the two kinds that assert something — a cause and a new problem — can be waved through,
+    and only when the passage is unhedged: everything else asks, because asking is cheap and a wrong attestation is not."""
     if not quote:
         return "inferred"
+    if kind in ("cause", "problem") and NEGATION.search(quote):
+        return "inferred"  # the passage may be denying it; a denial read as an assertion is the one error we cannot make
     if kind == "cause":
         return "stated" if cause_name and _mentions(quote, cause_name) and any(c in quote.lower() for c in CAUSAL_CUES) else "inferred"
     if kind == "problem":

@@ -59,3 +59,29 @@ and the problem card cannot disagree.
 both expectations answer *within*, the systolic lands at 138 against a projected 133.2–139.6 and reads *better*, the
 "BMP in 2 weeks" line stops being owed and reads *resulted*, and the count falls from nine to four. Each line links to
 its problem, which is the seam into the rest of the chart.
+
+## What "stated" is worth, and what it is not
+
+A finding marked **stated** is accepted by the signature without a click, so the classifier decides what a clinician
+never has to look at. Its two errors are not comparable: a stated thing called inferred costs one click; an inferred —
+or *denied* — thing called stated attests a claim the clinician did not make.
+
+Tested against eighteen passages written as dictation, the first version got ten wrong, and five of those were the
+dangerous kind. `"I doubt the ibuprofen is contributing"` was read as **stated**, because the sentence contains
+"ibuprofen" and "contribut": the chart would have recorded the suspected cause the clinician had just rejected.
+`"Ruled out albuminuria"` would have added the problem. The cue list is a closed vocabulary over open language and
+had no notion of a sentence saying *no*.
+
+Two changes (`v3/api.py`, `tests/test_origin.py`): a passage carrying any negation is never read as asserting a
+relation, and the cue list covers the causal verbs a clinician actually dictates ("explains", "aggravated by",
+"on the back of"). Seventeen of eighteen now, and the one miss asks instead of assuming.
+
+Run against a **second dictation** — the four-week visit, where the lisinopril has caused a cough and a new
+neuropathy appears — the split is **12 stated / 6 inferred**, not the 30 / 1 of the first note. That ratio was an
+artifact of one note's phrasing. Zero unsafe errors; three misses, all in the direction of asking:
+`"I think this is the lisinopril"` asserts a cause with no verb the list carries, and `"no fever, no sputum"` costs
+the cough a click because sentence-level negation cannot tell which clause it belongs to.
+
+The real fix is not a longer word list. The model has already read the passage and should say whether it asserts the
+relation, with the rule kept as the fallback for anything that does not carry the field — **flagged as a schema
+addition**, not applied.
