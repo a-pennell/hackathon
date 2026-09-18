@@ -152,7 +152,7 @@ svg.tl .relation.cause { fill: var(--flag); }
 
 .tip {
   position: absolute; z-index: 5; pointer-events: none;
-  max-width: 320px; padding: calc(var(--u) * 2) calc(var(--u) * 2.5);
+  max-width: 320px; box-sizing: border-box; padding: calc(var(--u) * 2) calc(var(--u) * 2.5);
   background: var(--ink); color: var(--paper); border-radius: var(--r-md);
   font-size: 12px; line-height: 1.4; box-shadow: 0 2px 8px rgba(0,0,0,0.18);
 }

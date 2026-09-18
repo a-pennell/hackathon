@@ -23,7 +23,12 @@ const fmtShort = (ms: number) => {
 };
 const nice = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2)).replace(/\.0+$/, "");
 
-type Tip = { x: number; y: number; body: React.ReactNode } | null;
+type Tip = { x: number; y: number; w: number; body: React.ReactNode } | null;
+
+// The tip is absolutely positioned with only `left` set, so it shrink-to-fits into whatever room is left to its
+// right: near the right-hand edge it squeezes into a tall narrow column instead of reading as a line or two. So it
+// gets a definite width, and flips to the left of the cursor when it would not fit on the right.
+const TIP_W = 320;
 
 export default function Timeline({ data, highlight, onHover, onOpenNote, corridor }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
@@ -77,7 +82,10 @@ export default function Timeline({ data, highlight, onHover, onOpenNote, corrido
 
   const show = (e: React.MouseEvent, body: React.ReactNode) => {
     const r = wrap.current!.getBoundingClientRect();
-    setTip({ x: e.clientX - r.left + 14, y: e.clientY - r.top + 12, body });
+    const w = Math.min(TIP_W, r.width - 16);
+    const cx = e.clientX - r.left;
+    const right = cx + 14;
+    setTip({ x: right + w <= r.width - 8 ? right : Math.max(8, cx - 14 - w), y: e.clientY - r.top + 12, w, body });
   };
   const hide = () => {
     setTip(null);
@@ -227,7 +235,7 @@ export default function Timeline({ data, highlight, onHover, onOpenNote, corrido
         )}
       </svg>
       {tip && (
-        <div className="tip" style={{ left: tip.x, top: tip.y }}>
+        <div className="tip" style={{ left: tip.x, top: tip.y, width: tip.w }}>
           {tip.body}
         </div>
       )}
