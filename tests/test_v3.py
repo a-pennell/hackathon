@@ -184,3 +184,34 @@ def test_the_note_records_what_the_plan_is_expected_to_do_and_what_the_visit_lef
     closing = by["not_addressed"]
     assert closing["heading"] == "Not addressed at this visit" and closing["text"] == "Hypertriglyceridemia."
     assert closing["cites"] == ["prob_0011"]
+
+
+def test_the_note_builds_as_the_dictation_goes_and_is_signed_only_whole(visit):
+    """The note is written alongside the reasoning, not after it. Part-way through, the preview compiles only what has
+    been spoken — the transcript to that point, the findings it has reached — and the closing list reads as what is not
+    yet addressed, shrinking as the visit goes. The signature takes the whole visit, and refuses a partial one."""
+    v = v3api.visit("pt_002")
+    text, utts = v["text"], v["utterances"]
+    def upto(i):  # the dictation as far as utterance i, and the findings that have landed by then
+        end = utts[i]["end"]
+        return v3api.VisitSignBody(heard=[p["id"] for p in v["proposals"] if p["offset"] is not None and p["offset"] < end], upto=end)
+    bp = next(u["i"] for u in utts if u["text"].startswith("BP 154/94"))
+    s_line = next(u["i"] for u in utts if u["text"] == "S:")
+    early, mid, whole = (v3api.preview_visit_note("pt_002", b)["document"] for b in (upto(s_line), upto(bp), v3api.VisitSignBody()))
+    sec = lambda d: {s["key"]: s for s in d["sections"]}  # noqa: E731
+
+    first = early["sections"][0]
+    assert first["source"] == "transcript" and first["text"].startswith("Jeane Lueilwitz")
+    assert "Tired" not in first["text"] and "154/94" not in first["text"]            # nothing past what has been said
+    assert sec(early)["not_addressed"]["heading"] == "Not yet addressed"
+    assert "Essential hypertension" in sec(early)["not_addressed"]["text"]
+
+    assert "154/94" in mid["sections"][0]["text"] and "A/P" not in mid["sections"][0]["text"]
+    assert "Essential hypertension" not in sec(mid).get("not_addressed", {"text": ""})["text"]  # the pressures have landed on it
+    assert len(mid["sections"]) > len(early["sections"])
+
+    assert sec(whole)["not_addressed"]["heading"] == "Not addressed at this visit"
+    assert sec(whole)["not_addressed"]["text"] == "Hypertriglyceridemia."
+
+    with pytest.raises(Exception, match="signed whole"):
+        v3api.sign_visit("pt_002", upto(bp))

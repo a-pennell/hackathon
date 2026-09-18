@@ -184,9 +184,12 @@ def _plan_of_signature(v: dict, body: "VisitSignBody") -> tuple[list[str], list[
     A stated finding is accepted with its links. For an inferred cause the answer applies to the relation only; the
     thing itself (the course, the result) stays."""
     accept, reject_yes, reject_unconfirmed, reason_of = [], [], [], {}
+    heard = set(body.heard) if body.heard is not None else None
     for p in v["proposals"]:
         if p["status"] != "proposed" or p.get("change"):
             continue
+        if heard is not None and p["id"] not in heard:
+            continue  # not spoken yet: neither taken nor set aside
         ids = list(dict.fromkeys([p["id"], *p.get("link_ids", [])]))
         cause_ids = p.get("cause_link_ids") or ([p["id"]] if p["id"].startswith("lnk_") else [])
         rest = [i for i in ids if i not in cause_ids]
@@ -204,9 +207,13 @@ def _plan_of_signature(v: dict, body: "VisitSignBody") -> tuple[list[str], list[
 class VisitSignBody(BaseModel):
     decisions: dict[str, str] = {}       # inferred proposal id -> "accept" | "reject"
     reasons: dict[str, str] = {}         # id -> the clinician's reason for a rejection
-    sections: list[dict] | None = None   # edits to the compiled note, by heading
+    sections: list[dict] | None = None   # edits to the compiled note, by section key
     authored: str | None = None
     by: str = DEFAULT_REVIEWER
+    # How far the dictation has got, for the note as it builds: the proposals the transcript has reached, and the
+    # character it has reached. A preview only. A clinician signs the visit when the dictation is finished, not partway.
+    heard: list[str] | None = None
+    upto: int | None = None
 
 
 @contextmanager
@@ -240,7 +247,10 @@ def _perform_signature(pid: str, v: dict, body: "VisitSignBody", *, data_dir: Pa
                 apply_review(pid, stem, accept=[aid], by=body.by, data_dir=data_dir)
             except (ValueError, KeyError):
                 pass
-        apply_review(pid, stem, accept_changes=True, by=body.by, data_dir=data_dir)
+        # course changes are taken together; while the note is building they wait until all of them have been spoken
+        changes = [x["id"] for x in v["proposals"] if x.get("change")]
+        if body.heard is None or set(changes) <= set(body.heard):
+            apply_review(pid, stem, accept_changes=True, by=body.by, data_dir=data_dir)
         # close the dictated note without accepting what was set aside
         p = load_patient(pid, data_dir)
         note = next((n for n in p.get("notes", []) if n["id"] == v["note"]["id"]), None)
@@ -253,7 +263,7 @@ def _perform_signature(pid: str, v: dict, body: "VisitSignBody", *, data_dir: Pa
     enc = open_encounter(p)
     if not enc:
         raise HTTPException(404, "no encounter to document")
-    batch = draft_note(p, enc, proposed_dir=proposed_dir, today=_today(as_of))
+    batch = draft_note(p, enc, proposed_dir=proposed_dir, today=_today(as_of), transcript_upto=body.upto)
     doc = batch["proposed"]["documents"][0]
     edits = {(sec.get("key") or sec.get("heading") or "").strip(): sec.get("text") for sec in (body.sections or []) if isinstance(sec.get("text"), str)}
     for sec in doc["sections"]:
@@ -274,6 +284,8 @@ def sign_visit(pid: str, body: VisitSignBody, as_of: str | None = None):
     v = visit(pid, as_of)
     if v["note"].get("status") == "signed":
         raise HTTPException(400, "this visit's note is already signed")
+    if body.heard is not None or body.upto is not None:
+        raise HTTPException(400, "the visit is signed whole, once the dictation is finished; heard and upto are for the note as it builds")
     p, enc, batch, doc = _perform_signature(pid, v, body, data_dir=DATA_DIR, proposed_dir=PROPOSED_DIR, as_of=as_of)
     accept_item(p, batch, doc["id"], review=review_record("accepted", body.by, encounter_id=enc))
     stamped = attest(p, enc, doc["id"])

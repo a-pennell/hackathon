@@ -94,8 +94,11 @@ def _course_events(name: str, segs: list[dict], day: str) -> list[str]:
     return events
 
 
-def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSED_DIR, today: date | None = None) -> dict:
-    """Compile the visit note for one encounter as a proposed Document. Deterministic; no model call."""
+def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSED_DIR, today: date | None = None,
+               transcript_upto: int | None = None) -> dict:
+    """Compile the visit note for one encounter as a proposed Document. Deterministic; no model call.
+    `transcript_upto` compiles the note as it stands part-way through the dictation: the transcript to that character,
+    and the closing list read as what is not yet addressed rather than what the visit left."""
     today = today or date.today()
     enc = next((e for e in patient.get("encounters", []) if e["id"] == encounter_id), None)
     if enc is None:
@@ -122,7 +125,7 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
     # 1. The transcript, verbatim: history and exam as the first section; the dictated assessment and plan folded,
     # since the sections compiled from the record restate them and a provider should not read their A/P twice.
     if note:
-        text = note["text"]
+        text = note["text"] if transcript_upto is None else note["text"][:transcript_upto]
         m = re.search(r"^\s*(A/P|A&P|Assessment(?: and Plan| & Plan)?|A)\s*:", text, re.M | re.I)
         if m:
             add("Subjective", text[: m.start()], [note["id"]], "transcript")
@@ -298,7 +301,8 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
     # — a problem can be left for a good reason — but a note that is silent about it reads as if it was forgotten.
     untouched = [p for p in patient["problems"] if p["status"] == "active" and p["id"] not in touched]
     if untouched:
-        add("Not addressed at this visit", "; ".join(p["name"] for p in untouched) + ".", [p["id"] for p in untouched], "compiled", key="not_addressed")
+        add("Not yet addressed" if transcript_upto is not None else "Not addressed at this visit",
+            "; ".join(p["name"] for p in untouched) + ".", [p["id"] for p in untouched], "compiled", key="not_addressed")
 
     now = datetime.now().astimezone().isoformat(timespec="seconds")
     author = (note or {}).get("author") or DEFAULT_REVIEWER
