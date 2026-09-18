@@ -612,6 +612,27 @@ own responses.
 
 ---
 
+## 22. v3: the visit in the order a clinician reasons (18 September 2026)
+
+A follow-up visit is management reasoning more than diagnosis, and it runs in a fairly fixed order: orient (why here,
+what changed, which problems, what is missing), gather (history, exam, results, testing hypotheses as they go),
+represent (one line per problem), link (one cause across two problems, one decision serving two), decide, set
+expectations (what should happen, by when, what would make us change course), close the loop (what was not touched).
+The note should record that reasoning; the common failure is a note that records the data and leaves it out.
+
+v3 now supports each step where it happens and has each one write its own part of the note — the table is in
+`v3/README.md`. The design consequences worth keeping:
+
+- **The note is written alongside the reasoning, not after it.** It compiles from what has been spoken so far and grows
+  through the visit. A note that appears only at the end turns documentation back into a separate task.
+- **Expectations belong in the note.** A drug started today that is expected to push a value the wrong way (lisinopril
+  and creatinine) is reasoning the next reader needs; left on a screen, a creatinine of 1.0 next month reads as harm.
+- **Silence is not a decision.** A question the clinician did not answer must not be written into the note as a
+  rejection. It was, in every signed note, until walking the visit step by step made it visible.
+- **Best practice is a checklist against the plan as it stands**, consulted at the moment of deciding, and never
+  written into the note. What the dictation covered reads as covered; what is left is what to add before signing.
+- **The signature closes a finished note.** A clinician does not sign halfway through dictating.
+
 ## Appendix: schema additions to flag (for `schema-v2-proposal.md`)
 
 All additive. None adopted until the team agrees.

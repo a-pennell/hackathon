@@ -10,10 +10,12 @@ replaces the relay with one screen, the **Visit**:
 - **Findings land on the problem they touch.** The gate strip across the top lights the problems the conversation has
   reached; a problem the note raises appears as a dashed "new" chip. The chosen problem shows "Heard at this visit"
   above its seven questions: what was said about it, with the passage.
-- **Only decisions wait.** A problem raised, a cause asserted, a course changed: these sit as chips with Accept and
-  Reject (with a reason, inline). Everything else is marked "accepted at close".
-- **The note grows the whole time.** The right pane counts what is accepted, what is heard and not yet accepted, and
-  what is to attest. **Close the visit** accepts what is left; **Sign the visit note** is then the one signature.
+- **Only what was inferred waits.** Whatever the dictation states is taken by the signature; what the reading added
+  beyond the passage — usually one thing — takes a yes, or a no with a reason, inline.
+- **The note writes itself on the right, as the dictation goes**: assessments as findings land, the exam as it is read
+  out, each plan as it is dictated, and what the plan is expected to do. It is signed once, whole, when the dictation
+  is finished. Before the visit the middle orients; after it, the screen hands over to what the chart is waiting for.
+  Why it is laid out in that order is in *The visit follows the order a clinician reasons in*, below.
 
 ## Two acts: dictate, sign
 
@@ -26,17 +28,17 @@ inferred and unanswered is set aside as unconfirmed, on the record and undoable,
 
 **Sign the visit note** is then the one act: it accepts what was stated, takes what was said yes to, closes the
 dictated note, compiles the visit note from the record as it now stands, adds the clinician's own words, and
-signs. On Jeane that is 45 items attested by one signature and two clicks after the dictation. The problem page,
+signs. On Jeane that is 45 items attested by one signature (46 with the statin added from the checklist). The problem page,
 the reasoning and the projections are there to think with, and none of them is owed.
 
 `POST /v3/api/patients/{pid}/visit/sign` does all of it. The visit's working state (where the transcript is, the
 answers given, the clinician's words) survives navigating to Problems and back within the session.
 
-**Review the note** shows the same note first. `POST /v3/api/patients/{pid}/visit/preview` runs the signature on a
-copy of the chart and the queue — the same decisions, the same compile — and returns the document and the manifest
-without writing anything. The dictated sections are shown as dictated; the compiled sections are editable there,
-and an edit travels with the signature as `sections`, so what the provider reads is what gets signed. Signing is
-available from the panel, so reading the note first costs one extra click and no second pass.
+The note column is the preview. `POST /v3/api/patients/{pid}/visit/preview` runs the signature on a copy of the chart
+and the queue — the same decisions, the same compile — and returns the document, the manifest and the best-practice
+check, without writing anything; with `heard` and `upto` it compiles the note as it stands part-way through. Compiled
+sections are editable once the dictation is finished, and an edit travels with the signature as `sections`, so what
+the clinician reads is what gets signed. **Read full page** opens the same draft at reading width.
 
 API: `GET /v3/api/patients/{pid}/visit` returns the utterances with character offsets and every proposal of the
 visit's note positioned in the transcript (`v3/api.py`). All actions reuse the v1 review endpoints and the v2
@@ -126,9 +128,33 @@ amber badge beside it, which is the one thing wanting an answer, has to stay the
 A side effect is the most useful line on the gate: at the end, hypertriglyceridemia is the only chip with no count at
 all. Nothing was said about it. That is the "what did this visit not address" question answering itself, for free.
 
+## The visit follows the order a clinician reasons in
+
+A follow-up visit for a patient like Jeane is management reasoning more than diagnosis, and it runs in a fairly fixed
+order. Each step should be supported where it happens, and each should write its own part of the note — because a good
+note is a record of the reasoning, and the common failure is a data dump with the reasoning left out.
+
+| step | what the clinician is doing | where v3 supports it | what it writes into the note |
+|---|---|---|---|
+| 1 Orient | why is she here, what changed, which problems need me, what does best practice say is missing | **Before you go in**, in the middle before the visit starts: the reason for the visit, each problem's standing and why, and the best practice the plan does not yet cover | — |
+| 2 Gather | history, exam, results — testing hypotheses as they go | the transcript, findings landing on their problems and in their flowsheet rows as they are spoken | *History and exam, as dictated*; *Objective* |
+| 3 Represent | one line per problem, with its qualifiers | the middle follows the dictation to the problem being talked about | *Assessment · …* per problem |
+| 4 Link | one cause across two problems, one decision serving two; the place anchoring happens | stated vs inferred, and the one question the reading cannot answer | the cause, or the rejection with the clinician's reason |
+| 5 Decide | options, harms, guideline, patient | best practice checked against **the plan as it stands**, at the moment of signing, with **Add** | *Plan · …* per problem |
+| 6 Set expectations | what should happen, by when, what would make us change course | the expected moves, and the watch list after signing | *Expected on lisinopril: creatinine up to 1.04 mg/dL…* |
+| 7 Close the loop | what this visit did not touch | the gate chip with no count; the closing section | *Not addressed at this visit: hypertriglyceridemia.* |
+
+The note is written alongside all of this: the right-hand column is the note, compiled from what has been spoken so far
+(`POST …/visit/preview` with `heard` and `upto`), so it grows through the visit rather than appearing at the end. It
+is signed whole, once the dictation is finished — a clinician does not sign a note halfway through dictating it.
+
+Walking the visit in this order found two things that were wrong, not just missing: every signed note recorded an
+unanswered question as "rejected: not confirmed at signing", a decision nobody made; and the note column claimed
+signing early took "what has been heard so far", which the signature never did.
+
 ## Runbook — the three-minute demo
 
-Rehearsed end to end at 1024×768 on a clean chart, last on 17 Sep 2026. Every number below was read off that
+Rehearsed end to end at 1440×900 on a clean chart, last on 18 Sep 2026. Every number below was read off that
 run, not estimated; the clock is the machine time plus room to talk.
 
 **Before you start.** Server up (`python3 -m uvicorn backend.main:app --reload --port 8000`), **Reset demo** clicked,
@@ -138,17 +164,21 @@ which also works. Open `http://localhost:8000/` and take **The visit** from the 
 
 | | beat | says | clock |
 |---|---|---|---|
-| 1 | The gate, before anything | Three problems, two of them off course. This is what she looks like walking in. | 0:00 |
-| 2 | **Start the visit**, set the speed to **2×**, open **Essential hypertension** | The dictation plays. Watch the flowsheet: when the pressures are read out they land in their rows, amber, with what the chart held kept underneath. The NSAID and the ACE inhibitor draw themselves as bands when they are dictated. | 0:10 |
-| 3 | Let it run, then **Skip to end** | Thirty findings placed, and the gate has grown from three problems to five: albuminuria and the back pain were never on the list. | 0:50 |
-| 4 | The one chip that asks | Everything the dictation *said* is accepted by the signature — no clicks. This one the reading inferred; the passage does not say it. **No**, "Non-adherence is the cause, not the drug." | 1:05 |
-| 5 | **Review the note** | This is the note, exactly as the signature would write it. Nothing is on the chart yet. The rejection I just gave is already in the assessment, with my reason. | 1:25 |
-| 6 | **Sign the visit note** | One signature. Forty-five items attested. | 1:40 |
-| 7 | The watch list | Signing ended the visit, not the problem — eight things now have a date and something that answers them. Creatinine is expected to rise, up to 1.04, which is *inside* the lab's range, so the range would never flag it. The BMP already on the plan is what answers it. | 1:50 |
-| 8 | **Two weeks later** | Creatinine 0.9, within. Potassium 4.4, within. Pressure 138, better than projected. The BMP stops being owed. Eight open items, now four. | 2:25 |
+| 1 | **Before you go in** — the middle, before anything plays | Here for diabetes and blood pressure. Two of three problems off course, and why. And before she says a word, seven things best practice says the plan does not cover. | 0:00 |
+| 2 | **Start the visit** there, speed **2×** | Watch three things at once: the reading lands on each problem as it is spoken, the flowsheet row takes the new pressure, and the note on the right writes itself — assessments first, then the exam, then each plan. The middle follows her to whichever problem is being talked about. | 0:20 |
+| 3 | The dictation ends (40s at 2×) | The note is complete. Under hypertension: *expected on lisinopril, creatinine up to 1.04 — which is inside the lab's range, so the range would never flag it — and the BMP in two weeks tests it.* At the bottom: *not addressed at this visit: hypertriglyceridemia.* | 1:00 |
+| 4 | The one question, on diabetes | Everything she *said* is taken by the signature. This one the reading inferred — the passage does not say it. **No**: "Non-adherence is the cause, not the drug." Watch the diabetes assessment change as I answer. | 1:10 |
+| 5 | **Best practice, against this plan** | Six of these are covered by what I just dictated. Three are not — and one is a statin, which is also the answer to the problem nobody mentioned. **Add**. It is in the diabetes plan. | 1:30 |
+| 6 | **Sign the visit note** | One signature, forty-six items. | 1:50 |
+| 7 | The watch list | Signing ended the visit, not the problem: eight things now have a date and something that answers them. | 2:00 |
+| 8 | **Two weeks later** | Creatinine 0.9, within. Potassium 4.4, within. Pressure 138, better than projected. The BMP stops being owed. | 2:20 |
 
-**Pacing.** The transcript is 34 utterances at 2.2s each: **75s at 1×, 37s at 2×, 19s at 4×**. At 1× it eats forty
-percent of the three minutes, so run it at 2× and talk over it, or 4× if you are short. **Skip to end** is always safe.
+**Pacing.** The transcript is 34 utterances at 2.2s each: **75s at 1×, 40s at 2×, 19s at 4×**. Run it at 2× and talk over
+it — that is when the note writes itself, and it is the best forty seconds of the demo. **Skip to end** is always safe,
+but it skips the note being written.
+
+**Width.** Below 1100px the three columns stack and the note falls to the foot of the page, behind a bar with the counts
+and the signature. It works, but the demo is the three columns side by side, so give the window the width.
 
 **If you are asked the hard question** — *"how do you know what the clinician said versus what you inferred?"* — the
 answer is `tests/test_origin.py` and the section above it: badly, at first. A denial read as an assertion was the bug,
