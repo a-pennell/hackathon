@@ -14,9 +14,10 @@ The arc: the dictation is read, findings land on the problems they touch, and on
 up — daily over-the-counter ibuprofen since May, with a new urine albumin/creatinine of 48 (up from 18)
 and BP above goal on HCTZ alone. The NSAID is a suspected cause; the plan stops it, starts lisinopril,
 switches metformin to extended-release. Albuminuria and low back pain enter as new problems. The hero
-view is the visit itself (v3): the dictation plays, each finding lands on the problem it touches and in
-its flowsheet row as it is spoken, one signature takes what was stated, and signing hands over to what
-the chart is now waiting for. Around it: the standing gate (which problems are off course before you
+view is the visit itself (v3), laid out in the order a clinician reasons (orient, gather, represent,
+link, decide, set expectations, close the loop — see `v3/README.md`): the dictation plays, each finding
+lands on its problem and flowsheet row as it is spoken, the note writes itself alongside, and one
+signature at the end hands over to what the chart is now waiting for. Around it: the standing gate (which problems are off course before you
 open one), the problem's seven questions with labs and medication courses on one axis, and the visit
 note compiled from the record.
 
