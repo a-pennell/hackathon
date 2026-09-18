@@ -154,24 +154,102 @@ signing early took "what has been heard so far", which the signature never did.
 
 ## Runbook — the three-minute demo
 
-Rehearsed end to end at 1440×900 on a clean chart, last on 18 Sep 2026. Every number below was read off that
-run, not estimated; the clock is the machine time plus room to talk.
+Rehearsed end to end at 1440×900 on a clean chart, last on 18 Sep 2026, by clicking exactly what this runbook says to
+click. Every number and label below was read off that run, not estimated; the clock is the machine time plus room to
+talk. Button names are written exactly as they appear on screen.
 
-**Before you start.** Server up (`python3 -m uvicorn backend.main:app --reload --port 8000`), **Reset demo** clicked,
-window at least 1100px wide if you want the note pane pinned on the right — below that it drops to the bar at the foot,
-which also works. Open `http://localhost:8000/` and take **The visit** from the chooser, or go straight to
-`http://localhost:8000/v3/?patient=pt_002`. No API key is needed: the reading is replayed.
+The screen has three columns: the **transcript** on the left, the **middle** (the problem being talked about), and the
+**note column** on the right. The row of problem names across the top is the **gate**.
 
-| | beat | says | clock |
-|---|---|---|---|
-| 1 | **Before you go in** — the middle, before anything plays | Here for diabetes and blood pressure. Two of three problems off course, and why. And before she says a word, seven things best practice says the plan does not cover. | 0:00 |
-| 2 | **Start the visit** there, speed **2×** | Watch three things at once: the reading lands on each problem as it is spoken, the flowsheet row takes the new pressure, and the note on the right writes itself — assessments first, then the exam, then each plan. The middle follows her to whichever problem is being talked about. | 0:20 |
-| 3 | The dictation ends (40s at 2×) | The note is complete. Under hypertension: *expected on lisinopril, creatinine up to 1.04 — which is inside the lab's range, so the range would never flag it — and the BMP in two weeks tests it.* At the bottom: *not addressed at this visit: hypertriglyceridemia.* | 1:00 |
-| 4 | The one question, on diabetes | Everything she *said* is taken by the signature. This one the reading inferred — the passage does not say it. **No**: "Non-adherence is the cause, not the drug." Watch the diabetes assessment change as I answer. | 1:10 |
-| 5 | **Best practice, against this plan** | Six of these are covered by what I just dictated. Three are not — and one is a statin, which is also the answer to the problem nobody mentioned. **Add**. It is in the diabetes plan. | 1:30 |
-| 6 | **Sign the visit note** | One signature, forty-six items. | 1:50 |
-| 7 | The watch list | Signing ended the visit, not the problem: eight things now have a date and something that answers them. | 2:00 |
-| 8 | **Two weeks later** | Creatinine 0.9, within. Potassium 4.4, within. Pressure 138, better than projected. The BMP stops being owed. | 2:20 |
+### Before anyone is watching
+
+1. **In a terminal**, from the project folder: `python3 -m uvicorn backend.main:app --reload --port 8000`
+   (skip if it is already running — `http://localhost:8000` answers).
+2. **Make the browser window at least 1100px wide**, so the three columns sit side by side.
+3. **Open** `http://localhost:8000/` and **click the card "The visit"**.
+4. **Click "Reset demo"** — top right of the header.
+5. **Reload the page once** (⌘R).
+6. **Check**: the middle reads **Before you go in**, and the note column says the note writes itself as you dictate.
+   If the middle shows a problem or a signed note instead, click **Reset demo** again.
+
+No API key is needed: the reading is replayed.
+
+### Click by click
+
+**0:00 · Orient — click nothing.**
+Point at the middle, **Before you go in**: the reason for the visit, each problem's standing and why, and the seven
+best-practice items the plan does not cover yet.
+*Say:* "Here for diabetes and blood pressure. Two of three problems off course, and why. And before she says a word,
+seven things best practice says the plan does not cover."
+
+**0:20 · Click "Start the visit"** — the button at the **bottom of Before you go in**, in the middle. (There is no start
+button in the header on this screen; that is deliberate.)
+**Then, straight away, click "1×"** — top of the transcript column, next to **Pause** and **Skip to end** — once, so it
+reads **2×**.
+*Wait for:* the transcript to start highlighting line by line.
+*Say:* "Watch three things at once: the reading lands on each problem as it is spoken, the flowsheet row takes the new
+pressure, and the note on the right writes itself — assessments first, then the exam, then each plan. The middle
+follows her to whichever problem is being talked about."
+*Don't click anything while it plays.* The middle moves on its own. If you do click a problem name in the gate, the
+middle stays on that problem; click **follow the dictation**, next to the **Heard at this visit** heading, to let it
+follow again.
+
+**1:00 · The dictation ends — click nothing.**
+*Wait for:* the transcript control to read **Ended**, and the top of the note column to read **Dictation finished ·
+read it, then sign**.
+Point at **Plan · Essential hypertension** in the note column, and at **Not addressed at this visit** below it.
+*Say:* "The note is complete. Under hypertension: expected on lisinopril, creatinine up to 1.04 — which is inside the
+lab's range, so the range would never flag it — and the BMP in two weeks tests it. At the bottom: not addressed at this
+visit, hypertriglyceridemia."
+*Optional, if there is time:* click **Read full page** (bottom of the note column) to show the note at reading width;
+press **Escape** to close it.
+
+**1:10 · Answer the one question.**
+1. **Click "Diabetes mellitus type 2"** in the gate — it is the chip with a small amber **1** on it.
+2. In the middle, under **Heard at this visit · Diabetes mellitus type 2**, find the row marked **ADDED**:
+   *"Metformin hydrochloride · suspected cause of Diabetes mellitus type 2."* **Click "No"** on that row.
+3. **Type** into the field that opens: `Non-adherence is the cause, not the drug.`
+4. **Click "No, with this reason"** (or press Enter).
+
+*Wait for:* **Assessment · Diabetes mellitus type 2** in the note column to flash and end with *"…rejected:
+Non-adherence is the cause, not the drug."*, and the top of the note column to read **answered**.
+*Say:* "Everything she said is taken by the signature. This one the reading inferred — the passage doesn't say it.
+Watch the diabetes assessment change as I answer."
+
+**1:30 · Add the statin.**
+1. **Scroll the note column down** — it scrolls on its own — past **Not addressed at this visit** and **In your words**,
+   to **Best practice, against this plan**.
+2. **Click "Add"** on *"Diabetes, age 40 to 75: moderate-intensity statin."*
+
+*Wait for:* a confirmation, *"Added to the plan; it is in the note"*; the line above the list to read **6 covered by the
+plan**; and **Plan · Diabetes mellitus type 2** (scroll up a little) to begin *"Start atorvastatin 20 mg daily."*
+*Say:* "Six of these are covered by what was just dictated. Three are not — and one is a statin, which is also the
+answer to the problem nobody mentioned."
+
+**1:50 · Click "Sign the visit note"** — the dark button at the **bottom of the note column**. (Before the dictation
+ends it reads **Sign when the dictation ends** and does nothing — that is intended.)
+*Wait for:* the note column to read **signed** and **46 items attested by one signature**, and the header to show
+**✓ Visit signed**.
+*Say:* "One signature, forty-six items."
+
+**2:00 · The watch list — click nothing.**
+The middle now reads **The visit is signed · what the chart is waiting for**. Point at the first rows: *BMP in 2 weeks*,
+*Creatinine at or under 1.04 mg/dL*, *Potassium under 5.5 mmol/L*.
+*Say:* "Signing ended the visit, not the problem: eight things now have a date and something that answers them."
+
+**2:20 · Click "Two weeks later · let the results land"** — the dark button at the **bottom of the watch list**, in the
+middle.
+*Wait for:* the rows to fill in on the right — *0.9 on 29 Sep 2026 · within*, *4.4 … · within*, *138 … · better*,
+*resulted 29 Sep 2026* — and the note column to read **4 things the chart is now waiting for**.
+*Say:* "Creatinine 0.9, within. Potassium 4.4, within. Pressure 138, better than projected. The BMP stops being owed."
+
+### If something goes wrong
+
+- **Anything looks wrong, or you want to run it again:** click **Reset demo** (top right), then reload the page.
+- **A page shows the wrong app:** reload it once.
+- **The middle is stuck on the wrong problem:** click **follow the dictation** next to **Heard at this visit**.
+- **You are short on time:** click **Skip to end** (top of the transcript column) instead of letting it play. It is
+  always safe, but it skips the note writing itself, which is the best forty seconds of the demo.
 
 **Pacing.** The transcript is 34 utterances at 2.2s each: **75s at 1×, 40s at 2×, 19s at 4×**. Run it at 2× and talk over
 it — that is when the note writes itself, and it is the best forty seconds of the demo. **Skip to end** is always safe,
@@ -184,10 +262,3 @@ and the signature. It works, but the demo is the three columns side by side, so 
 answer is `tests/test_origin.py` and the section above it: badly, at first. A denial read as an assertion was the bug,
 it is fixed, and the classifier now errs towards asking. The honest version of this demo says the split is 12/6 on a
 second dictation, not 30/1.
-
-**Recovering mid-demo.** **Reset demo** in the header puts the chart back to its server-start state and clears the
-visit's working state. It is safe at any point.
-
-**If a screen looks like the wrong app.** Index documents are served `no-store`, so this should not happen any more —
-but a browser that visited these URLs before that was added may still hold an old entry, and `/v3/` can render v1 from
-it. One reload fixes it for good. Worth doing once on the demo machine before you start, along with **Reset demo**.

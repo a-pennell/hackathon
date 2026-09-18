@@ -71,7 +71,9 @@ export default function App() {
         </nav>
         <span className="spacer" />
         {busy ? <span className="busy-inline">Working…</span> : next && (next.kind === "done" ? <span className="cta-status" title={next.hint}>{next.label}</span>
-          : <button className="btn cta primary" title={next.kind === "read" ? "the dictation plays and the reading lands on the problems it touches" : "the visit is waiting for its one signature; it is on the visit screen, with what it attests beside it"} onClick={doNext}>{next.kind === "read" ? "Start the visit" : "Finish the visit · sign"}</button>)}
+          // On the visit screen the header's action would only navigate to the screen already open — a button that
+          // does nothing when pressed. The visit's own controls are there; the header shows it only elsewhere.
+          : view !== "visit" && <button className="btn cta primary" title={next.kind === "read" ? "the dictation plays and the reading lands on the problems it touches" : "the visit is waiting for its one signature; it is on the visit screen, with what it attests beside it"} onClick={doNext}>{next.kind === "read" ? "Start the visit" : "Finish the visit · sign"}</button>)}
         {listing.followup && !listing.followup.applied && next?.kind === "done" && view !== "visit" && <button className="btn small" disabled={!!busy} title={listing.followup.label} onClick={() => run("advance", () => api.advance(PID), "Two weeks on: the home log and the BMP have landed").then(() => go("#/"))}>Two weeks later</button>}
         <button className="btn small ghost" disabled={!!busy} onClick={() => run("reset", () => api.reset(PID), "Chart reset").then(() => { try { sessionStorage.removeItem(`visit:${PID}`); } catch { /* ignore */ } go("#/visit"); })} title="Restore the chart to its server-start state">Reset demo</button>
       </header>
