@@ -1169,3 +1169,15 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
   to   { opacity: 1; transform: translateY(0); }
 }
 @media (prefers-reduced-motion: reduce) { .lane-heard { animation: none; } }
+
+/* The gate during a visit. Standing is computed from the chart and cannot move before the signature, so the chip
+   reports what it can: how much of the dictation has landed here. The count is quiet — the border coming up is the
+   moment worth noticing, and it eases in once rather than twitching on every finding. */
+.gchip { transition: border-color 200ms cubic-bezier(0.16, 1, 0.3, 1), color 200ms cubic-bezier(0.16, 1, 0.3, 1); }
+.gchip.touched { animation: chip-touched 300ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.gchip .tag.heard { font-family: var(--mono); font-size: 10px; color: var(--graphite); border: none; padding: 0 0 0 2px; }
+@keyframes chip-touched {
+  from { box-shadow: 0 0 0 3px var(--select-wash); }
+  to   { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .gchip, .gchip.touched { transition: none; animation: none; } }

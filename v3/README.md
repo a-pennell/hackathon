@@ -112,6 +112,20 @@ wants, so v2 is unchanged.
 The motion is 260ms, decelerating, from 5px below the line the value will occupy, and is dropped entirely under
 `prefers-reduced-motion`.
 
+### Why the standing dot does not move
+
+The obvious next step is to let the gate's standing shift as values land, and on this patient it would show nothing:
+diabetes and hypertension are **both already off course before the visit begins**, and hypertriglyceridemia has no
+monitored series to move. Standing is also computed from the chart, and nothing reaches the chart until the signature,
+so a live recompute would either be lying or unchanged.
+
+So the chip reports what it does know: how many findings from this dictation have landed on that problem, counting up
+as they do, with the border easing up the first time a problem is touched. The count is deliberately quiet — the
+amber badge beside it, which is the one thing wanting an answer, has to stay the loudest thing on the chip.
+
+A side effect is the most useful line on the gate: at the end, hypertriglyceridemia is the only chip with no count at
+all. Nothing was said about it. That is the "what did this visit not address" question answering itself, for free.
+
 ## Runbook — the three-minute demo
 
 Rehearsed end to end at 1024×768 on a clean chart, last on 17 Sep 2026. Every number below was read off that

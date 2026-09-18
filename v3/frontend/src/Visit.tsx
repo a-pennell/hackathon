@@ -77,6 +77,14 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
   const touched = useMemo(() => new Set(revealed.flatMap((p) => p.problems)), [revealed]);
   // What the flowsheet is allowed to show yet: a value appears in its row as it is spoken, not when the note was read.
   const revealedIds = useMemo(() => new Set(revealed.map((p) => p.id)), [revealed]);
+  // How much of the dictation has landed on each problem. Standing cannot answer this during a visit — it is computed
+  // from the chart, and nothing reaches the chart until the signature — so the gate says what it does know: how many
+  // findings this problem has collected so far.
+  const heardPer = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of revealed) for (const id of p.problems) m.set(id, (m.get(id) ?? 0) + 1);
+    return m;
+  }, [revealed]);
   useEffect(() => { if (!selected && revealed.length) { const first = revealed.find((p) => p.problems.length); if (first) setSelected(first.problems[0]); } }, [revealed, selected]);
   const inferred = revealed.filter((p) => p.origin === "inferred" && p.status === "proposed");
   const unanswered = inferred.filter((p) => !decisions[p.id]);
@@ -110,6 +118,7 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
           ...revealed.filter((x) => x.kind === "problem" && !v.problems.some((p) => p.name === x.text)).map((x) => ({ id: x.id, name: x.text, standing: "proposed", why: "raised at this visit; not on the chart until accepted", isNew: true }))].map((p) => (
           <button key={p.id} className={`gchip ${selected === p.id ? "on" : ""} ${touched.has(p.id) ? "touched" : ""} ${p.isNew ? "new" : ""}`} onClick={() => setSelected(p.id)} title={p.why}>
             <span className={`dot ${p.standing}`} />{p.name}{p.isNew && <span className="pill">new</span>}
+            {heardPer.get(p.id) ? <span className="tag heard" title="findings from this dictation that landed on this problem">{heardPer.get(p.id)}</span> : null}
             {unanswered.filter((x) => x.problems.includes(p.id)).length > 0 && <span className="tag pend" title="the reading added this; say yes or no">{unanswered.filter((x) => x.problems.includes(p.id)).length}</span>}
           </button>
         ))}
