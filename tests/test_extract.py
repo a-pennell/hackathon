@@ -353,3 +353,46 @@ def test_a_course_is_read_whether_its_interval_is_nested_or_flat(tmp_path):
     nested_path = tmp_path / "nested.raw.json"
     nested_path.write_text(json.dumps(nested))
     assert course(nested_path) == flat
+
+
+def test_the_note_is_read_in_two_passes_that_merge_into_one_recording():
+    """All six sections in one request compile to a grammar the API refuses (scripts/probe_schema.py); each half is
+    under the line. The two passes merge into exactly the shape a single call produced, so every recording made before
+    the split still replays and nothing downstream knows the difference."""
+    from ehr.extract import OUTPUT_SCHEMA, PASS_A, PASS_B, SCHEMA_A, SCHEMA_B, build_messages, read_note_in_two_passes
+
+    assert set(PASS_A) | set(PASS_B) == set(OUTPUT_SCHEMA["properties"])
+    assert not set(PASS_A) & set(PASS_B)
+    for part, keys in ((SCHEMA_A, PASS_A), (SCHEMA_B, PASS_B)):
+        assert set(part["properties"]) == set(keys)
+        assert set(part["required"]) == set(keys)          # strict mode needs required to cover every property
+        assert part["additionalProperties"] is False
+
+    note = {"id": "note_x", "time": "2026-09-15T09:00:00-05:00", "author": "Dr. Chen", "encounter_id": "enc_x",
+            "text": "Stopped the ibuprofen. New albuminuria."}
+    patient = {"patient": {"id": "pt_002"}, "problems": [], "observations": [], "medications": [], "links": [], "notes": [], "encounters": []}
+
+    # pass B is told what pass A found, by the refs A used, so its refs still resolve
+    _, msgs = build_messages(patient, note, found={"problems": [{"ref": "new_1", "name": "Albuminuria"}]})
+    body = msgs[0]["content"]
+    assert "new_1" in body and "Albuminuria" in body and "Do not repeat them" in body
+    assert "new_1" not in build_messages(patient, note)[1][0]["content"]
+
+    calls = []
+
+    def fake(system_blocks, messages, model=None, schema=None):
+        calls.append(set(schema["properties"]))
+        out = {k: [{"marker": k}] for k in schema["properties"]}
+        return {"parsed": out, "model": "m", "usage": {"input_tokens": 3, "output_tokens": 4}, "request_id": f"r{len(calls)}"}
+
+    import ehr.extract as ex
+    real, ex.call_model = ex.call_model, fake
+    try:
+        raw = read_note_in_two_passes(patient, note)
+    finally:
+        ex.call_model = real
+
+    assert calls == [set(PASS_A), set(PASS_B)]
+    assert set(raw["parsed"]) == set(OUTPUT_SCHEMA["properties"])   # the shape a single call used to return
+    assert raw["usage"] == {"input_tokens": 6, "output_tokens": 8}  # both passes counted
+    assert raw["passes"] == 2 and raw["request_id"] == "r1" and raw["request_id_b"] == "r2"

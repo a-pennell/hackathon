@@ -5,7 +5,11 @@
 
 Pipeline:
   1. ingest   - upsert the (human-written) encounter + note into the patient file
-  2. extract  - one structured-output call to Claude with the chart context + note text
+  2. extract  - two structured-output calls over the same note: what it is about (results,
+               findings, new problems), then what is done about it (medications, plans,
+               suspected causes), the second given the first's problems so refs resolve.
+               One call is a grammar the API refuses as too large; see scripts/probe_schema.py.
+               They merge into the single shape every recording already has.
   3. validate - deterministic checks: every quote verbatim in the note, codes from the
                allowed table, every ref resolves; anything failing is *rejected with a
                reason*, never silently dropped
@@ -195,8 +199,29 @@ def chart_context(patient: dict) -> dict:
     return {"patient": patient["patient"], "problems": problems, "medications": meds}
 
 
-def build_messages(patient: dict, note: dict) -> tuple[list[dict], list[dict]]:
-    """Returns (system_blocks, messages). The stable chart context is cached; the note is not."""
+# The API compiles a constrained-output schema into a grammar and refuses one that is too large. All six sections
+# together are over the line; each half is comfortably under it (scripts/probe_schema.py measures where). So the note
+# is read in two passes over the same text. The split is not arbitrary: the first pass establishes what the note is
+# ABOUT — the results, the findings and any new problem — and the second says what is DONE about it, which is the
+# half whose refs point at the first. Passing pass A's problems into pass B keeps `new_N` refs resolvable, exactly as
+# a single call had them.
+PASS_A = ("observations", "findings", "problems")
+PASS_B = ("medications", "plans", "suspected_causes")
+
+
+def _sub_schema(keys: tuple[str, ...]) -> dict:
+    return {**OUTPUT_SCHEMA,
+            "properties": {k: v for k, v in OUTPUT_SCHEMA["properties"].items() if k in keys},
+            "required": [k for k in OUTPUT_SCHEMA["required"] if k in keys]}
+
+
+SCHEMA_A = _sub_schema(PASS_A)
+SCHEMA_B = _sub_schema(PASS_B)
+
+
+def build_messages(patient: dict, note: dict, *, found: dict | None = None) -> tuple[list[dict], list[dict]]:
+    """Returns (system_blocks, messages). The stable chart context is cached; the note is not.
+    `found` is pass A's output, given to pass B so its `new_N` refs point at the problems A raised."""
     ctx = chart_context(patient)
     system_blocks = [
         {"type": "text", "text": SYSTEM_PROMPT},
@@ -207,15 +232,31 @@ def build_messages(patient: dict, note: dict) -> tuple[list[dict], list[dict]]:
     ]
     user = (f"Note id: {note['id']}\nNote date: {note['time'][:10]}\nAuthor: {note.get('author')}\n"
             f"Encounter: {note.get('encounter_id')}\n\n--- NOTE TEXT ---\n{note['text']}\n--- END NOTE ---")
+    if found is not None:
+        problems = [{"ref": x.get("ref"), "name": x.get("name")} for x in found.get("problems", [])]
+        user += ("\n\nA first pass over this same note already recorded its results, findings and new problems. "
+                 "Do not repeat them. Return only the medications, plans and suspected causes.\n"
+                 "New problems it raised, which you may reference by these refs exactly as they are written here:\n"
+                 + (json.dumps(problems, indent=1) if problems else "(none)"))
     return system_blocks, [{"role": "user", "content": user}]
 
 
 # ------------------------------------------------------------------------------ model
 
-def call_model(system_blocks, messages, model: str = DEFAULT_MODEL) -> dict:
+def call_model(system_blocks, messages, model: str = DEFAULT_MODEL, schema: dict | None = None) -> dict:
     """One structured-output request (see ehr.llm.call_structured)."""
     from ehr.llm import call_structured
-    return call_structured(system_blocks, messages, OUTPUT_SCHEMA, model=model)
+    return call_structured(system_blocks, messages, schema or OUTPUT_SCHEMA, model=model)
+
+
+def read_note_in_two_passes(patient: dict, note: dict, *, model: str = DEFAULT_MODEL) -> dict:
+    """Both passes, merged into the single shape everything downstream (and every recording) already expects."""
+    a = call_model(*build_messages(patient, note), model=model, schema=SCHEMA_A)
+    b = call_model(*build_messages(patient, note, found=a["parsed"]), model=model, schema=SCHEMA_B)
+    usage = {k: (a["usage"].get(k) or 0) + (b["usage"].get(k) or 0) for k in a["usage"]}
+    return {"parsed": {**{k: a["parsed"].get(k, []) for k in PASS_A}, **{k: b["parsed"].get(k, []) for k in PASS_B}},
+            "model": a["model"], "usage": usage,
+            "request_id": a.get("request_id"), "request_id_b": b.get("request_id"), "passes": 2}
 
 
 # --------------------------------------------------------------------------- validate
@@ -630,8 +671,7 @@ def queue_path(patient_id: str, note_id: str, proposed_dir: Path = PROPOSED_DIR)
 def extract_note(patient: dict, note: dict, *, model: str = DEFAULT_MODEL, raw: dict | None = None) -> tuple[dict, dict]:
     """Run extraction (or validate a replayed raw response). Returns (batch, raw_response)."""
     if raw is None:
-        system_blocks, messages = build_messages(patient, note)
-        raw = call_model(system_blocks, messages, model=model)
+        raw = read_note_in_two_passes(patient, note, model=model)
     batch = validate(patient, note, raw["parsed"], raw.get("model", model))
     batch["usage"] = raw.get("usage")
     return batch, raw
