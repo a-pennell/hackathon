@@ -121,3 +121,7 @@ second dictation, not 30/1.
 
 **Recovering mid-demo.** **Reset demo** in the header puts the chart back to its server-start state and clears the
 visit's working state. It is safe at any point.
+
+**If a screen looks like the wrong app.** Index documents are served `no-store`, so this should not happen any more —
+but a browser that visited these URLs before that was added may still hold an old entry, and `/v3/` can render v1 from
+it. One reload fixes it for good. Worth doing once on the demo machine before you start, along with **Reset demo**.

@@ -745,7 +745,7 @@ if V3_DIST.is_dir():
         target = V3_DIST / path
         if path and target.is_file():
             return FileResponse(target)
-        return FileResponse(V3_DIST / "index.html")
+        return _page(V3_DIST / "index.html")
 
 V2_DIST = ROOT / "v2" / "frontend" / "dist"
 if V2_DIST.is_dir():
@@ -756,7 +756,7 @@ if V2_DIST.is_dir():
         target = V2_DIST / path
         if path and target.is_file():
             return FileResponse(target)
-        return FileResponse(V2_DIST / "index.html")
+        return _page(V2_DIST / "index.html")
 
 DIST = ROOT / "frontend" / "dist"
 
@@ -806,9 +806,19 @@ Nothing here calls a model; the readings are recorded. <b>Reset demo</b> in any 
 </div></body></html>"""
 
 
+# The index documents are never cached. Asset filenames carry a content hash, so those are safe to keep, but a stale
+# index.html points at assets that no longer exist — or, worse, quietly serves a previous app at the same URL. That
+# has cost time twice here: /v3/ rendering v1 from cache, long after the server had been right.
+NO_STORE = {"Cache-Control": "no-store, must-revalidate"}
+
+
+def _page(path: Path) -> FileResponse:
+    return FileResponse(path, headers=NO_STORE)
+
+
 @app.get("/", response_class=HTMLResponse)
 def doormat():
-    return DOORMAT
+    return HTMLResponse(DOORMAT, headers=NO_STORE)
 
 
 if DIST.is_dir():
@@ -819,11 +829,11 @@ if DIST.is_dir():
         target = DIST / path
         if path and target.is_file():
             return FileResponse(target)
-        return FileResponse(DIST / "index.html")
+        return _page(DIST / "index.html")
 
     @app.get("/{path:path}")
     def spa(path: str):
         target = DIST / path
         if path and target.is_file():
             return FileResponse(target)
-        return FileResponse(DIST / "index.html")
+        return _page(DIST / "index.html")
