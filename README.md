@@ -95,6 +95,12 @@ A simpler front on the same chart: the problem list as a gate (which problems ar
 and which are not), one problem as the seven questions, and the visit note assembled from what was
 decided. `v2/README.md` describes it; it is served at `/v2/?patient=pt_002` by the same server.
 
+## v3
+
+The visit as one surface: the transcript plays, findings land on the problem they touch as their passage is spoken,
+decisions wait as chips, and the note grows the whole time. `v3/README.md`; served at `/v3/?patient=pt_002`. v2 is
+unchanged.
+
 ## Demo runbook (v2)
 
 Open `http://localhost:8000/v2/?patient=pt_002` from a clean chart, Claude on saved. Three claims, about three minutes.

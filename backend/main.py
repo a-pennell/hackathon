@@ -733,7 +733,20 @@ def reset(pid: str):
 
 # v2: the gate, the seven answers, the assembled note. Served at /v2/, its API under /v2/api.
 from v2.api import router as v2_router  # noqa: E402
+from v3.api import router as v3_router  # noqa: E402
 app.include_router(v2_router)
+app.include_router(v3_router)
+V3_DIST = ROOT / "v3" / "frontend" / "dist"
+if V3_DIST.is_dir():
+    app.mount("/v3/assets", StaticFiles(directory=V3_DIST / "assets"), name="v3-assets")
+
+    @app.get("/v3/{path:path}")
+    def v3_spa(path: str):
+        target = V3_DIST / path
+        if path and target.is_file():
+            return FileResponse(target)
+        return FileResponse(V3_DIST / "index.html")
+
 V2_DIST = ROOT / "v2" / "frontend" / "dist"
 if V2_DIST.is_dir():
     app.mount("/v2/assets", StaticFiles(directory=V2_DIST / "assets"), name="v2-assets")
