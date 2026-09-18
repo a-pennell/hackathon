@@ -1106,7 +1106,7 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .pv-head { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--rule); }
 .pv-head h2 { font-family: var(--serif); font-weight: 400; font-size: 20px; margin: 2px 0 0; }
 .pv-head .dclose { margin-left: auto; font-size: 16px; color: var(--graphite); }
-.pv-body { overflow: auto; padding: 8px 18px; }
+.pv-body { overflow: auto; overscroll-behavior: contain; padding: 8px 18px; }
 .pv-manifest { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0; }
 .pv-body .note-sec textarea { width: 100%; field-sizing: content; resize: vertical; font-family: var(--serif); font-size: 14px; line-height: 1.55; border: 1px dashed var(--pending); background: var(--pending-wash); border-radius: var(--r-sm); padding: 8px 10px; }
 .pv-foot { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--rule); }

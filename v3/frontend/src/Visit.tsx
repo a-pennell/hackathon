@@ -43,6 +43,21 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
   const [authored, setAuthored] = useState(saved?.authored ?? "");
   const [signed, setSigned] = useState<{ attested: number } | null>(null);
   const [preview, setPreview] = useState<{ document: NoteDoc; manifest: ManifestGroup[] } | null>(null);
+  // While the note is open the page underneath must not move. It is five thousand pixels of transcript and chart, and
+  // any wheel that missed the panel's own scroll — over its header or footer, or momentum past the end of the note —
+  // scrolled that instead: the page, its sticky transcript and its fixed bar sliding at different rates behind a panel
+  // that stayed put. The scrollbar's width is held as padding so the page does not shift sideways when it goes.
+  useEffect(() => {
+    if (!preview) return;
+    const root = document.documentElement;
+    const gutter = window.innerWidth - root.clientWidth;
+    const was = { overflow: root.style.overflow, paddingRight: root.style.paddingRight };
+    root.style.overflow = "hidden";
+    if (gutter > 0) root.style.paddingRight = `${gutter}px`;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setPreview(null); };
+    window.addEventListener("keydown", onKey);
+    return () => { root.style.overflow = was.overflow; root.style.paddingRight = was.paddingRight; window.removeEventListener("keydown", onKey); };
+  }, [preview]);
   const [edits, setEdits] = useState<Record<string, string>>({});   // keyed by section key, which survives a recompile
   const [commit, setCommit] = useState<Commitments | null>(null);
   const sectionsBody = () => Object.entries(edits).map(([key, text]) => ({ key, text }));
