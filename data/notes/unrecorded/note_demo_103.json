@@ -1,0 +1,17 @@
+{
+  "encounter": {
+    "id": "enc_c003",
+    "patient_id": "pt_002",
+    "time": "2026-10-13T09:00:00-05:00",
+    "type": "office visit",
+    "summary": "Four-week follow-up: blood pressure, cough, numb feet"
+  },
+  "note": {
+    "id": "note_demo_103",
+    "patient_id": "pt_002",
+    "encounter_id": "enc_c003",
+    "time": "2026-10-13T09:35:00-05:00",
+    "author": "Dr. Chen",
+    "text": "Jeane Lueilwitz, 55F, back for the four-week visit after we started lisinopril.\n\nS:\n\nDry cough for about two weeks, worse at night, no fever, no sputum. She wondered about the new blood pressure tablet.\n\nBack is much better since she stopped the ibuprofen; taking acetaminophen maybe twice a week now.\n\nHome log: readings mostly 132 to 138 over low 80s. Taking the extended-release metformin without the stomach upset she had before, no missed doses that she can recall.\n\nFeet feel numb in the mornings, both sides, for a few months. No ulcers, no night pain.\n\nO:\n\nBP 134/82 sitting. HR 72. Wt 84.9 kg.\n\nChest clear, no wheeze.\n\nMonofilament reduced at both great toes; pedal pulses present.\n\nLabs from last week: creatinine 0.9, potassium 4.4, A1c not repeated yet.\n\nA/P:\n\n1. Hypertension, now at goal on lisinopril and HCTZ. Continue both. Home log monthly.\n\n2. Cough. I think this is the lisinopril. Stop lisinopril, start losartan 50 mg daily. Repeat BMP in two weeks.\n\n3. Albuminuria. Awaiting the repeat ACR. The losartan covers this as well as the lisinopril did.\n\n4. New peripheral neuropathy, distal and symmetric, almost certainly diabetic. Not from the metformin, though I checked a B12 anyway. Start gabapentin 100 mg at night. Podiatry referral.\n\n5. Type 2 diabetes. Repeat A1c next month as planned."
+  }
+}
