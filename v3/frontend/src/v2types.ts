@@ -53,7 +53,7 @@ export type Proposal = { id: string; kind: string; text: string; problems: strin
 /** A best-practice rule checked against the plan as it stands: the chart before the visit, the draft while it builds. */
 export type Practice = { problem_id: string; problem: string; id: string; text: string; source: string; status: "covered" | "gap"; action: { kind: string; text: string } | null };
 /** The note as it stands: the whole visit once the dictation is finished, what has been spoken so far before that. */
-export type Draft = { document: NoteDoc; manifest: ManifestGroup[]; practice: Practice[] };
+export type Draft = { document: NoteDoc; manifest: ManifestGroup[]; practice: Practice[]; on_plan: Record<string, string[]> };
 export type VisitData = {
   note: { id: string; author: string; time: string; status?: string; read: boolean; file: string };
   encounter: { id: string; time: string; type: string; summary: string } | null;

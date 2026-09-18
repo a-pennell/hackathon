@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { api } from "./api";
 import type { Ctx } from "./App";
 import type { Timeline as TL, QueueBatch } from "./types";
-import type { ProblemView } from "./v2types";
+import type { Practice, ProblemView } from "./v2types";
 import Timeline from "./Timeline";
 
 const KINDS = ["therapeutic", "diagnostic", "monitoring", "referral", "follow_up", "education"];
@@ -30,7 +30,12 @@ function Line({ x, v: mark }: { x: { text: string; detail?: string; ids: string[
 
 /** One problem as seven answers. Everything on this page is computed from the record; the buttons are the only
  *  places a signature happens: acknowledging a detected change, signing an insight, adding to the plan. */
-export default function Problem({ pid, problemId, busy, run, go, refreshKey, embedded, revealed }: Ctx & { problemId: string; embedded?: boolean; revealed?: Set<string> | null }) {
+/** During a visit, the plan as dictated so far, from the note's draft. Best practice and the projected options were
+ *  otherwise computed from the chart as it stood before the visit — nothing is written until the signature — so the
+ *  middle column contradicted the note column beside it. */
+export type DraftPlan = { practice: Practice[]; onPlan: string[] };
+
+export default function Problem({ pid, problemId, busy, run, go, refreshKey, embedded, revealed, draftPlan }: Ctx & { problemId: string; embedded?: boolean; revealed?: Set<string> | null; draftPlan?: DraftPlan | null }) {
   const [v, setV] = useState<ProblemView | null>(null);
   const [tl, setTl] = useState<TL | null>(null);
   const [queues, setQueues] = useState<QueueBatch[]>([]);
@@ -57,6 +62,10 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey, emb
   }, [v]);
   if (!v) return <div className="lede">Reading the record for this problem…</div>;
   const a = v.answers;
+  const rules = draftPlan
+    ? draftPlan.practice.map((r) => ({ id: r.id, text: r.text, source: r.source, status: r.status, ids: [] as string[], action: r.action }))
+    : a.guidelines;
+  const onPlan = (o: { id: string; on_plan: boolean }) => o.on_plan || !!draftPlan?.onPlan.includes(o.id);
   // The corridor on the trajectory: the current plan's projection when there is one, otherwise the card's expectation.
   const reasonStem = `reason_${problemId}`;
   const reasonBatch = queues.find((b) => b.stem === reasonStem);
@@ -117,8 +126,8 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey, emb
 
       <Q n={6} ask="What should happen next?" sub="loops to close, what best practice recommends, and what each option is projected to do">
         {a.next.map((x, i) => <Line key={i} x={x} />)}
-        {a.guidelines.length > 0 && <h3 className="sub3">Best practice <span className="n">rules checked against the chart, each with its source</span></h3>}
-        {a.guidelines.map((g) => (
+        {rules.length > 0 && <h3 className="sub3">Best practice <span className="n">{draftPlan ? "checked against the plan as dictated so far, each with its source" : "rules checked against the chart, each with its source"}</span></h3>}
+        {rules.map((g) => (
           <div key={g.id} className="line" onMouseEnter={() => hover(g.ids)} onMouseLeave={() => hover(null)}>
             <span className={`v ${g.status === "gap" ? "unx" : "for"}`}>{g.status === "gap" ? "○" : "✓"}</span>
             <span>{g.text}<span className="d">{g.source} · {g.status === "gap" ? "not on the plan" : "covered by the plan"}</span></span>
@@ -130,11 +139,11 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey, emb
             <h3 className="sub3">Options, projected <span className="n">{a.change_course.projection_of.name} from {a.change_course.projection_of.from.value}{a.change_course.projection_of.goal ? ` · goal under ${a.change_course.projection_of.goal}` : ""}</span></h3>
             <div className="opts">
               {a.options.map((o) => (
-                <div key={o.id} className={`opt ${o.on_plan ? "on" : ""}`}>
+                <div key={o.id} className={`opt ${onPlan(o) ? "on" : ""}`}>
                   <span className="lab">{o.label}</span>
                   <span className="eff num">{o.effect.low} to {o.effect.high}</span>
                   <span className="by">full effect by {dmy(o.full_effect_by)}{o.reaches_goal_by ? ` · to goal about ${dmy(o.reaches_goal_by)}` : " · alone, not to goal"}</span>
-                  {o.on_plan ? <span className="pill ok">on the plan</span> : <button className="btn small" disabled={!!busy} onClick={() => run("intent", () => api.intent(pid, problemId, o.kind, o.text), "Added to the plan")}>Add</button>}
+                  {onPlan(o) ? <span className="pill ok">on the plan</span> : <button className="btn small" disabled={!!busy} onClick={() => run("intent", () => api.intent(pid, problemId, o.kind, o.text), "Added to the plan")}>Add</button>}
                   <span className="srcline">{o.source}</span>
                 </div>
               ))}
@@ -142,7 +151,7 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey, emb
             <div className="simnote">{a.change_course.projection_of.note}</div>
           </>
         )}
-        {a.next.length + a.guidelines.length + a.options.length === 0 && <div className="quiet">Nothing is owed on this problem.</div>}
+        {a.next.length + rules.length + a.options.length === 0 && <div className="quiet">Nothing is owed on this problem.</div>}
       </Q>
 
       <Q n={7} ask="What would make us change course?" sub="the expectation, and the thresholds the rules watch">

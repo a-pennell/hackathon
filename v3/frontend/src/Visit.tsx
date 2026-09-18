@@ -319,7 +319,8 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
                   </div>
                 ))}
               </section>
-              {v.problems.some((p) => p.id === selected) ? <Problem pid={pid} listing={listing} busy={busy} run={run} go={go} refreshKey={refreshKey + tick} problemId={selected} embedded revealed={revealedIds} />
+              {v.problems.some((p) => p.id === selected) ? <Problem pid={pid} listing={listing} busy={busy} run={run} go={go} refreshKey={refreshKey + tick} problemId={selected} embedded revealed={revealedIds}
+                  draftPlan={!isSigned && cursor >= 0 && draft ? { practice: draft.practice.filter((r) => r.problem_id === selected), onPlan: draft.on_plan?.[selected] ?? [] } : null} />
                 : <div className="quiet">A problem raised at this visit has no page until it is accepted; then it is watched like any other.</div>}
             </>
           ) : <div className="lede">Pick a problem above, or start the visit and the first one spoken about opens here.</div>}

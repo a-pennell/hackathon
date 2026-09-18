@@ -244,3 +244,17 @@ def test_best_practice_is_checked_against_the_plan_as_it_stands(visit):
         assert after[rid] == "gap", rid
     doc = v3api.preview_visit_note("pt_002", v3api.VisitSignBody())["document"]
     assert "statin" not in " ".join(s["text"] for s in doc["sections"]).lower()  # a checklist, not the note
+
+
+def test_during_the_visit_both_best_practice_lists_read_the_plan_as_dictated(visit):
+    """The problem page in the middle column computed best practice and the projected options from the chart as it was
+    before the visit - nothing is written until the signature - so while the note column said the ACE inhibitor was
+    covered, the middle said it was not on the plan, and offered to add the metformin switch just dictated. The draft
+    now reports both against the plan as dictated, and the middle column reads them from there."""
+    before = {r["id"]: r["status"] for r in v3api.visit("pt_002")["practice"] if r["problem_id"] == "prob_0009"}
+    d = v3api.preview_visit_note("pt_002", v3api.VisitSignBody())
+    after = {r["id"]: r["status"] for r in d["practice"] if r["problem_id"] == "prob_0009"}
+    assert before["dm_acr_acei"] == "gap" and after["dm_acr_acei"] == "covered"
+    assert "metformin_taken" in d["on_plan"]["prob_0009"]         # the extended-release switch, dictated
+    assert "add_sglt2" not in d["on_plan"].get("prob_0009", [])    # not dictated, still offered
+    assert "add_acei" in d["on_plan"]["prob_0007"]                 # lisinopril, on hypertension

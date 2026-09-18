@@ -23,7 +23,7 @@ from ehr.review import DEFAULT_REVIEWER, accept_item, apply_review, list_queues,
 from ehr.trend import DATA_DIR, load_patient
 from v2.monitor import attest, manifest
 from v2.guidelines import guidelines
-from v2.simulate import expectations
+from v2.simulate import EFFECTS, _context, expectations
 from v2.api import _attach_note, _next_action, _followup, _today
 from v2.monitor import problem_list, problem_view, unattested
 
@@ -115,6 +115,21 @@ def _practice(patient: dict, today: date | None) -> list[dict]:
             continue
         for r in guidelines(patient, pr, today=today or date.today()):
             out.append({"problem_id": pr["id"], "problem": pr["name"], **{k: r[k] for k in ("id", "text", "source", "status", "action")}})
+    return out
+
+
+def _options_on_plan(patient: dict) -> dict[str, list[str]]:
+    """Which projected options each problem's plan already covers, by the same on_plan rules the options themselves use
+    (v2/simulate.py). Evaluated on the draft's copy of the chart, so an option the clinician has just dictated — the
+    metformin extended-release switch — reads as on the plan instead of offering to add it again."""
+    out = {}
+    for pr in patient["problems"]:
+        if pr["status"] != "active":
+            continue
+        ctx = _context(patient, {pr["id"]})
+        ids = [e["id"] for e in EFFECTS if e["applies"](ctx) and e["on_plan"](ctx)]
+        if ids:
+            out[pr["id"]] = ids
     return out
 
 
@@ -319,7 +334,7 @@ def preview_visit_note(pid: str, body: VisitSignBody, as_of: str | None = None):
     with _scratch(pid) as (data_dir, proposed_dir):
         p, enc, _, doc = _perform_signature(pid, v, body, data_dir=data_dir, proposed_dir=proposed_dir, as_of=as_of)
         return {"document": doc, "manifest": manifest(p, enc, proposed_dir=proposed_dir), "preview": True,
-                "practice": _practice(p, _today(as_of))}
+                "practice": _practice(p, _today(as_of)), "on_plan": _options_on_plan(p)}
 
 
 # --------------------------------------------------------------------------- what the signature committed to
