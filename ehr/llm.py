@@ -37,9 +37,15 @@ def call_structured(system_blocks, messages, schema: dict, *, model: str = DEFAU
         raise RuntimeError("Anthropic rejected the API key (401). Check ANTHROPIC_API_KEY is the real key from "
                            "console.anthropic.com, not a placeholder, and that ANTHROPIC_BASE_URL is unset.") from e
     except anthropic.BadRequestError as e:
-        if "fallback" not in str(e).lower() and "beta" not in str(e).lower():
-            raise
-        response = client.messages.create(**kwargs)
+        # Any 400 from the beta path is retried plainly, not only ones that name the beta. The server-side fallback
+        # prepares the request for more than one model, and a constrained-output schema it accepts on its own can be
+        # refused here ("the compiled grammar is too large") without the word "fallback" appearing anywhere in the
+        # message. Losing the fallback costs a policy decline becoming an error; not retrying costs the whole call.
+        try:
+            response = client.messages.create(**kwargs)
+        except anthropic.BadRequestError as plain:
+            raise RuntimeError(f"Anthropic rejected the request both with the server-side fallback and without it.\n"
+                               f"  with fallback: {e}\n  without:       {plain}") from plain
 
     if response.stop_reason == "refusal":
         details = getattr(response, "stop_details", None)
