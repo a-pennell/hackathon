@@ -41,3 +41,21 @@ available from the panel, so reading the note first costs one extra click and no
 API: `GET /v3/api/patients/{pid}/visit` returns the utterances with character offsets and every proposal of the
 visit's note positioned in the transcript (`v3/api.py`). All actions reuse the v1 review endpoints and the v2
 note endpoints; no new model call is made.
+
+## Signing ends the visit, not the problem
+
+The visit used to stop at *signed · open the visit note*, which is a filing-cabinet ending for a system whose claim is
+that it keeps watching. The signature is really the moment the chart starts waiting for something, so that is what the
+screen now says: `GET /v3/api/patients/{pid}/commitments` returns the promises the visit just made, each with a date
+and something that answers it.
+
+On Jeane, nine of them: the two expectations the lisinopril sets (creatinine at or under 1.04 mg/dL, potassium under
+5.5, both tested by the BMP), the projections for systolic pressure and A1c, the plan lines that say when ("BMP in 2
+weeks" → 29 Sep, "Repeat A1c in 3 months" → 14 Dec), and the one inferred finding left unanswered, still undoable and
+still off the note. The projection is read from the same `problem_view` the problem page renders, so the watch list
+and the problem card cannot disagree.
+
+**Two weeks later · let the results land** sits in that panel. The BMP comes back at creatinine 0.9 and potassium 4.4:
+both expectations answer *within*, the systolic lands at 138 against a projected 133.2–139.6 and reads *better*, the
+"BMP in 2 weeks" line stops being owed and reads *resulted*, and the count falls from nine to four. Each line links to
+its problem, which is the seam into the rest of the chart.

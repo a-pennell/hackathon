@@ -35,7 +35,7 @@ export type SimOption = { id: string; label: string; kind: string; text: string;
 export type Projection = { options: string[]; labels: string[]; points: Band[]; weeks: number; full_effect_by: string; at_full_effect: { low: number; high: number }; reaches_goal_by: string | null; observed?: { value: number; time: string; status: string } };
 export type ExpectedMove = {
   id: string; value: { code: string; name: string; unit: string }; trigger: { text: string; ids: string[] };
-  baseline: { value: number; time: string; id: string }; because: string; expect: string; limit: number; by: string;
+  baseline: { value: number; time: string; id: string }; because: string; expect: string; limit: number; limit_kind: "rise" | "ceiling"; by: string;
   not_expected: string; then: string; reference_range: { low: number; high: number } | null; inside_range: boolean;
   note: string; tested_by: { text: string; ids: string[] } | null;
   observed: { value: number; time: string; id: string; status: "within" | "beyond" } | null;

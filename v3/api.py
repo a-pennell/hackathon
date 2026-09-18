@@ -13,7 +13,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 
-from datetime import date
+from datetime import date, timedelta
 
 from pydantic import BaseModel
 
@@ -22,8 +22,9 @@ from ehr.extract import PROPOSED_DIR, load_note_file, save_patient, verbatim_quo
 from ehr.review import DEFAULT_REVIEWER, accept_item, apply_review, list_queues, open_encounter, review_record
 from ehr.trend import DATA_DIR, load_patient
 from v2.monitor import attest, manifest
+from v2.simulate import expectations
 from v2.api import _attach_note, _next_action, _followup, _today
-from v2.monitor import problem_list, unattested
+from v2.monitor import problem_list, problem_view, unattested
 
 router = APIRouter(prefix="/v3/api")
 ROOT = Path(__file__).resolve().parent.parent
@@ -267,3 +268,87 @@ def preview_visit_note(pid: str, body: VisitSignBody, as_of: str | None = None):
     with _scratch(pid) as (data_dir, proposed_dir):
         p, enc, _, doc = _perform_signature(pid, v, body, data_dir=data_dir, proposed_dir=proposed_dir, as_of=as_of)
         return {"document": doc, "manifest": manifest(p, enc, proposed_dir=proposed_dir), "preview": True}
+
+
+# --------------------------------------------------------------------------- what the signature committed to
+
+WHEN = re.compile(r"\bin (\d+)\s*(day|week|month)s?\b", re.I)
+
+
+def _dmy(iso: str) -> str:
+    return date.fromisoformat(iso[:10]).strftime("%-d %b %Y")
+
+
+def _due(text: str, start: date) -> str | None:
+    """A plan line that says when ("BMP in 2 weeks") is a date the chart can wait for."""
+    m = WHEN.search(text)
+    if not m:
+        return None
+    n, unit = int(m.group(1)), m.group(2).lower()
+    return (start + timedelta(days=n * {"day": 1, "week": 7, "month": 30}[unit])).isoformat()
+
+
+@router.get("/patients/{pid}/commitments")
+def commitments(pid: str, as_of: str | None = None):
+    """What the visit committed to, once it is signed: the values the plan is expected to move and how far, what the
+    plan promised and when, and what was left unanswered. The signature is not the end of the visit — it is the point
+    where the chart starts waiting for something, and this is the list of what."""
+    p = load_patient(pid, DATA_DIR)
+    today = _today(as_of) or date.today()
+    enc = open_encounter(p) or next((e["id"] for e in reversed(p.get("encounters", []))), None)
+    e = next((x for x in p.get("encounters", []) if x["id"] == enc), None)
+    day = date.fromisoformat(e["time"][:10]) if e else today
+    names = {x["id"]: x["name"] for x in p["problems"]}
+    touched = [x for x in p["problems"] if x["status"] == "active" and any(pl.get("problem_id") == x["id"] for pl in p.get("plans", []))]
+    watching: list[dict] = []
+    seen = set()
+    for prob in touched:
+        for m in expectations(p, prob["id"], today=today):
+            key = (m["id"], m["value"]["code"])
+            if key in seen:
+                continue
+            seen.add(key)
+            o = m["observed"]
+            watching.append({"kind": "expectation", "problem": prob["name"], "problem_id": prob["id"],
+                             "text": f"{m['value']['name']} {'at or under' if m['limit_kind'] == 'rise' else 'under'} {m['limit']} {m['value']['unit']}".strip(),
+                             "detail": f"from {m['baseline']['value']} on {_dmy(m['baseline']['time'])} · {m['expect']}",
+                             "by": m["by"], "tested_by": (m["tested_by"] or {}).get("text"), "ids": m["ids"],
+                             "status": o["status"] if o else "waiting", "observed": o, "source": m["source"]})
+        # the projection comes from the same view the problem page renders, so the two cannot disagree
+        cc = problem_view(p, prob["id"], proposed_dir=PROPOSED_DIR, today=today)["answers"]["change_course"]
+        cp, of = cc.get("projection"), cc.get("projection_of")
+        if cp and of:
+            ob = cp.get("observed")
+            watching.append({"kind": "projection", "problem": prob["name"], "problem_id": prob["id"],
+                             "text": f"{of['name']} {cp['at_full_effect']['low']} to {cp['at_full_effect']['high']} {of.get('unit') or ''}".strip(),
+                             "detail": f"on the current plan: {'; '.join(cp['labels']).lower()}", "by": cp["full_effect_by"],
+                             "tested_by": None, "ids": [], "status": ob["status"] if ob else "waiting", "observed": ob, "source": of["note"]})
+    for pl in p.get("plans", []):
+        due = _due(pl["text"], day)
+        if due:
+            watching.append({"kind": "plan", "problem": names.get(pl.get("problem_id"), ""), "problem_id": pl.get("problem_id"),
+                             "text": pl["text"], "detail": "promised at this visit", "by": due, "tested_by": None,
+                             "ids": [pl["id"]], "status": "waiting", "observed": None, "source": None})
+    aside = next((g for g in manifest(p, enc, proposed_dir=PROPOSED_DIR) if g["kind"] == "set_aside"), None)
+    for it in (aside or {}).get("items", []):
+        watching.append({"kind": "set_aside", "problem": "", "problem_id": None, "text": it["text"], "detail": "undoable, and off the note until it is answered",
+                         "by": None, "tested_by": None, "ids": [it["id"]], "status": "unanswered", "observed": None, "source": None})
+    # a promise whose answer is already on the chart is not still waiting: the expectations it was to settle say so
+    answered_by = {}
+    for w in watching:
+        if w["kind"] == "expectation" and w["tested_by"] and w["observed"]:
+            prev = answered_by.get(w["tested_by"])
+            if not prev or w["observed"]["time"] < prev["time"]:
+                answered_by[w["tested_by"]] = w["observed"]
+    for w in watching:
+        if w["kind"] == "plan" and w["text"] in answered_by:
+            w["status"], w["observed"] = "resulted", answered_by[w["text"]]
+    watching.sort(key=lambda w: (w["by"] or "9999"))
+    open_ = [w for w in watching if w["status"] == "waiting"]
+    return {"as_of": today.isoformat(), "encounter": enc, "signed": _signed_note(p, enc), "watching": watching,
+            "open": len(open_), "next_date": next((w["by"] for w in open_ if w["by"]), None), "followup": _followup(pid, p)}
+
+
+def _signed_note(patient: dict, enc: str | None) -> dict | None:
+    d = next((x for x in patient.get("documents", []) if x.get("kind") == "encounter_note" and (x.get("review") or {}).get("encounter_id") == enc), None)
+    return {"id": d["id"], "title": d["title"]} if d else None

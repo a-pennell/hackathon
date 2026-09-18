@@ -1,10 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api";
 import type { Ctx } from "./App";
-import type { ManifestGroup, NoteDoc, Proposal, VisitData } from "./v2types";
+import type { Commitment, Commitments, ManifestGroup, NoteDoc, Proposal, VisitData } from "./v2types";
 import Problem from "./Problem";
 
 const PACE_MS = 2200;
+function Watch({ w, go }: { w: Commitment; go: (h: string) => void }) {
+  const answered = w.observed || w.status === "unanswered";
+  return (
+    <div className={`wrow ${w.kind} ${w.status}`}>
+      <span className="wkind">{w.kind === "set_aside" ? "set aside" : w.kind}</span>
+      <span className="wwhat">
+        <b>{w.text}</b>
+        <span className="wdetail">{w.detail}{w.tested_by ? ` · tested by: ${w.tested_by}` : ""}</span>
+        {w.problem_id && <button className="wprob" onClick={() => go(`#/problem/${w.problem_id}`)}>{w.problem}</button>}
+      </span>
+      <span className={`wby ${answered ? "done" : ""}`}>
+        {w.observed ? (w.kind === "plan" ? `resulted ${dmy(w.observed.time)}` : `${w.observed.value} on ${dmy(w.observed.time)} · ${w.observed.status}`)
+          : w.by ? `by ${dmy(w.by)}` : "no date"}
+      </span>
+    </div>
+  );
+}
+
 const dmy = (iso: string) => { const d = new Date(iso.slice(0, 10) + "T00:00:00"); return `${d.getDate()} ${d.toLocaleString("en", { month: "short" })} ${d.getFullYear()}`; };
 
 /** The visit as one surface. The dictation plays on the left. The recorded reading is revealed as the transcript reaches
@@ -26,6 +44,7 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
   const [signed, setSigned] = useState<{ attested: number } | null>(null);
   const [preview, setPreview] = useState<{ document: NoteDoc; manifest: ManifestGroup[] } | null>(null);
   const [edits, setEdits] = useState<Record<string, string>>({});
+  const [commit, setCommit] = useState<Commitments | null>(null);
   const sectionsBody = () => Object.entries(edits).map(([heading, text]) => ({ heading, text }));
   const openPreview = () => run("preview", async () => { setPreview(await api.previewVisit(pid, { decisions, reasons, authored, sections: sectionsBody() })); });
   useEffect(() => { if (saved) { if (typeof saved.cursor === "number") setCursor(saved.cursor); if (saved.selected) setSelected(saved.selected); } }, []);  // eslint-disable-line react-hooks/exhaustive-deps
@@ -38,6 +57,9 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
     if (!d.note.read && d.proposals.length === 0) { setCursor(-1); setPlaying(false); setDecisions({}); setReasons({}); }
   }).catch(() => setV(null)), [pid]);
   useEffect(() => { load(); }, [load, refreshKey]);
+  // Once it is signed the visit is not over: the chart starts waiting for things, and this is what it is waiting for.
+  const isSigned = !!signed || v?.note.status === "signed";
+  useEffect(() => { if (isSigned) api.commitments(pid).then(setCommit).catch(() => setCommit(null)); }, [isSigned, pid, refreshKey, tick]);
 
   const n = v?.utterances.length ?? 0;
   const done = v ? cursor >= n - 1 : false;
@@ -109,6 +131,20 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
         </aside>
 
         <main className="work">
+          {isSigned && commit && (
+            <section className="watch">
+              <span className="eyebrow">The visit is signed · what the chart is waiting for</span>
+              <p className="muted">Signing ended the visit, not the problem. Each line below has a date and something that answers it.</p>
+              {commit.watching.map((w, i) => <Watch key={`${w.kind}${i}`} w={w} go={go} />)}
+              {commit.followup && !commit.followup.applied && (
+                <button className="btn primary" disabled={!!busy} title={commit.followup.label}
+                  onClick={() => run("advance", () => api.advance(pid), "Two weeks on: the home log and the BMP have landed").then(() => setTick((t) => t + 1))}>
+                  Two weeks later · let the results land
+                </button>
+              )}
+              {commit.followup?.applied && <p className="muted">The follow-up results are on the chart. Open a problem to see what they did to it.</p>}
+            </section>
+          )}
           {selected ? (
             <>
               <section className="heard">
@@ -147,7 +183,8 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
             <>
               <div className="big">signed</div>
               <p className="muted">{signed ? `${signed.attested} items attested by one signature.` : "The dictation and the visit note are signed."}</p>
-              <button className="btn primary" onClick={() => go("#/note")}>Open the visit note</button>
+              <button className="btn" onClick={() => go("#/note")}>Open the visit note</button>
+              {commit && <p className="muted">{commit.open} things the chart is now waiting for{commit.next_date ? `, the first on ${dmy(commit.next_date)}` : ""}.</p>}
             </>
           ) : (
             <>

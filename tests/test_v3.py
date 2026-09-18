@@ -117,3 +117,37 @@ def test_a_visit_is_signed_once(visit):
     v3api.sign_visit("pt_002", v3api.VisitSignBody())
     with pytest.raises(Exception, match="already signed"):
         v3api.sign_visit("pt_002", v3api.VisitSignBody())
+
+
+def test_signing_hands_off_to_what_the_chart_is_now_waiting_for(visit):
+    """The signature is not the end of the visit. It leaves promises with dates — values the plan is expected to move,
+    what the plan said it would do and when, and what was left unanswered — and the follow-up answers them."""
+    from ehr.extract import save_patient
+    from ehr.trend import load_patient
+    v3api.sign_visit("pt_002", v3api.VisitSignBody())
+    c = v3api.commitments("pt_002", as_of="2026-09-17")
+    kinds = {w["kind"] for w in c["watching"]}
+    assert {"expectation", "projection", "plan", "set_aside"} <= kinds
+    assert c["signed"]["title"].startswith("Visit note")
+    assert all(w["status"] == "waiting" for w in c["watching"] if w["kind"] != "set_aside")
+    assert c["next_date"] == "2026-09-29" and c["open"] == len([w for w in c["watching"] if w["status"] == "waiting"])
+    cr = next(w for w in c["watching"] if w["text"].startswith("Creatinine"))
+    assert cr["tested_by"] == "BMP in 2 weeks" and cr["by"] == "2026-10-13"
+    assert next(w for w in c["watching"] if w["kind"] == "set_aside")["by"] is None  # nothing is waiting on it; it is just open
+    # the promise is dated from the visit, not from today
+    assert next(w for w in c["watching"] if w["text"] == "BMP in 2 weeks")["by"] == "2026-09-29"
+
+    # two weeks later the basic metabolic panel lands, and the promises answer themselves
+    p = load_patient("pt_002", visit / "patients")
+    for oid, code, name, val, unit, rng in (("obs_f001", "38483-4", "Creatinine (whole blood)", 0.9, "mg/dL", {"low": 0.6, "high": 1.2}),
+                                            ("obs_f002", "6298-4", "Potassium", 4.4, "mmol/L", {"low": 3.5, "high": 5.1})):
+        p["observations"].append({"id": oid, "patient_id": "pt_002", "name": name, "code": {"system": "LOINC", "value": code},
+                                  "value": val, "unit": unit, "effective_time": "2026-09-29T09:15:00-05:00", "reference_range": rng,
+                                  "status": "accepted", "provenance": {"source": "curated", "followup": True}})
+    save_patient(p, visit / "patients")
+    after = v3api.commitments("pt_002", as_of="2026-09-30")
+    by_text = {w["text"]: w for w in after["watching"]}
+    assert by_text["BMP in 2 weeks"]["status"] == "resulted"          # the promise is kept, not still owed
+    assert next(w for w in after["watching"] if w["text"].startswith("Creatinine"))["observed"]["status"] == "within"
+    assert next(w for w in after["watching"] if w["text"].startswith("Potassium"))["observed"]["status"] == "within"
+    assert after["open"] < c["open"]
