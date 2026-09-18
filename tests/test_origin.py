@@ -84,3 +84,69 @@ def test_the_classifier_errs_towards_asking_and_the_misses_are_all_that_directio
         assert _origin("cause", quote, cause_name=name) == "inferred"  # a miss, in the safe direction
     # sentence-level negation is blunt: "no fever" costs the cough a click, and that is the trade we chose
     assert _origin("problem", "Dry cough for about two weeks, worse at night, no fever, no sputum.", problem_name="Cough") == "inferred"
+
+
+# --- the extractor's own answer (schema §13), which is better evidence than cue words after the fact ---
+
+def test_the_extractors_answer_decides_when_it_gave_one():
+    # a cause it says it inferred is put to the clinician, however plainly the sentence reads
+    assert _origin("cause", "Daily NSAID use since May, likely contributing.", cause_name="Ibuprofen", asserted=False) == "inferred"
+    # and one it says the passage states is taken, even when no cue word in our list appears
+    assert _origin("cause", "I think this is the lisinopril.", cause_name="Lisinopril", asserted=True) == "stated"
+    assert _origin("cause", "Her albuminuria is likely the ibuprofen's doing.", cause_name="Ibuprofen", asserted=True) == "stated"
+    # the same for a new problem the rule's blunt negation guard would have sent back
+    assert _origin("problem", "Dry cough for two weeks, no fever, no sputum.", problem_name="Cough", asserted=True) == "stated"
+
+
+def test_an_outright_denial_is_refused_even_if_the_extractor_says_otherwise():
+    """The one veto kept over the extractor. A model that reads 'not due to the ibuprofen' as an assertion would have
+    the signature attest the opposite of what was dictated, and no downstream step would catch it."""
+    for quote in ("The albuminuria is not due to the ibuprofen.",
+                  "I doubt the ibuprofen is contributing.",
+                  "No evidence of an NSAID effect.",
+                  "Ruled out the ibuprofen as a cause.",
+                  "Not from the metformin, though I checked a B12 anyway."):
+        assert _origin("cause", quote, cause_name="Ibuprofen", asserted=True) == "inferred", quote
+
+
+def test_without_the_field_the_rule_still_applies():
+    assert _origin("cause", "Daily NSAID use since May, likely contributing.", cause_name="Ibuprofen") == "stated"
+    assert _origin("cause", "I doubt the ibuprofen is contributing.", cause_name="Ibuprofen") == "inferred"
+
+
+def test_the_field_reaches_the_reader_from_a_queue(tmp_path):
+    """End to end: an extraction that carries the flag changes what the visit puts to the clinician. The recordings in
+    data/proposed predate the field, so this builds a batch the way the extractor now writes one."""
+    import json
+    import shutil
+    import pytest as _pytest
+    from ehr.extract import run_extraction
+    from ehr.trend import DATA_DIR
+    import v2.api as v2api
+    import v3.api as v3api
+
+    data = tmp_path / "data"
+    shutil.copytree(DATA_DIR, data / "patients")
+    (data / "proposed" / "pt_002").mkdir(parents=True)
+    for f in (DATA_DIR.parent / "proposed" / "pt_002").glob("*.raw.json"):
+        shutil.copy(f, data / "proposed" / "pt_002" / f.name)
+    mp = _pytest.MonkeyPatch()
+    for mod, name, value in ((v3api, "DATA_DIR", data / "patients"), (v3api, "PROPOSED_DIR", data / "proposed"),
+                             (v2api, "DATA_DIR", data / "patients"), (v2api, "PROPOSED_DIR", data / "proposed")):
+        mp.setattr(mod, name, value)
+    try:
+        run_extraction("pt_002", ROOT / "data" / "notes" / "note_demo_102.json",
+                       replay=data / "proposed" / "pt_002" / "note_demo_102.raw.json", data_dir=data / "patients")
+        qp = data / "proposed" / "pt_002" / "note_demo_102.json"
+        batch = json.loads(qp.read_text())
+        # the NSAID cause reads as stated today, on the rule alone
+        assert next(p for p in v3api.visit("pt_002")["proposals"] if p["id"] == "med_demo_102_01")["origin"] == "stated"
+        # the extractor, having read the passage, says it was the one drawing the line
+        for l in batch["proposed"]["links"]:
+            if l["id"] in ("lnk_demo_102_18", "lnk_demo_102_19"):
+                l["provenance"]["asserted"] = False
+        qp.write_text(json.dumps(batch, indent=2))
+        again = next(p for p in v3api.visit("pt_002")["proposals"] if p["id"] == "med_demo_102_01")
+        assert again["origin"] == "inferred" and again["decision"] is True  # so it is now asked, not waved through
+    finally:
+        mp.undo()

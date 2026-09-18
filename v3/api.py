@@ -36,6 +36,10 @@ CAUSAL_CUES = ("contribut", "cause", "caus", "due to", "secondary to", "because 
 # A dictation says what is not so as often as what is. The cue words above appear in both, so a passage carrying any of
 # these is never read as asserting a relation: it falls to "inferred", which asks. The asymmetry is the whole point —
 # a wrong "inferred" costs one click, a wrong "stated" attests a claim the clinician did not make.
+# When the extractor has judged the passage itself, that judgement stands. This narrow list is the one veto kept over
+# it — phrases that deny the relation outright — because a model saying "asserted" about a sentence that says the
+# opposite is the single error the signature cannot absorb. It is deliberately much shorter than NEGATION below.
+DENIAL = re.compile(r"\b(not due to|not from|not the cause|no evidence|no reason to think|doubt|unlikely|ruled? out|denies|denied|rather than)\b", re.I)
 NEGATION = re.compile(r"\b(no|not|n't|never|none|negative|without|denies|denied|doubt|doubtful|unlikely|ruled? out|rules out|excluded?|absent|rather than|resolved|against|nothing|neither|nor)\b", re.I)
 ALIASES = {"ibuprofen": ("nsaid", "advil", "motrin"), "naproxen": ("nsaid", "aleve"), "hydrochlorothiazide": ("hctz", "thiazide"), "lisinopril": ("ace inhibitor", "acei"),
            "metformin": ("metformin",), "acetaminophen": ("tylenol", "acetaminophen")}
@@ -56,13 +60,22 @@ def _states_problem(quote: str, name: str) -> bool:
     return bool(words) and sum(1 for w in words if w[:5] in q) >= max(1, (len(words) + 1) // 2)
 
 
-def _origin(kind: str, quote: str | None, *, cause_name: str | None = None, problem_name: str | None = None) -> str:
+def _origin(kind: str, quote: str | None, *, cause_name: str | None = None, problem_name: str | None = None,
+            asserted: bool | None = None) -> str:
     """'stated': the passage itself makes the claim, so the dictation already decided it and the note's signature covers
     it. 'inferred': the reading went past what the passage says, or the passage is not plainly asserting it; that one is
-    put to the clinician. Only the two kinds that assert something — a cause and a new problem — can be waved through,
-    and only when the passage is unhedged: everything else asks, because asking is cheap and a wrong attestation is not."""
+    put to the clinician.
+
+    `asserted` is the extractor's own answer to that question, recorded when it read the passage (schema §13). It is
+    better evidence than anything recoverable afterwards from cue words, so it decides — subject to one narrow veto.
+    Without it the rule below applies, and because the rule cannot read, it is blunt on purpose: only a cause or a new
+    problem can be waved through at all, and any negation in the passage sends it to the clinician instead."""
     if not quote:
         return "inferred"
+    if kind in ("cause", "problem") and asserted is not None:
+        if not asserted:
+            return "inferred"
+        return "inferred" if DENIAL.search(quote) else "stated"
     if kind in ("cause", "problem") and NEGATION.search(quote):
         return "inferred"  # the passage may be denying it; a denial read as an assertion is the one error we cannot make
     if kind == "cause":
@@ -134,8 +147,10 @@ def visit(pid: str, as_of: str | None = None):
                     seg = (it.get("segments") or [{}])[0]
                     text_ = f"{it['name']} {seg.get('dose') or ''} {seg.get('frequency') or ''}".strip() + (f" · {seg.get('start')} → {seg.get('end') or 'ongoing'}" if seg.get("start") else "")
                 cause = [names.get(l["to"], l["to"]) for l in links if l["type"] == "suspected_cause"]
-                cause_q = next(((l.get("provenance") or {}).get("quote") for l in links if l["type"] == "suspected_cause"), None)
-                origin = _origin("cause", cause_q, cause_name=it.get("name")) if cause else _origin(kind, q, problem_name=it.get("name"))
+                cause_l = next((l for l in links if l["type"] == "suspected_cause"), None)
+                cause_q = ((cause_l or {}).get("provenance") or {}).get("quote")
+                origin = (_origin("cause", cause_q, cause_name=it.get("name"), asserted=((cause_l or {}).get("provenance") or {}).get("asserted")) if cause
+                          else _origin(kind, q, problem_name=it.get("name"), asserted=(it.get("provenance") or {}).get("asserted")))
                 proposals.append({"id": it["id"], "kind": "cause" if cause else kind, "text": text_ + (f" · suspected cause of {', '.join(cause)}" if cause else ""),
                                   "problems": problems_of(it["id"], it) or ([it["id"]] if kind == "problem" else []), "quote": cause_q or q, "offset": _offset(cause_q or q, text),
                                   "decision": decision and origin == "inferred", "origin": origin, "status": it.get("status"), "link_ids": [l["id"] for l in links],
@@ -149,7 +164,7 @@ def visit(pid: str, as_of: str | None = None):
                 q = (l.get("provenance") or {}).get("quote")
                 subj = names.get(frm, frm) if not frm.startswith("note_") else (batch.get("review_hints", {}).get(l["id"]) or "finding")
                 rel = {"suspected_cause": "suspected cause of", "evidence_for": "evidence for", "relevant_to": "bears on", "treats": "treats"}.get(l["type"], l["type"])
-                origin = _origin("cause", q, cause_name=names.get(frm, frm)) if l["type"] == "suspected_cause" else "stated"
+                origin = _origin("cause", q, cause_name=names.get(frm, frm), asserted=(l.get("provenance") or {}).get("asserted")) if l["type"] == "suspected_cause" else "stated"
                 proposals.append({"id": l["id"], "kind": "cause" if l["type"] == "suspected_cause" else "finding", "text": f"{subj} · {rel} {names.get(l['to'], l['to'])}",
                                   "problems": [l["to"]] if l["to"].startswith("prob_") else [], "quote": q, "offset": _offset(q, text),
                                   "decision": l["type"] in DECISION_LINKS and origin == "inferred", "origin": origin, "status": l.get("status"), "link_ids": [l["id"]], "stem": batch["stem"]})

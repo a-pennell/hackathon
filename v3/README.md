@@ -82,9 +82,15 @@ artifact of one note's phrasing. Zero unsafe errors; three misses, all in the di
 `"I think this is the lisinopril"` asserts a cause with no verb the list carries, and `"no fever, no sputum"` costs
 the cough a click because sentence-level negation cannot tell which clause it belongs to.
 
-The real fix is not a longer word list. The model has already read the passage and should say whether it asserts the
-relation, with the rule kept as the fallback for anything that does not carry the field — **flagged as a schema
-addition**, not applied.
+The real fix is not a longer word list, and it is now built: `provenance.asserted` (schema §7.1). The extractor
+answers, while it has the passage in front of it, whether that passage itself makes the claim, and `_origin` prefers
+that answer to anything recoverable from cue words afterwards. One veto is kept over it — a passage that denies the
+relation outright is never read as asserting it, however the extractor answered — because a wrong `true` is attested
+without anyone seeing it while a wrong `false` costs one click.
+
+**The demo still runs on the rule.** Every recording in `data/proposed` was made before the field existed, and the
+reader falls back when it is absent. Re-recording the extractions with a live key is what turns it on; nothing else
+has to change.
 
 ## Runbook — the three-minute demo
 

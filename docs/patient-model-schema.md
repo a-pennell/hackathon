@@ -160,6 +160,31 @@ Relationships are first-class rows, not foreign keys. This is deliberate: one la
 
 The problem-scoped timeline view = "give me everything linked to `prob_ckd`, plotted on one axis."
 
+### 7.1 `provenance.asserted` — did the passage say it, or did we?
+
+An extracted item's provenance may carry `"asserted": true | false`: the extractor's own answer, given while it had the
+passage in front of it, to whether that passage *itself* makes the claim. It applies to the two kinds that assert
+something a clinician would otherwise have to check — a `suspected_cause` link, and a proposed Problem (with its
+`evidence_for` link) — and is absent everywhere else.
+
+```json
+"provenance": { "source": "nlp_extraction", "note_id": "note_0007", "quote": "Daily NSAID use since May, likely contributing.",
+                "asserted": true, "confidence": 0.91 }
+```
+
+`true` means a clinician reading that passage alone would agree it says so. `false` means the extractor drew the line
+itself, or the passage hedges, or the patient rather than the clinician raised it, or — most importantly — the passage
+*denies* it. A denial is always `false`.
+
+It is a judgement, not a fact about the text, so it is written where judgements go: provenance, beside `confidence`,
+never on the item. It is optional; a reader that does not find it must fall back to its own rule, because every
+extraction recorded before this field exists lacks it.
+
+**Why it matters.** Consumers may use it to decide what a clinician never has to look at — `v3` accepts an `asserted`
+cause under the visit's signature with no review — so a wrong `true` is attested without anyone seeing it, while a
+wrong `false` costs one click. Readers should therefore treat absence and uncertainty as `false`, and should keep a
+check for outright denial even when the field says `true` (`v3/api.py::DENIAL`).
+
 ## 8. FHIR → model mapping (import script)
 
 | Synthea FHIR resource | maps to |

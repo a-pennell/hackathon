@@ -269,11 +269,12 @@ built — it is the fix for a defect described in `v3/README.md`, written down s
 12. **Section key on a Document** (`ehr/draft.py`): every section carries `key`, stable across recompiles
     (`assessment:<problem_id>`, `plan:<problem_id>`, else a slug of the heading). A clinician's edit is addressed by
     it, because a heading is not unique — two problems with the same name give two identical headings.
-13. **`asserted` on a link's provenance** — *proposed, not built.* The extractor has already read the passage and
-    should say whether it asserts the relation it is proposing, rather than the reader guessing from cue words after
-    the fact (`v3/api.py::_origin`, `tests/test_origin.py`). Shape: `provenance: {..., "asserted": true|false}`, with
-    the rule kept as the fallback for any recording that does not carry it. Needs a prompt change and re-recorded
-    extractions.
+13. **`provenance.asserted`** (`ehr/extract.py`, `v3/api.py::_origin`) — **agreed and built**, and the one entry
+    here also written into the schema doc (§7.1), since it changes what the extractor emits. The extractor answers,
+    while it has the passage in front of it, whether that passage itself makes the claim; `v3` prefers that answer over
+    guessing from cue words afterwards, keeps a narrow denial veto over it, and falls back to the rule when the field
+    is absent. **Every recording in `data/proposed` predates the field**, so the demo still runs on the rule until the
+    extractions are re-recorded with a live key.
 
 ## Things the team should know
 

@@ -74,6 +74,12 @@ Rules
 - `suspected_causes`: only when the note itself raises the causal link (e.g. NSAID use and
   kidney function). `cause_ref` is a medication or problem id (existing or new_N); `effect_ref`
   is a problem id or "LOINC:<code>".
+- `asserted` (on `suspected_causes` and on `problems`): does the quoted passage *itself* make the
+  claim, or are you the one making it? true only when a clinician reading that passage alone would
+  agree it says so. false when you inferred it from context, when the passage only hints at it, when
+  the patient rather than the clinician raises it, and above all when the passage *denies* it — a
+  passage saying the NSAID is not to blame is `asserted: false`, never true. Downstream, `true` means
+  the clinician's signature takes it with no review, so when in doubt answer false.
 - `plans`: each thing the assessment/plan section says will be done, one item each, linked to
   the problem it addresses: a medication decision, a test, monitoring, a referral, education, or
   a follow-up. `text` is the action in a few words as the note states it (no advice of your own);
@@ -110,7 +116,7 @@ OUTPUT_SCHEMA = {
             }}},
         "problems": {"type": "array", "items": {
             "type": "object", "additionalProperties": False,
-            "required": ["ref", "quote", "name", "status", "onset_date", "supersedes_problem_id", "confidence"],
+            "required": ["ref", "quote", "name", "status", "onset_date", "supersedes_problem_id", "asserted", "confidence"],
             "properties": {
                 "ref": {"type": "string", "description": "new_1, new_2, ..."},
                 "quote": {"type": "string"},
@@ -118,6 +124,7 @@ OUTPUT_SCHEMA = {
                 "status": {"type": "string", "enum": ["active", "resolved"]},
                 "onset_date": {"type": ["string", "null"]},
                 "supersedes_problem_id": {"type": ["string", "null"]},
+                "asserted": {"type": "boolean", "description": "does the quoted passage itself say the patient has this problem?"},
                 "confidence": {"type": "number"},
             }}},
         "medications": {"type": "array", "items": {
@@ -150,12 +157,13 @@ OUTPUT_SCHEMA = {
             }}},
         "suspected_causes": {"type": "array", "items": {
             "type": "object", "additionalProperties": False,
-            "required": ["quote", "cause_ref", "effect_ref", "rationale", "confidence"],
+            "required": ["quote", "cause_ref", "effect_ref", "rationale", "asserted", "confidence"],
             "properties": {
                 "quote": {"type": "string"},
                 "cause_ref": {"type": "string"},
                 "effect_ref": {"type": "string"},
                 "rationale": {"type": "string"},
+                "asserted": {"type": "boolean", "description": "does the quoted passage itself assert this cause, rather than you inferring it?"},
                 "confidence": {"type": "number"},
             }}},
     },
@@ -274,9 +282,14 @@ class Validator:
         self.counters[prefix] += 1
         return f"{prefix}_{self.tag}_{self.counters[prefix]:02d}"
 
-    def provenance(self, quote: str, confidence) -> dict:
-        return {"source": "nlp_extraction", "note_id": self.note["id"], "quote": quote,
+    def provenance(self, quote: str, confidence, asserted=None) -> dict:
+        """`asserted` (schema §13) is the extractor's own answer to whether the passage makes the claim. Only a real
+        boolean is kept: anything else is absent, and the reader falls back to its rule."""
+        prov = {"source": "nlp_extraction", "note_id": self.note["id"], "quote": quote,
                 "model": f"{EXTRACTOR_VERSION}/{self.model}", "confidence": _conf(confidence)}
+        if isinstance(asserted, bool):
+            prov["asserted"] = asserted
+        return prov
 
     def reject(self, kind: str, item: dict, reason: str):
         self.rejected.append({"kind": kind, "reason": reason, "item": item})
@@ -320,14 +333,14 @@ class Validator:
             return ref
         return self.ref_map.get(ref)
 
-    def add_link(self, frm: str, to: str, ltype: str, quote: str, confidence) -> str | None:
+    def add_link(self, frm: str, to: str, ltype: str, quote: str, confidence, asserted=None) -> str | None:
         assert ltype in LINK_TYPES
         if (frm, to, ltype) in self.existing_links:
             return None
         self.existing_links.add((frm, to, ltype))
         lid = self.new_id("lnk")
         self.out["links"].append({"id": lid, "from": frm, "to": to, "type": ltype, "status": "proposed",
-                                  "provenance": self.provenance(quote, confidence), "created_at": self.now})
+                                  "provenance": self.provenance(quote, confidence, asserted), "created_at": self.now})
         return lid
 
     # -- passes (problems first so refs resolve)
@@ -342,7 +355,7 @@ class Validator:
                 "id": pid, "patient_id": self.patient["patient"]["id"], "name": it["name"].strip(),
                 "code": None, "status": "proposed",
                 "onset_date": _iso_date_or_none(it.get("onset_date")), "resolved_date": None,
-                "provenance": self.provenance(q, it.get("confidence")),
+                "provenance": self.provenance(q, it.get("confidence"), it.get("asserted")),
             })
             self.add_link(self.note["id"], pid, "evidence_for", q, it.get("confidence"))
             sup = it.get("supersedes_problem_id")
@@ -506,7 +519,7 @@ class Validator:
             if not cause or not effect:
                 self.reject("suspected_cause", it, "cause or effect ref does not resolve")
                 continue
-            lid = self.add_link(cause, effect, "suspected_cause", q, it.get("confidence"))
+            lid = self.add_link(cause, effect, "suspected_cause", q, it.get("confidence"), it.get("asserted"))
             if lid:
                 self.review_hints[lid] = it.get("rationale", "")
 
