@@ -22,6 +22,7 @@ from ehr.extract import PROPOSED_DIR, load_note_file, save_patient, verbatim_quo
 from ehr.review import DEFAULT_REVIEWER, accept_item, apply_review, list_queues, open_encounter, review_record
 from ehr.trend import DATA_DIR, load_patient
 from v2.monitor import attest, manifest
+from v2.guidelines import guidelines
 from v2.simulate import expectations
 from v2.api import _attach_note, _next_action, _followup, _today
 from v2.monitor import problem_list, problem_view, unattested
@@ -104,6 +105,19 @@ def _offset(quote: str | None, text: str) -> int | None:
     return text.find(exact) if exact else None
 
 
+def _practice(patient: dict, today: date | None) -> list[dict]:
+    """Best practice for each active problem, against the plan as it stands. Before the visit that is the chart; while
+    the note builds it is the draft's copy, so an item the clinician has just dictated reads as covered. Deciding is a
+    step of the reasoning, and this is its checklist — sourced rules, not a model, and never written to the note."""
+    out = []
+    for pr in patient["problems"]:
+        if pr["status"] != "active":
+            continue
+        for r in guidelines(patient, pr, today=today or date.today()):
+            out.append({"problem_id": pr["id"], "problem": pr["name"], **{k: r[k] for k in ("id", "text", "source", "status", "action")}})
+    return out
+
+
 @router.get("/patients/{pid}/visit")
 def visit(pid: str, as_of: str | None = None):
     """The transcript, and every proposal of the visit's note placed in it."""
@@ -176,7 +190,8 @@ def visit(pid: str, as_of: str | None = None):
     proposals.sort(key=lambda x: (x["offset"] if x["offset"] is not None else 10**9))
     return {"note": {"id": here["id"], "author": here["author"], "time": here["time"], "status": here.get("status"), "read": bool(batch), "file": here["file"]},
             "encounter": listing["here_for"]["encounter"], "utterances": _utterances(text), "text": text, "proposals": proposals,
-            "problems": listing["problems"], "counts": listing["counts"], "next_action": _next_action(p, listing), "unattested": unattested(p), "followup": _followup(pid, p)}
+            "problems": listing["problems"], "counts": listing["counts"], "next_action": _next_action(p, listing), "unattested": unattested(p), "followup": _followup(pid, p),
+            "practice": _practice(p, _today(as_of))}
 
 
 def _plan_of_signature(v: dict, body: "VisitSignBody") -> tuple[list[str], list[str], list[str], dict]:
@@ -303,7 +318,8 @@ def preview_visit_note(pid: str, body: VisitSignBody, as_of: str | None = None):
     v = visit(pid, as_of)
     with _scratch(pid) as (data_dir, proposed_dir):
         p, enc, _, doc = _perform_signature(pid, v, body, data_dir=data_dir, proposed_dir=proposed_dir, as_of=as_of)
-        return {"document": doc, "manifest": manifest(p, enc, proposed_dir=proposed_dir), "preview": True}
+        return {"document": doc, "manifest": manifest(p, enc, proposed_dir=proposed_dir), "preview": True,
+                "practice": _practice(p, _today(as_of))}
 
 
 # --------------------------------------------------------------------------- what the signature committed to

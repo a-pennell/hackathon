@@ -215,3 +215,32 @@ def test_the_note_builds_as_the_dictation_goes_and_is_signed_only_whole(visit):
 
     with pytest.raises(Exception, match="signed whole"):
         v3api.sign_visit("pt_002", upto(bp))
+
+
+def test_a_question_left_unanswered_is_not_written_into_the_note_as_a_rejection(visit):
+    """The screen says an inferred finding without an answer is left out of the note unless the clinician says yes. The
+    signature sets it aside as unconfirmed; the note used to write it up as 'rejected: not confirmed at signing',
+    recording a decision the clinician never made. An answered 'no' with a reason is still written, because that is
+    reasoning the next reader needs."""
+    silent = v3api.preview_visit_note("pt_002", v3api.VisitSignBody())["document"]
+    dm = next(s for s in silent["sections"] if s["heading"] == "Assessment · Diabetes mellitus type 2")
+    assert "rejected" not in dm["text"] and "not confirmed" not in dm["text"]
+    assert INFERRED_CAUSE not in dm["cites"]
+    said_no = v3api.preview_visit_note("pt_002", v3api.VisitSignBody(
+        decisions={INFERRED_CAUSE: "reject"}, reasons={INFERRED_CAUSE: "Non-adherence is the cause, not the drug."}))["document"]
+    dm = next(s for s in said_no["sections"] if s["heading"] == "Assessment · Diabetes mellitus type 2")
+    assert "rejected: Non-adherence is the cause, not the drug." in dm["text"]
+
+
+def test_best_practice_is_checked_against_the_plan_as_it_stands(visit):
+    """Deciding is a step of the reasoning and best practice is its checklist, but the rules were evaluated against the
+    chart as it was before the visit. Against the draft instead, what the clinician has just dictated reads as covered,
+    and what is left open is what they might add before signing. Never written into the note."""
+    before = {r["id"]: r["status"] for r in v3api.visit("pt_002")["practice"]}
+    after = {r["id"]: r["status"] for r in v3api.preview_visit_note("pt_002", v3api.VisitSignBody())["practice"]}
+    for rid in ("htn_second_agent", "htn_home_bp", "dm_acr_acei"):  # lisinopril, the home BP log, an ACE inhibitor
+        assert before[rid] == "gap" and after[rid] == "covered", rid
+    for rid in ("dm_statin", "dm_acr_confirm", "dm_intensify"):   # not dictated: still open at signing
+        assert after[rid] == "gap", rid
+    doc = v3api.preview_visit_note("pt_002", v3api.VisitSignBody())["document"]
+    assert "statin" not in " ".join(s["text"] for s in doc["sections"]).lower()  # a checklist, not the note

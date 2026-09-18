@@ -50,10 +50,14 @@ export type NoteView = { encounter: { id: string; time: string; type: string; su
 /* v3: the visit as one surface */
 export type Utterance = { i: number; start: number; end: number; text: string };
 export type Proposal = { id: string; kind: string; text: string; problems: string[]; quote: string | null; offset: number | null; decision: boolean; origin: "stated" | "inferred"; status: string; link_ids: string[]; cause_link_ids?: string[]; stem: string; change?: boolean };
+/** A best-practice rule checked against the plan as it stands: the chart before the visit, the draft while it builds. */
+export type Practice = { problem_id: string; problem: string; id: string; text: string; source: string; status: "covered" | "gap"; action: { kind: string; text: string } | null };
+/** The note as it stands: the whole visit once the dictation is finished, what has been spoken so far before that. */
+export type Draft = { document: NoteDoc; manifest: ManifestGroup[]; practice: Practice[] };
 export type VisitData = {
   note: { id: string; author: string; time: string; status?: string; read: boolean; file: string };
   encounter: { id: string; time: string; type: string; summary: string } | null;
-  utterances: Utterance[]; text: string; proposals: Proposal[]; problems: ProblemRow[]; counts: Record<Standing, number>; next_action: NextAction; unattested: number;
+  utterances: Utterance[]; text: string; proposals: Proposal[]; problems: ProblemRow[]; counts: Record<Standing, number>; next_action: NextAction; unattested: number; practice: Practice[];
   followup: { label: string; as_of: string; applied: boolean } | null;
 };
 
