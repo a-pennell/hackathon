@@ -157,16 +157,36 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
     return m;
   }, [revealed]);
   // Represent, link, decide: that work happens on whichever problem is being talked about, so the middle follows the
-  // dictation to the problem the latest finding landed on — until the clinician picks one, and then it stays put.
-  useEffect(() => {
-    if (pinned || !v) return;
-    let latest: Proposal | null = null;
-    for (const p of revealed) if (p.problems.length && (!latest || utteranceOf(p) >= utteranceOf(latest))) latest = p;
-    if (!latest) return;
-    const onChart = latest.problems.find((id) => v.problems.some((q) => q.id === id));
-    const next = onChart ?? latest.problems[0];
-    if (next !== selected) setSelected(next);
-  }, [revealed, pinned, v, utteranceOf, selected]);
+  // dictation — until the clinician picks one, and then it stays put. It follows the way attention does, not every
+  // mention: a line that still touches the current problem keeps it, and moving takes two lines in a row agreeing on
+  // the new one. Taking every mention switched eleven times in thirty-four lines, with one-line detours ("Hypertension,
+  // above goal… with new albuminuria" flicked to albuminuria and back); this switches five times, each where the topic
+  // really changes. A pure function of how far the transcript has got, so skipping and reloading agree with playing.
+  const followed = useMemo(() => {
+    if (!v) return null;
+    const onChart = new Set(v.problems.map((q) => q.id));
+    const lines = new Map<number, Map<string, number>>();   // utterance -> problem -> findings landing there
+    for (const p of v.proposals) {
+      if (!p.problems.length) continue;
+      const i = utteranceOf(p);
+      const m = lines.get(i) ?? new Map<string, number>();
+      for (const id of p.problems) m.set(id, (m.get(id) ?? 0) + 1);
+      lines.set(i, m);
+    }
+    const top = (m: Map<string, number>) => [...m.entries()].sort((a, b) => (Number(!onChart.has(a[0])) - Number(!onChart.has(b[0]))) || b[1] - a[1])[0][0];
+    let sel: string | null = null, pending: string | null = null;
+    for (let c = 0; c <= cursor; c++) {
+      const m = lines.get(c);
+      if (!m) continue;
+      const t = top(m);
+      if (sel === null) { sel = t; continue; }
+      if (m.has(sel)) { pending = null; continue; }        // the line still touches the current problem
+      if (pending === t) { sel = t; pending = null; }        // two lines in a row agree
+      else pending = t;
+    }
+    return sel;
+  }, [v, cursor, utteranceOf]);
+  useEffect(() => { if (!pinned && followed && followed !== selected) setSelected(followed); }, [followed, pinned, selected]);
   const inferred = revealed.filter((p) => p.origin === "inferred" && p.status === "proposed");
   const unanswered = inferred.filter((p) => !decisions[p.id]);
   const stated = revealed.filter((p) => p.origin === "stated" && p.status === "proposed").length;
