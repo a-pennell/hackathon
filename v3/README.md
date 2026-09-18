@@ -223,8 +223,14 @@ Watch the diabetes assessment change as I answer."
 
 *Wait for:* a confirmation, *"Added to the plan; it is in the note"*; the line above the list to read **6 covered by the
 plan**; and **Plan · Diabetes mellitus type 2** (scroll up a little) to begin *"Start atorvastatin 20 mg daily."*
-*Say:* "Six of these are covered by what was just dictated. Three are not — and one is a statin, which is also the
-answer to the problem nobody mentioned."
+*Say, before clicking Add* (the list reads **5 covered by the plan**, four open): "What was just dictated covers five of
+these without anyone being told — the second blood-pressure drug, the home log, the kidney check after starting it, the
+repeat A1c, and the ACE inhibitor for her albuminuria. Four are open. One is a statin: the guideline says everyone with
+diabetes between 40 and 75 should be on one, and she isn't — and it bears on the one problem nobody mentioned today,
+her triglycerides."
+*Then, after clicking Add:* "It's in the diabetes plan. Notice hypertriglyceridemia still reads *not addressed* — the
+chart doesn't assume a link the clinician didn't make. The other three stay open because they're judgement calls: she's
+fixing adherence before adding a drug, the albumin repeat is a fair catch, and the 130/80 is a target."
 
 **1:50 · Click "Sign the visit note"** — the dark button at the **bottom of the note column**. (Before the dictation
 ends it reads **Sign when the dictation ends** and does nothing — that is intended.)
