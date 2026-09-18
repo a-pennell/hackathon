@@ -14,8 +14,11 @@ The arc: the dictation is read, findings land on the problems they touch, and on
 up — daily over-the-counter ibuprofen since May, with a new urine albumin/creatinine of 48 (up from 18)
 and BP above goal on HCTZ alone. The NSAID is a suspected cause; the plan stops it, starts lisinopril,
 switches metformin to extended-release. Albuminuria and low back pain enter as new problems. The hero
-views are the standing gate (which problems are off course before you open one), the problem's seven
-questions with labs and medication courses on one axis, and the visit note compiled from the record.
+view is the visit itself (v3): the dictation plays, each finding lands on the problem it touches and in
+its flowsheet row as it is spoken, one signature takes what was stated, and signing hands over to what
+the chart is now waiting for. Around it: the standing gate (which problems are off course before you
+open one), the problem's seven questions with labs and medication courses on one axis, and the visit
+note compiled from the record.
 
 `pt_001` (Willie Klocko) is the Synthea-imported patient; it stays for import and extraction-replay
 tests, not for the demo.
@@ -29,15 +32,23 @@ scripts in /scripts are stdlib-only Python. No FHIR server, no database.
 
 One server runs all three fronts: `python3 -m uvicorn backend.main:app --reload --port 8000`.
 
-- `/` — v1, the full workbench (`frontend/`). Queue, timeline, notes.
-- `/v2/?patient=pt_002` — **the demo** (`v2/`). Gate, seven questions, one signature. See `v2/README.md`.
-- `/v3/?patient=pt_002` — the visit as one surface (`v3/`): the dictation plays, findings land, the note
-  grows, one signature closes it. See `v3/README.md`.
+- `/` — a chooser naming the three, with a line on what each shows.
+- `/v3/?patient=pt_002` — **the demo** (`v3/`): the visit as one surface. Its runbook, with measured
+  timings, is in `v3/README.md`.
+- `/v2/?patient=pt_002` — everything between visits (`v2/`): the gate across all problems and the seven
+  questions on one. Much of `v2/monitor.py` and `v2/simulate.py` serves v3 too. See `v2/README.md`.
+- `/v1/?patient=pt_002` — the full workbench v2 and v3 were cut down from (`frontend/`).
 
-Each front's `dist` is committed; rebuild with `npm run build` in its own directory (v2/v3 `node_modules`
-are symlinks to `frontend/node_modules`). Model calls are recorded — the demo runs offline from
-`data/proposed/**/*.raw.json`; live calls need `ANTHROPIC_API_KEY` exported in the terminal that starts
-uvicorn.
+Each front's `dist` is committed, so a fresh clone serves all three with nothing installed. To change a
+frontend, run `npm install` in `frontend/` once first (v2/v3 `node_modules` are symlinks into it), then
+`npm run build` in that front's directory. Index documents are served `no-store`; if a URL shows the
+wrong app, the browser is holding a pre-fix copy and one reload clears it.
+
+Model calls are recorded — the demo runs offline from `data/proposed/**/*.raw.json`. A live call needs
+`ANTHROPIC_API_KEY` exported in the user's own terminal, never pasted into chat or read by Claude.
+Extraction reads a note in two passes (what it is about, then what is done about it) because one schema
+with every section compiles to a grammar the API refuses; `scripts/probe_schema.py` measures where the
+line is if the schema grows.
 
 ## The data model is law
 
@@ -45,6 +56,8 @@ uvicorn.
 IDs, link types, and provenance shapes are defined there. Do not invent fields or alternate shapes; if the
 schema needs to change, stop and flag it — schema changes require team agreement, not a unilateral edit.
 Proposed additions are listed under "Schema additions proposed" in `README.md` and wait for sign-off.
+Two sections are already written into the schema doc and still need the team's sign-off: §7.1
+`provenance.asserted` (approved by the user) and §11–13 (written by another session).
 
 ## Non-negotiables
 
@@ -69,6 +82,8 @@ Proposed additions are listed under "Schema additions proposed" in `README.md` a
 - Golden patient bundles live in `/data`. Don't regenerate them mid-hackathon without telling the team —
   everyone's demos depend on the same data.
 - Hand-written demo notes live in `/data/notes/`. These are curated demo assets; don't overwrite them.
+  The app takes the *newest* note there as the current visit, so a note without a committed recording,
+  or one that should not displace the 15 Sep visit, goes in `data/notes/unrecorded/` (not globbed).
 - **Never commit `data/patients/*.json` or non-raw queue files.** They are the live chart; a demo run dirties
   them and the reset snapshot is taken from the clean state. Recorded model responses (`*.raw.json`) are the
   exception — those are assets and belong in git.
