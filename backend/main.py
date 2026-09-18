@@ -12,7 +12,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -759,8 +759,67 @@ if V2_DIST.is_dir():
         return FileResponse(V2_DIST / "index.html")
 
 DIST = ROOT / "frontend" / "dist"
+
+# Three fronts on one chart, and the root is the doormat: whoever opens the app should be told what they are looking
+# at rather than landing in whichever one happens to be mounted first. v1 keeps every URL it had, under /v1.
+DOORMAT = """<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Problem-Oriented EHR</title><style>
+:root { --paper:#f6f3ec; --paper-2:#fbf9f4; --ink:#23262f; --graphite:#7a7d86; --rule:rgba(46,41,30,.12);
+        --rule-strong:rgba(46,41,30,.28); --select:#1f4e79;
+        --serif:"Charter","Iowan Old Style","Palatino",Georgia,serif;
+        --sans:-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif; --mono:"SF Mono",Menlo,Consolas,monospace; }
+* { box-sizing:border-box; } body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); }
+.wrap { max-width:760px; margin:0 auto; padding:56px 16px 72px; }
+h1 { font-family:var(--serif); font-weight:400; font-size:30px; margin:0 0 6px; }
+.lede { color:var(--graphite); font-size:14px; margin:0 0 30px; max-width:60ch; line-height:1.55; }
+a.card { display:block; text-decoration:none; color:inherit; background:var(--paper-2); border:1px solid var(--rule);
+         border-radius:5px; padding:16px 18px; margin-bottom:12px; }
+a.card:hover { border-color:var(--rule-strong); }
+a.card h2 { font-family:var(--serif); font-weight:400; font-size:19px; margin:0 0 4px; }
+a.card p { margin:0; font-size:13px; line-height:1.55; color:var(--graphite); }
+.url { font-family:var(--mono); font-size:11px; color:var(--select); }
+.tag { font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase;
+       color:var(--graphite); border:1px solid var(--rule-strong); border-radius:3px; padding:1px 5px; margin-left:8px; }
+footer { margin-top:26px; font-size:12px; color:var(--graphite); line-height:1.6; }
+</style></head><body><div class="wrap">
+<h1>Jeane Lueilwitz&rsquo;s chart, three ways</h1>
+<p class="lede">The same patient, the same data model and the same pipelines underneath. What differs is where each
+one puts the clinician.</p>
+
+<a class="card" href="/v3/?patient=pt_002"><h2>The visit<span class="tag">v3</span></h2>
+<p>The dictation plays and the reading lands on the problems it touches as it is spoken. What the note states is
+accepted by one signature; what the reading inferred is asked. Signing hands over to what the chart is now waiting
+for. <span class="url">/v3/</span></p></a>
+
+<a class="card" href="/v2/?patient=pt_002"><h2>The problems<span class="tag">v2</span></h2>
+<p>Which problems are in good standing and which are not, then seven questions on any one of them: what is happening,
+what it means, what changed, what we are doing, what is uncertain, what is next, what would change course.
+<span class="url">/v2/</span></p></a>
+
+<a class="card" href="/v1/?patient=pt_002"><h2>The workbench<span class="tag">v1</span></h2>
+<p>The full surface the first two were cut down from: the review queue item by item, the co-registered timeline, the
+reasoning, orders and composed documents. <span class="url">/v1/</span></p></a>
+
+<footer>Runbooks: <span class="url">v3/README.md</span> &middot; <span class="url">v2/README.md</span>.
+Nothing here calls a model; the readings are recorded. <b>Reset demo</b> in any header restores the chart.</footer>
+</div></body></html>"""
+
+
+@app.get("/", response_class=HTMLResponse)
+def doormat():
+    return DOORMAT
+
+
 if DIST.is_dir():
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
+
+    @app.get("/v1/{path:path}")
+    def v1_spa(path: str):
+        target = DIST / path
+        if path and target.is_file():
+            return FileResponse(target)
+        return FileResponse(DIST / "index.html")
 
     @app.get("/{path:path}")
     def spa(path: str):

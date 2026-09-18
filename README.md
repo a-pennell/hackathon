@@ -42,7 +42,9 @@ and v3 and the whole demo runs — verified from a clean clone: read the note, s
 watch list, the follow-up. You only need Node to *change* a frontend, and then `npm install` in `frontend/` once
 first: `v2/frontend/node_modules` and `v3/frontend/node_modules` are symlinks into it and dangle until it exists.
 
-Open http://localhost:8000. The built frontend is committed in `frontend/dist`; after editing
+Open http://localhost:8000. The root is a chooser: three ways into the same chart, with a line on what each
+shows — **the visit** (`/v3/`), **the problems** (`/v2/`) and **the workbench** (`/v1/`, which is v1 and keeps every
+URL it had). The built frontend is committed in `frontend/dist`; after editing
 `frontend/src`, rebuild with `cd frontend && npm install && npm run build` (Node 22). For live
 frontend reloads use `npm run dev` (port 5173, proxies `/api` to 8000).
 
@@ -91,7 +93,7 @@ holds the Claude live/saved switch, an About page on the record's architecture, 
 Everything AI-proposed is drawn in *pencil* (dashed, amber) until a clinician signs it; signed
 items become ink.
 
-The chart opens on `pt_002`; `http://localhost:8000/?patient=pt_001` opens the first golden
+The chart opens on `pt_002`; `http://localhost:8000/v1/?patient=pt_001` opens the first golden
 patient, whose recorded demo (CKD, naproxen, metformin) still plays through the same views.
 
 ## v2
