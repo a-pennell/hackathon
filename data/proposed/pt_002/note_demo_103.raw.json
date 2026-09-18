@@ -1,0 +1,449 @@
+{
+  "parsed": {
+    "observations": [
+      {
+        "quote": "BP 134/82 sitting",
+        "loinc": "8480-6",
+        "value": 134,
+        "unit": "mm[Hg]",
+        "date": null,
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.97
+      },
+      {
+        "quote": "BP 134/82 sitting",
+        "loinc": "8462-4",
+        "value": 82,
+        "unit": "mm[Hg]",
+        "date": null,
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.97
+      },
+      {
+        "quote": "HR 72",
+        "loinc": "8867-4",
+        "value": 72,
+        "unit": "/min",
+        "date": null,
+        "problem_refs": [],
+        "confidence": 0.94
+      },
+      {
+        "quote": "Wt 84.9 kg",
+        "loinc": "29463-7",
+        "value": 84.9,
+        "unit": "kg",
+        "date": null,
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "Labs from last week: creatinine 0.9",
+        "loinc": "2160-0",
+        "value": 0.9,
+        "unit": "mg/dL",
+        "date": null,
+        "problem_refs": [
+          "prob_0007",
+          "new_1"
+        ],
+        "confidence": 0.88
+      },
+      {
+        "quote": "potassium 4.4",
+        "loinc": "6298-4",
+        "value": 4.4,
+        "unit": "mmol/L",
+        "date": null,
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.88
+      }
+    ],
+    "findings": [
+      {
+        "quote": "Dry cough for about two weeks, worse at night, no fever, no sputum.",
+        "summary": "Two weeks of dry nocturnal cough without fever or sputum",
+        "problem_refs": [
+          "new_3"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "She wondered about the new blood pressure tablet.",
+        "summary": "Patient raises possibility that the new antihypertensive is causing the cough",
+        "problem_refs": [
+          "new_3"
+        ],
+        "confidence": 0.7
+      },
+      {
+        "quote": "Back is much better since she stopped the ibuprofen; taking acetaminophen maybe twice a week now.",
+        "summary": "Back pain improved after stopping ibuprofen; now uses acetaminophen about twice weekly",
+        "problem_refs": [],
+        "confidence": 0.8
+      },
+      {
+        "quote": "Home log: readings mostly 132 to 138 over low 80s.",
+        "summary": "Home BP readings 132-138 systolic over low 80s diastolic",
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "quote": "Taking the extended-release metformin without the stomach upset she had before, no missed doses that she can recall.",
+        "summary": "Tolerating extended-release metformin without GI upset; adherent",
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "quote": "Feet feel numb in the mornings, both sides, for a few months. No ulcers, no night pain.",
+        "summary": "Bilateral morning foot numbness for months; no ulcers or night pain",
+        "problem_refs": [
+          "new_2"
+        ],
+        "confidence": 0.92
+      },
+      {
+        "quote": "Chest clear, no wheeze.",
+        "summary": "Lungs clear without wheeze",
+        "problem_refs": [
+          "new_3"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "quote": "Monofilament reduced at both great toes; pedal pulses present.",
+        "summary": "Reduced monofilament sensation at both great toes with intact pedal pulses",
+        "problem_refs": [
+          "new_2"
+        ],
+        "confidence": 0.93
+      },
+      {
+        "quote": "A1c not repeated yet",
+        "summary": "Hemoglobin A1c not yet repeated",
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.75
+      },
+      {
+        "quote": "Hypertension, now at goal on lisinopril and HCTZ.",
+        "summary": "Blood pressure at goal on current regimen",
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "quote": "Awaiting the repeat ACR.",
+        "summary": "Repeat urine albumin/creatinine ratio pending",
+        "problem_refs": [
+          "new_1"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "quote": "Not from the metformin, though I checked a B12 anyway.",
+        "summary": "Clinician does not attribute neuropathy to metformin; B12 checked",
+        "problem_refs": [
+          "new_2"
+        ],
+        "confidence": 0.8
+      }
+    ],
+    "problems": [
+      {
+        "ref": "new_1",
+        "quote": "Albuminuria. Awaiting the repeat ACR.",
+        "name": "Albuminuria",
+        "status": "active",
+        "onset_date": null,
+        "supersedes_problem_id": null,
+        "asserted": true,
+        "confidence": 0.85
+      },
+      {
+        "ref": "new_2",
+        "quote": "New peripheral neuropathy, distal and symmetric, almost certainly diabetic.",
+        "name": "Diabetic peripheral neuropathy, distal symmetric",
+        "status": "active",
+        "onset_date": null,
+        "supersedes_problem_id": null,
+        "asserted": true,
+        "confidence": 0.91
+      },
+      {
+        "ref": "new_3",
+        "quote": "Cough. I think this is the lisinopril.",
+        "name": "Cough, suspected ACE inhibitor-induced",
+        "status": "active",
+        "onset_date": null,
+        "supersedes_problem_id": null,
+        "asserted": true,
+        "confidence": 0.82
+      }
+    ],
+    "medications": [
+      {
+        "ref": "m1",
+        "quote": "Stop lisinopril, start losartan 50 mg daily.",
+        "name": "Lisinopril",
+        "segment": {
+          "dose": null,
+          "route": null,
+          "frequency": null,
+          "start": null,
+          "end": "2026-10-13"
+        },
+        "existing_med_id": null,
+        "change": "stop",
+        "treats_problem_refs": [
+          "prob_0007",
+          "new_3"
+        ]
+      },
+      {
+        "ref": "m2",
+        "quote": "Stop lisinopril, start losartan 50 mg daily.",
+        "name": "Losartan",
+        "segment": {
+          "dose": "50 mg",
+          "route": null,
+          "frequency": "daily",
+          "start": "2026-10-13",
+          "end": null
+        },
+        "existing_med_id": null,
+        "change": "new",
+        "treats_problem_refs": [
+          "prob_0007",
+          "new_1"
+        ]
+      },
+      {
+        "ref": "m3",
+        "quote": "Hypertension, now at goal on lisinopril and HCTZ. Continue both.",
+        "name": "Hydrochlorothiazide",
+        "segment": {
+          "dose": null,
+          "route": null,
+          "frequency": null,
+          "start": null,
+          "end": null
+        },
+        "existing_med_id": "med_hydrochlorothiazide",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0007"
+        ]
+      },
+      {
+        "ref": "m4",
+        "quote": "Start gabapentin 100 mg at night.",
+        "name": "Gabapentin",
+        "segment": {
+          "dose": "100 mg",
+          "route": null,
+          "frequency": "at night",
+          "start": "2026-10-13",
+          "end": null
+        },
+        "existing_med_id": null,
+        "change": "new",
+        "treats_problem_refs": [
+          "new_2"
+        ]
+      },
+      {
+        "ref": "m5",
+        "quote": "Taking the extended-release metformin without the stomach upset she had before, no missed doses that she can recall.",
+        "name": "Metformin extended-release",
+        "segment": {
+          "dose": null,
+          "route": null,
+          "frequency": null,
+          "start": null,
+          "end": null
+        },
+        "existing_med_id": "med_metformin_hydrochloride",
+        "change": "confirm",
+        "treats_problem_refs": [
+          "prob_0009"
+        ]
+      },
+      {
+        "ref": "m6",
+        "quote": "Back is much better since she stopped the ibuprofen; taking acetaminophen maybe twice a week now.",
+        "name": "Ibuprofen",
+        "segment": {
+          "dose": null,
+          "route": null,
+          "frequency": null,
+          "start": null,
+          "end": null
+        },
+        "existing_med_id": null,
+        "change": "stop",
+        "treats_problem_refs": []
+      },
+      {
+        "ref": "m7",
+        "quote": "taking acetaminophen maybe twice a week now",
+        "name": "Acetaminophen",
+        "segment": {
+          "dose": null,
+          "route": null,
+          "frequency": "twice a week",
+          "start": null,
+          "end": null
+        },
+        "existing_med_id": null,
+        "change": "confirm",
+        "treats_problem_refs": []
+      }
+    ],
+    "plans": [
+      {
+        "quote": "Hypertension, now at goal on lisinopril and HCTZ. Continue both.",
+        "kind": "therapeutic",
+        "text": "Continue HCTZ (antihypertensive regimen)",
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "quote": "Home log monthly.",
+        "kind": "monitoring",
+        "text": "Home blood pressure log monthly",
+        "problem_refs": [
+          "prob_0007"
+        ],
+        "confidence": 0.94
+      },
+      {
+        "quote": "Stop lisinopril, start losartan 50 mg daily.",
+        "kind": "therapeutic",
+        "text": "Stop lisinopril",
+        "problem_refs": [
+          "new_3",
+          "prob_0007"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "quote": "Stop lisinopril, start losartan 50 mg daily.",
+        "kind": "therapeutic",
+        "text": "Start losartan 50 mg daily",
+        "problem_refs": [
+          "prob_0007",
+          "new_1"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "quote": "Repeat BMP in two weeks.",
+        "kind": "diagnostic",
+        "text": "Repeat BMP in two weeks",
+        "problem_refs": [
+          "prob_0007",
+          "new_3"
+        ],
+        "confidence": 0.92
+      },
+      {
+        "quote": "Awaiting the repeat ACR.",
+        "kind": "diagnostic",
+        "text": "Awaiting repeat urine ACR",
+        "problem_refs": [
+          "new_1"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "quote": "Not from the metformin, though I checked a B12 anyway.",
+        "kind": "diagnostic",
+        "text": "Checked B12 level",
+        "problem_refs": [
+          "new_2"
+        ],
+        "confidence": 0.85
+      },
+      {
+        "quote": "Start gabapentin 100 mg at night.",
+        "kind": "therapeutic",
+        "text": "Start gabapentin 100 mg at night",
+        "problem_refs": [
+          "new_2"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "quote": "Podiatry referral.",
+        "kind": "referral",
+        "text": "Referral to podiatry",
+        "problem_refs": [
+          "new_2"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "quote": "Repeat A1c next month as planned.",
+        "kind": "diagnostic",
+        "text": "Repeat A1c next month",
+        "problem_refs": [
+          "prob_0009"
+        ],
+        "confidence": 0.94
+      }
+    ],
+    "suspected_causes": [
+      {
+        "quote": "Cough. I think this is the lisinopril. Stop lisinopril, start losartan 50 mg daily.",
+        "cause_ref": "m1",
+        "effect_ref": "new_3",
+        "rationale": "Clinician attributes the dry cough to lisinopril and stops it.",
+        "asserted": true,
+        "confidence": 0.93
+      },
+      {
+        "quote": "New peripheral neuropathy, distal and symmetric, almost certainly diabetic.",
+        "cause_ref": "prob_0009",
+        "effect_ref": "new_2",
+        "rationale": "Clinician attributes the distal symmetric neuropathy to diabetes.",
+        "asserted": true,
+        "confidence": 0.9
+      },
+      {
+        "quote": "Not from the metformin, though I checked a B12 anyway.",
+        "cause_ref": "med_metformin_hydrochloride",
+        "effect_ref": "new_2",
+        "rationale": "Metformin is explicitly excluded as a cause, though B12 was checked.",
+        "asserted": false,
+        "confidence": 0.5
+      }
+    ]
+  },
+  "model": "claude-opus-5",
+  "usage": {
+    "input_tokens": 1426,
+    "output_tokens": 4425,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 6157
+  },
+  "request_id": "req_011CfAD5busthY1HMcev9WaT",
+  "request_id_b": "req_011CfAD7V5fjr2GmB6jqtdF3",
+  "passes": 2
+}
