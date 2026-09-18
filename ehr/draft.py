@@ -165,6 +165,11 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
             touched[l["to"]]["evidence"].append(l)
     for b in queues:
         for l in b["proposed"].get("links", []):
+            # A cause the clinician rejected, with their reason, is reasoning and belongs in the assessment. One they never
+            # answered is not: it was set aside as unconfirmed (undoable, and listed as such in the manifest), and the
+            # screen promises it is left out of the note. Writing it up as "rejected" recorded a decision nobody made.
+            if (l.get("review") or {}).get("reason_code") == "needs_confirmation":
+                continue
             if l.get("status") == "rejected" and mine(l) and l["type"] == "suspected_cause":
                 touch(l["to"])
                 if l["to"] in touched:
