@@ -109,10 +109,13 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
 
     sections: list[dict] = []
 
-    def add(heading, text, cites, source, problem_id=None):
+    def add(heading, text, cites, source, problem_id=None, key=None):
+        # `key` identifies a section across recompiles, so a clinician's edit lands on the section they edited even
+        # when two problems share a name. Headings do not: "Plan · Hypertension" is not unique in that chart.
         text = text.strip()
         if text:
-            sections.append({"heading": heading, "text": text, "cites": list(dict.fromkeys(c for c in cites if c)), "source": source,
+            sections.append({"key": key or heading.lower().replace(" ", "_"), "heading": heading, "text": text,
+                             "cites": list(dict.fromkeys(c for c in cites if c)), "source": source,
                              **({"problem_id": problem_id} if problem_id else {})})
 
     # 1. The transcript, verbatim: history and exam as the first section; the dictated assessment and plan folded,
@@ -236,7 +239,7 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
             lines = [assessment["statement"]]
             cites = [pid, assessment["id"], *assessment.get("evidence", [])]
         if lines:
-            add(f"Assessment · {pname}", " ".join(lines), cites, "compiled", pid)
+            add(f"Assessment · {pname}", " ".join(lines), cites, "compiled", pid, key=f"assessment:{pid}")
         plan_lines, pcites = [], [pid]
         plan_text = " ".join(pl["text"] for pl in t["plans"]).lower()
         for e, mid in t["courses"]:
@@ -262,7 +265,7 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
                 a = i["suggested_action"].removeprefix("Consider ").rstrip(".")
                 plan_lines.append(a[:1].upper() + a[1:] + " (signed insight)."); pcites.append(i["id"])
         if plan_lines:
-            add(f"Plan · {pname}", " ".join(plan_lines), pcites, "compiled", pid)
+            add(f"Plan · {pname}", " ".join(plan_lines), pcites, "compiled", pid, key=f"plan:{pid}")
 
     now = datetime.now().astimezone().isoformat(timespec="seconds")
     author = (note or {}).get("author") or DEFAULT_REVIEWER

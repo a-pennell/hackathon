@@ -240,9 +240,9 @@ def _perform_signature(pid: str, v: dict, body: "VisitSignBody", *, data_dir: Pa
         raise HTTPException(404, "no encounter to document")
     batch = draft_note(p, enc, proposed_dir=proposed_dir, today=_today(as_of))
     doc = batch["proposed"]["documents"][0]
-    edits = {(sec.get("heading") or "").strip(): sec.get("text") for sec in (body.sections or []) if isinstance(sec.get("text"), str)}
+    edits = {(sec.get("key") or sec.get("heading") or "").strip(): sec.get("text") for sec in (body.sections or []) if isinstance(sec.get("text"), str)}
     for sec in doc["sections"]:
-        t = edits.get(sec["heading"])
+        t = edits.get(sec.get("key")) or edits.get(sec["heading"])
         if t is not None and t.strip() != sec["text"].strip():
             sec["text"] = t.strip(); sec["edited"] = True
     if body.authored and body.authored.strip():

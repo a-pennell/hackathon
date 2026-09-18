@@ -85,3 +85,33 @@ the cough a click because sentence-level negation cannot tell which clause it be
 The real fix is not a longer word list. The model has already read the passage and should say whether it asserts the
 relation, with the rule kept as the fallback for anything that does not carry the field — **flagged as a schema
 addition**, not applied.
+
+## Runbook — the three-minute demo
+
+Rehearsed end to end at 1024×768 on a clean chart. Timings are measured, not estimated.
+
+**Before you start.** Server up (`python3 -m uvicorn backend.main:app --reload --port 8000`), **Reset demo** clicked,
+window at least 1100px wide if you want the note pane pinned on the right — below that it drops to the bar at the foot,
+which also works. Open `http://localhost:8000/v3/?patient=pt_002`. No API key is needed: the reading is replayed.
+
+| | beat | says | clock |
+|---|---|---|---|
+| 1 | The gate, before anything | Five problems, two off course. This is what she looks like walking in. | 0:00 |
+| 2 | **Start the visit**, set the speed to **2×** | The dictation plays. Watch the right margin: the reading lands on the problem each sentence touches, as it is spoken. | 0:10 |
+| 3 | Let it run, then **Skip to end** | Thirty findings placed. Two new problems appeared that were never on the list — albuminuria and the back pain. | 0:50 |
+| 4 | The one chip that asks | Everything the dictation *said* is accepted by the signature — no clicks. This one the reading inferred; the passage does not say it. **No**, "Non-adherence is the cause, not the drug." | 1:05 |
+| 5 | **Review the note** | This is the note, exactly as the signature would write it. Nothing is on the chart yet. The rejection I just gave is already in the assessment, with my reason. | 1:25 |
+| 6 | **Sign the visit note** | One signature. Forty-five items attested. | 1:40 |
+| 7 | The watch list | Signing ended the visit, not the problem. Creatinine is expected to rise — up to 1.04, which is *inside* the lab's range, so the range would never flag it. The BMP already on the plan is what answers it. | 1:50 |
+| 8 | **Two weeks later** | Creatinine 0.9, within. Potassium 4.4, within. Pressure 138, better than projected. The BMP stops being owed. Nine open items, now four. | 2:25 |
+
+**Pacing.** The transcript is 34 utterances at 2.2s each: **75s at 1×, 37s at 2×, 19s at 4×**. At 1× it eats forty
+percent of the three minutes, so run it at 2× and talk over it, or 4× if you are short. **Skip to end** is always safe.
+
+**If you are asked the hard question** — *"how do you know what the clinician said versus what you inferred?"* — the
+answer is `tests/test_origin.py` and the section above it: badly, at first. A denial read as an assertion was the bug,
+it is fixed, and the classifier now errs towards asking. The honest version of this demo says the split is 12/6 on a
+second dictation, not 30/1.
+
+**Recovering mid-demo.** **Reset demo** in the header puts the chart back to its server-start state and clears the
+visit's working state. It is safe at any point.

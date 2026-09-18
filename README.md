@@ -228,7 +228,8 @@ those PRDs need, flagged for team agreement; `docs/patient-model-schema.md` is u
 
 ## Schema additions proposed (not yet in docs/patient-model-schema.md)
 
-Two shapes the build needs that the schema doc does not define. Both are additive; flag for team sign-off.
+Shapes the build needs that the schema doc does not define. All additive; flag for team sign-off. Number 13 is not
+built — it is the fix for a defect described in `v3/README.md`, written down so the decision is the team's.
 
 1. **Review record** on any proposed item once decided (`ehr/review.py`):
    `"review": {"by", "at", "decision": "accepted"|"rejected", "reason_code", "reason"}`. Reason codes:
@@ -264,6 +265,15 @@ Two shapes the build needs that the schema doc does not define. Both are additiv
 11. **`attested_in` on the review record** (`v2/monitor.py`): the visit note's signature is the one legal act.
     Everything accepted at the visit (problems, results, links, insights, plan lines, orders, the dictated note)
     is stamped with the document that attested it; the gate counts what is accepted and not yet attested.
+
+12. **Section key on a Document** (`ehr/draft.py`): every section carries `key`, stable across recompiles
+    (`assessment:<problem_id>`, `plan:<problem_id>`, else a slug of the heading). A clinician's edit is addressed by
+    it, because a heading is not unique — two problems with the same name give two identical headings.
+13. **`asserted` on a link's provenance** — *proposed, not built.* The extractor has already read the passage and
+    should say whether it asserts the relation it is proposing, rather than the reader guessing from cue words after
+    the fact (`v3/api.py::_origin`, `tests/test_origin.py`). Shape: `provenance: {..., "asserted": true|false}`, with
+    the rule kept as the fallback for any recording that does not carry it. Needs a prompt change and re-recorded
+    extractions.
 
 ## Things the team should know
 

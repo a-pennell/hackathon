@@ -43,9 +43,9 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
   const [authored, setAuthored] = useState(saved?.authored ?? "");
   const [signed, setSigned] = useState<{ attested: number } | null>(null);
   const [preview, setPreview] = useState<{ document: NoteDoc; manifest: ManifestGroup[] } | null>(null);
-  const [edits, setEdits] = useState<Record<string, string>>({});
+  const [edits, setEdits] = useState<Record<string, string>>({});   // keyed by section key, which survives a recompile
   const [commit, setCommit] = useState<Commitments | null>(null);
-  const sectionsBody = () => Object.entries(edits).map(([heading, text]) => ({ heading, text }));
+  const sectionsBody = () => Object.entries(edits).map(([key, text]) => ({ key, text }));
   const openPreview = () => run("preview", async () => { setPreview(await api.previewVisit(pid, { decisions, reasons, authored, sections: sectionsBody() })); });
   useEffect(() => { if (saved) { if (typeof saved.cursor === "number") setCursor(saved.cursor); if (saved.selected) setSelected(saved.selected); } }, []);  // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { try { sessionStorage.setItem(KEY, JSON.stringify({ cursor, decisions, reasons, authored, selected })); } catch { /* per-viewer convenience only */ } }, [KEY, cursor, decisions, reasons, authored, selected]);
@@ -224,10 +224,10 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
             <div className="pv-body">
               <div className="pv-manifest">{preview.manifest.map((g) => <span key={g.kind} className="pill">{g.count} {g.label}</span>)}</div>
               {preview.document.sections.map((sec) => (
-                <section key={sec.heading} className={`note-sec ${sec.source ?? "compiled"}`}>
-                  <h2>{sec.heading} {sec.source !== "transcript" && <span className="pill">{sec.source === "authored" ? "your words" : edits[sec.heading] != null ? "compiled · edited" : "compiled from the record"}</span>}</h2>
+                <section key={sec.key} className={`note-sec ${sec.source ?? "compiled"}`}>
+                  <h2>{sec.heading} {sec.source !== "transcript" && <span className="pill">{sec.source === "authored" ? "your words" : edits[sec.key] != null ? "compiled · edited" : "compiled from the record"}</span>}</h2>
                   {sec.source === "transcript" || sec.source === "authored" ? <p className="ro">{sec.text}</p>
-                    : <textarea value={edits[sec.heading] ?? sec.text} rows={Math.max(2, Math.ceil((edits[sec.heading] ?? sec.text).length / 70))} onChange={(e) => setEdits((x) => ({ ...x, [sec.heading]: e.target.value }))} aria-label={sec.heading} />}
+                    : <textarea value={edits[sec.key] ?? sec.text} rows={Math.max(2, Math.ceil((edits[sec.key] ?? sec.text).length / 70))} onChange={(e) => setEdits((x) => ({ ...x, [sec.key]: e.target.value }))} aria-label={sec.heading} />}
                 </section>
               ))}
               <p className="muted">Compiled sections can be edited here; edits are kept and travel with the signature.</p>

@@ -42,7 +42,7 @@ export type ExpectedMove = {
   source: string; counter: string | null; ids: string[];
 };
 export type Guideline = { id: string; text: string; source: string; status: "covered" | "gap"; ids: string[]; action: { kind: string; text: string } | null };
-export type NoteSection = { heading: string; text: string; cites: string[]; source?: string; edited?: boolean; collapsed?: boolean; problem_id?: string };
+export type NoteSection = { key: string; heading: string; text: string; cites: string[]; source?: string; edited?: boolean; collapsed?: boolean; problem_id?: string };
 export type NoteDoc = { id: string; title: string; sections: NoteSection[]; status: string; problems_addressed?: string[]; review?: { by: string; at: string }; created_at: string };
 export type ManifestGroup = { kind: string; label: string; count: number; items: { id: string; text: string; attested: boolean | null }[] };
 export type NoteView = { encounter: { id: string; time: string; type: string; summary: string }; signed: NoteDoc | null; draft: NoteDoc | null; compiled: NoteDoc; manifest: ManifestGroup[] };

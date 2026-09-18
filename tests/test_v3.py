@@ -151,3 +151,18 @@ def test_signing_hands_off_to_what_the_chart_is_now_waiting_for(visit):
     assert next(w for w in after["watching"] if w["text"].startswith("Creatinine"))["observed"]["status"] == "within"
     assert next(w for w in after["watching"] if w["text"].startswith("Potassium"))["observed"]["status"] == "within"
     assert after["open"] < c["open"]
+
+
+def test_an_edit_lands_on_the_section_it_was_made_in_even_when_two_problems_share_a_name(visit):
+    """Sections were addressed by heading, and a heading is not unique — two problems called the same thing give two
+    "Plan · ..." sections, and the edit would land on whichever came first."""
+    body = v3api.VisitSignBody()
+    doc = v3api.preview_visit_note("pt_002", body)["document"]
+    keys = [s["key"] for s in doc["sections"]]
+    assert len(keys) == len(set(keys)) and all(keys)
+    plan = next(s for s in doc["sections"] if s["heading"].startswith("Plan · Albuminuria"))
+    assert plan["key"] == f"plan:{plan['problem_id']}"  # the problem id, not the name, is what identifies it
+
+    edited = v3api.preview_visit_note("pt_002", v3api.VisitSignBody(sections=[{"key": plan["key"], "text": "Rewritten by key."}]))["document"]
+    hit = [s for s in edited["sections"] if s.get("edited")]
+    assert len(hit) == 1 and hit[0]["key"] == plan["key"] and hit[0]["text"] == "Rewritten by key."
