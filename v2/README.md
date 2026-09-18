@@ -105,6 +105,7 @@ view; the merge into a real monitoring link stays a steward's decision.
 ## Run
 
 ```bash
+cd frontend && npm install          # once: v2 and v3 symlink their node_modules into this one
 cd v2/frontend && npm run build     # node_modules is a symlink to ../../frontend/node_modules
 uvicorn backend.main:app --reload --reload-dir backend --reload-dir ehr --reload-dir v2
 ```

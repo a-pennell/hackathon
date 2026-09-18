@@ -37,6 +37,11 @@ Stdlib-only except `anthropic` (needed only for live extraction / reasoning). Py
 python3 -m uvicorn backend.main:app --reload --port 8000     # API + serves frontend/dist at /
 ```
 
+**A fresh clone serves without installing anything.** Every `dist` is committed, so `uvicorn` alone gives you v1, v2
+and v3 and the whole demo runs — verified from a clean clone: read the note, sign the visit, 45 items attested, the
+watch list, the follow-up. You only need Node to *change* a frontend, and then `npm install` in `frontend/` once
+first: `v2/frontend/node_modules` and `v3/frontend/node_modules` are symlinks into it and dangle until it exists.
+
 Open http://localhost:8000. The built frontend is committed in `frontend/dist`; after editing
 `frontend/src`, rebuild with `cd frontend && npm install && npm run build` (Node 22). For live
 frontend reloads use `npm run dev` (port 5173, proxies `/api` to 8000).
