@@ -1201,7 +1201,12 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .heard .eyebrow .follow, .heard .eyebrow .following { margin-left: 10px; font-size: 10px; letter-spacing: 0; text-transform: none; }
 .heard .eyebrow .following { color: var(--select); }
 
-.vnote { max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain; gap: 10px; }
+.vnote { gap: 10px; }
+/* Side by side, the note column is sticky and scrolls on its own so the note being written stays in view. Stacked
+   (below 1100px) it is simply the last part of the page: a viewport-high scroll box at the foot of a long page would
+   put a second scrollbar inside the first. The rule is written inside the width it applies to, so it cannot outrank
+   the narrow layout by coming later in the file. */
+@media (min-width: 1101px) { .vnote { max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain; } }
 .dstate { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; }
 .dstate .dcount { font-family: var(--mono); font-size: 11px; color: var(--graphite); }
 .dstate .warn, .dfoot .warn { color: var(--pending); }
@@ -1215,7 +1220,8 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .nc-sec.is-open { border: 1px dashed var(--rule-strong); padding: 8px 10px; }
 .nc-sec.is-open h3 { color: var(--pending); }
 .nc-sec textarea { width: 100%; field-sizing: content; min-height: 3lh; resize: vertical; font-family: var(--serif); font-size: 13.5px; line-height: 1.5; border: 1px solid var(--rule-strong); border-radius: var(--r-sm); background: var(--paper); padding: 6px 8px; }
-.dfoot { display: flex; flex-direction: column; gap: 6px; align-items: stretch; position: sticky; bottom: -12px; background: var(--paper-2); padding: 10px 0 12px; border-top: 1px solid var(--rule); }
+.dfoot { display: flex; flex-direction: column; gap: 6px; align-items: stretch; background: var(--paper-2); padding: 10px 0 12px; border-top: 1px solid var(--rule); }
+@media (min-width: 1101px) { .dfoot { position: sticky; bottom: -12px; } }
 .dfoot .btn.ghost { align-self: flex-start; }
 
 .pcheck { border-top: 1px solid var(--rule); padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
