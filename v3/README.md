@@ -92,6 +92,26 @@ without anyone seeing it while a wrong `false` costs one click.
 reader falls back when it is absent. Re-recording the extractions with a live key is what turns it on; nothing else
 has to change.
 
+## The flowsheet fills in as it is spoken
+
+The chart the reading writes to is the same one on screen, so it should show the writing happen. Every proposal the
+transcript has reached is passed into the problem's chart (`revealed`, `v3/frontend/src/Timeline.tsx`), and only those
+are drawn — so a value lands in its row at the moment it is said, not in a batch when the note was read.
+
+When "BP 154 over 94 sitting, repeat 150 over 92" goes past, the systolic row's headline becomes **150** in the amber
+of something unsigned, labelled *heard at this visit*, with *was 154 · 2026-08* kept underneath rather than replaced:
+the clinician can see both the number they just said and the one the chart has been carrying. The point appears on the
+plot at the visit's date in the same pass. Later, when "stop ibuprofen" and "start lisinopril" are dictated, their
+courses draw as pencil bands under the series they affect — the NSAID's band closing at this visit, the ACE inhibitor's
+opening — which is the linked-entities claim made while it is being said rather than asserted afterwards.
+
+Nothing here is on the chart. It is the same pencil convention the review queue uses, and the signature is still what
+writes it. Outside a visit `revealed` is omitted and every proposal shows at once, which is what the problem page
+wants, so v2 is unchanged.
+
+The motion is 260ms, decelerating, from 5px below the line the value will occupy, and is dropped entirely under
+`prefers-reduced-motion`.
+
 ## Runbook — the three-minute demo
 
 Rehearsed end to end at 1024×768 on a clean chart, last on 17 Sep 2026. Every number below was read off that
@@ -105,7 +125,7 @@ which also works. Open `http://localhost:8000/` and take **The visit** from the 
 | | beat | says | clock |
 |---|---|---|---|
 | 1 | The gate, before anything | Three problems, two of them off course. This is what she looks like walking in. | 0:00 |
-| 2 | **Start the visit**, set the speed to **2×** | The dictation plays. Watch the right margin: the reading lands on the problem each sentence touches, as it is spoken. | 0:10 |
+| 2 | **Start the visit**, set the speed to **2×**, open **Essential hypertension** | The dictation plays. Watch the flowsheet: when the pressures are read out they land in their rows, amber, with what the chart held kept underneath. The NSAID and the ACE inhibitor draw themselves as bands when they are dictated. | 0:10 |
 | 3 | Let it run, then **Skip to end** | Thirty findings placed, and the gate has grown from three problems to five: albuminuria and the back pain were never on the list. | 0:50 |
 | 4 | The one chip that asks | Everything the dictation *said* is accepted by the signature — no clicks. This one the reading inferred; the passage does not say it. **No**, "Non-adherence is the cause, not the drug." | 1:05 |
 | 5 | **Review the note** | This is the note, exactly as the signature would write it. Nothing is on the chart yet. The rejection I just gave is already in the assessment, with my reason. | 1:25 |

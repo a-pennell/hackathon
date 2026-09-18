@@ -30,7 +30,7 @@ function Line({ x, v: mark }: { x: { text: string; detail?: string; ids: string[
 
 /** One problem as seven answers. Everything on this page is computed from the record; the buttons are the only
  *  places a signature happens: acknowledging a detected change, signing an insight, adding to the plan. */
-export default function Problem({ pid, problemId, busy, run, go, refreshKey, embedded }: Ctx & { problemId: string; embedded?: boolean }) {
+export default function Problem({ pid, problemId, busy, run, go, refreshKey, embedded, revealed }: Ctx & { problemId: string; embedded?: boolean; revealed?: Set<string> | null }) {
   const [v, setV] = useState<ProblemView | null>(null);
   const [tl, setTl] = useState<TL | null>(null);
   const [queues, setQueues] = useState<QueueBatch[]>([]);
@@ -71,7 +71,7 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey, emb
 
       <Q n={1} ask="What is happening?" sub="the monitored series, the courses on board, what the patient reported">
         {a.happening.map((x, i) => <Line key={i} x={x} />)}
-        {tl && <div className="chart"><Timeline data={tl} highlight={hi} onHover={hoverOne} corridor={corridor as never} /></div>}
+        {tl && <div className="chart"><Timeline data={tl} highlight={hi} onHover={hoverOne} corridor={corridor as never} revealed={revealed} /></div>}
         <div style={{ fontSize: 11.5, color: "var(--graphite)" }}>Courses are drawn as bands under the series they are linked to, so a medication's effect on a value is read off the same axis.</div>
       </Q>
 

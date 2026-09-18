@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CardExpectation, Encounter, Medication, Observation, Series, Timeline as TL } from "./types";
 
 /** An expectation drawn as a corridor on its series: from the value at the stop toward the target, until the due date. */
 export type Corridor = Pick<CardExpectation, "code" | "direction" | "since" | "by" | "status" | "ref_value" | "target_value">;
 
-type Props = { data: TL; highlight: Set<string>; onHover?: (id: string | null) => void; onOpenNote?: (noteId: string) => void; corridor?: Corridor | null };
+type Props = { data: TL; highlight: Set<string>; onHover?: (id: string | null) => void; onOpenNote?: (noteId: string) => void; corridor?: Corridor | null;
+  /** Ids of proposed items the transcript has reached. Omit to show every proposal at once, which is what the
+   *  problem page outside a visit wants; during a visit it is what makes a spoken value land as it is said. */
+  revealed?: Set<string> | null };
 
 const GUTTER = 176; // the flowsheet margin: lane names, units, latest values
 const RIGHT = 24;
@@ -30,7 +33,7 @@ type Tip = { x: number; y: number; w: number; body: React.ReactNode } | null;
 // gets a definite width, and flips to the left of the cursor when it would not fit on the right.
 const TIP_W = 320;
 
-export default function Timeline({ data, highlight, onHover, onOpenNote, corridor }: Props) {
+export default function Timeline({ data, highlight, onHover, onOpenNote, corridor, revealed }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(900);
   const [tip, setTip] = useState<Tip>(null);
@@ -50,16 +53,18 @@ export default function Timeline({ data, highlight, onHover, onOpenNote, corrido
   const todayX = corridor && day(corridor.by) > day(data.window.end) ? GUTTER + ((day(data.window.end) - t0) / (t1 - t0)) * (width - GUTTER - RIGHT) : null;
   const x = (iso: string) => GUTTER + ((day(iso) - t0) / (t1 - t0)) * (width - GUTTER - RIGHT);
 
-  // Proposed (pencil) observations attach to the series of the same code.
+  // Proposed (pencil) observations attach to the series of the same code. During a visit only the ones the dictation
+  // has reached are drawn, so the flowsheet fills in as the numbers are spoken rather than all at once.
+  const heard = useCallback((id: string) => !revealed || revealed.has(id), [revealed]);
   const pencilByCode = useMemo(() => {
     const m: Record<string, Observation[]> = {};
-    for (const o of data.proposed.observations) (m[o.code.value] ??= []).push(o);
+    for (const o of data.proposed.observations) if (heard(o.id)) (m[o.code.value] ??= []).push(o);
     return m;
-  }, [data]);
+  }, [data, heard]);
 
   const meds: (Medication & { pencil?: boolean })[] = useMemo(
-    () => [...data.proposed.medications.map((m) => ({ ...m, pencil: true, relation: m.relation ?? ("suspected_cause" as const) })), ...data.medications],
-    [data],
+    () => [...data.proposed.medications.filter((m) => heard(m.id)).map((m) => ({ ...m, pencil: true, relation: m.relation ?? ("suspected_cause" as const) })), ...data.medications],
+    [data, heard],
   );
 
   const medTop = data.series.length * (LANE_H + LANE_GAP) + 28;
@@ -269,6 +274,8 @@ function Lane({
   const delta = t.delta_pct != null ? `${t.delta_pct > 0 ? "+" : ""}${t.delta_pct.toFixed(0)}%` : "";
   const arrow = t.direction === "rising" ? "↗" : t.direction === "falling" ? "↘" : t.direction === "stable" ? "→" : "";
   const latestOut = t.latest ? out(t.latest.value) : false;
+  // the newest proposal on this series that the transcript has reached
+  const spoken = pencil.length ? pencil.reduce((a, b) => (a.effective_time > b.effective_time ? a : b)) : null;
   const bandTop = rr?.high != null ? y(Math.min(rr.high, hi)) : plotTop;
   const bandBot = rr?.low != null ? y(Math.max(rr.low, lo)) : plotTop + plotH;
 
@@ -280,7 +287,9 @@ function Lane({
       <text className="lane-unit" x={GUTTER - 168} y={top + 36}>
         {s.unit} · {s.points.length} results
       </text>
-      {t.latest && (
+      {/* A value just spoken is the one the clinician is thinking about, so it takes the headline — in the amber of
+          something unsigned, with what the chart still holds kept underneath it rather than replaced. */}
+      {t.latest && !spoken && (
         <>
           <text className="lane-latest" x={GUTTER - 168} y={top + 60} fill={latestOut ? "var(--flag)" : undefined}>
             {nice(t.latest.value)}
@@ -289,6 +298,17 @@ function Lane({
             {arrow} {delta} vs {t.baseline ? nice(t.baseline.value) : ""} · {t.latest.time.slice(0, 7)}
           </text>
         </>
+      )}
+      {spoken && (
+        <g key={spoken.id} className="lane-heard">
+          <text className="lane-latest pending" x={GUTTER - 168} y={top + 60}>{nice(spoken.value)}</text>
+          <text className="lane-delta pending" x={GUTTER - 168} y={top + 74}>heard at this visit</text>
+          {t.latest && (
+            <text className="lane-was" x={GUTTER - 168} y={top + 86}>
+              was {nice(t.latest.value)} · {t.latest.time.slice(0, 7)}
+            </text>
+          )}
+        </g>
       )}
       {rr && (rr.low != null || rr.high != null) && <rect className="refband" x={GUTTER} y={bandTop} width={width - GUTTER - RIGHT} height={Math.max(0, bandBot - bandTop)} />}
       <line className="rule" x1={GUTTER} x2={width - RIGHT} y1={plotTop + plotH} y2={plotTop + plotH} />

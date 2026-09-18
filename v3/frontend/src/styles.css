@@ -1158,3 +1158,14 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .wby.done { color: var(--accepted); }
 .wrow.beyond .wby, .wrow.missed .wby { color: var(--flag); }
 .wrow.set_aside .wkind { color: var(--pending); }
+
+/* A value landing in the flowsheet as it is spoken. It arrives from just below the line it will occupy — the same
+   direction the eye is already travelling down the gutter — and settles in about the time it takes to say it. */
+.lane-latest.pending, .lane-delta.pending { fill: var(--pending); }
+.lane-was { font-family: var(--mono); font-size: 9.5px; fill: var(--pencil); }
+.lane-heard { animation: heard 260ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes heard {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .lane-heard { animation: none; } }

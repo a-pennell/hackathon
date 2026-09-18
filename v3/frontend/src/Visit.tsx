@@ -75,6 +75,8 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
   const revealed = useMemo(() => (v?.proposals ?? []).filter((p) => cursor >= utteranceOf(p)), [v, cursor, utteranceOf]);
   const perUtterance = useMemo(() => { const m = new Map<number, number>(); for (const p of v?.proposals ?? []) { const i = utteranceOf(p); m.set(i, (m.get(i) ?? 0) + 1); } return m; }, [v, utteranceOf]);
   const touched = useMemo(() => new Set(revealed.flatMap((p) => p.problems)), [revealed]);
+  // What the flowsheet is allowed to show yet: a value appears in its row as it is spoken, not when the note was read.
+  const revealedIds = useMemo(() => new Set(revealed.map((p) => p.id)), [revealed]);
   useEffect(() => { if (!selected && revealed.length) { const first = revealed.find((p) => p.problems.length); if (first) setSelected(first.problems[0]); } }, [revealed, selected]);
   const inferred = revealed.filter((p) => p.origin === "inferred" && p.status === "proposed");
   const unanswered = inferred.filter((p) => !decisions[p.id]);
@@ -171,7 +173,7 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
                   </div>
                 ))}
               </section>
-              {v.problems.some((p) => p.id === selected) ? <Problem pid={pid} listing={listing} busy={busy} run={run} go={go} refreshKey={refreshKey + tick} problemId={selected} embedded />
+              {v.problems.some((p) => p.id === selected) ? <Problem pid={pid} listing={listing} busy={busy} run={run} go={go} refreshKey={refreshKey + tick} problemId={selected} embedded revealed={revealedIds} />
                 : <div className="quiet">A problem raised at this visit has no page until it is accepted; then it is watched like any other.</div>}
             </>
           ) : <div className="lede">Pick a problem above, or start the visit and the first one spoken about opens here.</div>}
