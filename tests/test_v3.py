@@ -69,6 +69,12 @@ def test_reading_the_note_before_signing_writes_nothing(visit):
         authored="Discussed the cost of the switch."))
     assert out["preview"] is True and out["document"]["sections"] and out["manifest"]
     assert _snapshot(visit) == before, "the preview changed the chart or the queue"
+    # and it is repeatable: the throwaway copy leaves nothing behind for the next read to pick up
+    again = v3api.preview_visit_note("pt_002", v3api.VisitSignBody(
+        decisions={INFERRED_CAUSE: "reject"}, reasons={INFERRED_CAUSE: "Non-adherence is the cause, not the drug."},
+        authored="Discussed the cost of the switch."))
+    assert again["document"]["sections"] == out["document"]["sections"] and again["manifest"] == out["manifest"]
+    assert _snapshot(visit) == before
 
 
 def test_what_the_preview_shows_is_what_the_signature_writes(visit):
@@ -87,12 +93,24 @@ def test_what_the_preview_shows_is_what_the_signature_writes(visit):
     assert shown[-1]["heading"] == "In the clinician's words" and shown[-1]["source"] == "authored"
     counts = {g["kind"]: g["count"] for g in preview["manifest"]}
     assert counts.get("rejected") == 1 and counts.get("problems") == 2  # what the signature attests, listed before it is given
+    assert "set_aside" not in counts  # this one was answered, so it is not credited as merely unanswered
 
     out = v3api.sign_visit("pt_002", body)
     chart = json.loads((visit / "patients" / "pt_002.json").read_text())
     signed = next(d for d in chart["documents"] if d["id"] == out["document_id"])
-    assert [(s["heading"], s["text"]) for s in signed["sections"]] == [(s["heading"], s["text"]) for s in shown]
+    # the equality is the point: reading and signing run the same code against different copies of the chart
+    assert [(s["heading"], s["text"], s.get("cites")) for s in signed["sections"]] == [(s["heading"], s["text"], s.get("cites")) for s in shown]
     assert out["attested"] > 0 and signed["review"]["encounter_id"] == "enc_c002"
+
+
+def test_saying_nothing_is_reported_as_set_aside_not_as_a_reasoned_rejection(visit):
+    """The manifest is the answer to 'what am I signing'. An inferred finding left unanswered is kept out of the note,
+    but the clinician gave no reason for that and the list must not say they did."""
+    preview = v3api.preview_visit_note("pt_002", v3api.VisitSignBody())  # nothing answered
+    groups = {g["kind"]: g for g in preview["manifest"]}
+    assert "rejected" not in groups
+    assert groups["set_aside"]["count"] == 1 and groups["set_aside"]["label"] == "set aside, unanswered"
+    assert "unanswered" in groups["set_aside"]["items"][0]["text"]
 
 
 def test_a_visit_is_signed_once(visit):

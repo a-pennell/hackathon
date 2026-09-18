@@ -245,8 +245,14 @@ def manifest(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSED_
     group("problems", "problems raised", [{"id": p["id"], "text": p["name"], "attested": bool((p.get("review") or {}).get("attested_in"))} for p in patient["problems"] if p["status"] == "active" and mine(p)])
     links = [l for l in _accepted(patient["links"]) if mine(l)]
     group("causes", "causes asserted", [{"id": l["id"], "text": f"{names.get(l['from'], l['from'])} → {names.get(l['to'], l['to'])}", "attested": bool((l.get("review") or {}).get("attested_in"))} for l in links if l["type"] == "suspected_cause"])
-    group("rejected", "rejected, with your reason", [{"id": l["id"], "text": f"{names.get(l['from'], l['from'])} → {names.get(l['to'], l['to'])}: {(l.get('review') or {}).get('reason') or 'no reason given'}", "attested": None}
-                                                   for b in queues for l in b["proposed"].get("links", []) if l.get("status") == "rejected" and mine(l)])
+    # Saying no and saying nothing are different acts, and the manifest must not credit the clinician with a reason
+    # they did not give: what they answered is "rejected", what they left is "set aside", undoable either way.
+    rejected = [l for b in queues for l in b["proposed"].get("links", []) if l.get("status") == "rejected" and mine(l)]
+    aside = [l for l in rejected if ((l.get("review") or {}).get("reason_code")) == "needs_confirmation"]
+    said_no = [l for l in rejected if l not in aside]
+    pair = lambda l: f"{names.get(l['from'], l['from'])} → {names.get(l['to'], l['to'])}"  # noqa: E731
+    group("rejected", "rejected, with your reason", [{"id": l["id"], "text": f"{pair(l)}: {(l.get('review') or {}).get('reason') or 'no reason given'}", "attested": None} for l in said_no])
+    group("set_aside", "set aside, unanswered", [{"id": l["id"], "text": f"{pair(l)}: left unanswered, kept off the note", "attested": None} for l in aside])
     group("results", "results recorded", [{"id": o["id"], "text": f"{o['name']} {o['value']} {o.get('unit') or ''}".strip(), "attested": bool((o.get("review") or {}).get("attested_in"))} for o in _accepted(patient["observations"]) if mine(o)])
     ins = [i for i in patient.get("insights", []) if i.get("status") == "accepted" and mine(i)]
     group("insights", "insights agreed", [{"id": i["id"], "text": i["statement"][:120], "attested": bool((i.get("review") or {}).get("attested_in"))} for i in ins if (i.get("provenance") or {}).get("source") != "rules"])

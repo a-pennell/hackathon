@@ -8,7 +8,7 @@ import json
 import re
 import shutil
 import tempfile
-from copy import deepcopy
+from contextlib import contextmanager
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from ehr.draft import draft_note, stem_for
 from ehr.extract import PROPOSED_DIR, load_note_file, save_patient, verbatim_quote
-from ehr.review import DEFAULT_REVIEWER, accept_item, accept_medication_change, apply_review, list_queues, load_queue, open_encounter, review_record
+from ehr.review import DEFAULT_REVIEWER, accept_item, apply_review, list_queues, open_encounter, review_record
 from ehr.trend import DATA_DIR, load_patient
 from v2.monitor import attest, manifest
 from v2.api import _attach_note, _next_action, _followup, _today
@@ -184,41 +184,51 @@ class VisitSignBody(BaseModel):
     by: str = DEFAULT_REVIEWER
 
 
-@router.post("/patients/{pid}/visit/sign")
-def sign_visit(pid: str, body: VisitSignBody, as_of: str | None = None):
-    """Dictate, then sign: the one act. Everything the dictation stated is accepted by the signature; what the reading
-    inferred beyond the dictation is taken only if the clinician said yes, rejected if they said no, and set aside
-    (rejected as unconfirmed, undoable) if they said nothing. Then the note is closed and the visit note is compiled from
-    the record as it now stands and signed, with the clinician's edits and their own words."""
-    v = visit(pid, as_of)
-    stem = next((p["stem"] for p in v["proposals"] if p.get("stem")), None)
-    if v["note"].get("status") == "signed":
-        raise HTTPException(400, "this visit's note is already signed")
-    if stem:
+@contextmanager
+def _scratch(pid: str):
+    """A throwaway copy of the chart and the queue. The preview runs the real signature against this, so reading the
+    note and signing it are the same code, not two implementations that have to be kept in agreement."""
+    with tempfile.TemporaryDirectory(prefix="visit-preview-") as tmp:
+        root = Path(tmp)
+        (root / "patients").mkdir()
+        (root / "proposed" / pid).mkdir(parents=True)
+        shutil.copy(DATA_DIR / f"{pid}.json", root / "patients" / f"{pid}.json")
+        for q in (PROPOSED_DIR / pid).glob("*.json"):
+            shutil.copy(q, root / "proposed" / pid / q.name)
+        yield root / "patients", root / "proposed"
+
+
+def _perform_signature(pid: str, v: dict, body: "VisitSignBody", *, data_dir: Path, proposed_dir: Path, as_of: str | None):
+    """Everything the signature does, against whichever chart it is handed: the real one when signing, a throwaway copy
+    when the clinician is only reading what they would sign. Returns the chart as it now stands, the encounter, the
+    compiled batch and the note itself — edited and in the clinician's words, ready to be written or read."""
+    stem = next((x["stem"] for x in v["proposals"] if x.get("stem")), None)
+    if stem and v["note"].get("status") != "signed":
         accept, reject_yes, reject_unconfirmed, reason_of = _plan_of_signature(v, body)
         for rid in reject_yes:
-            apply_review(pid, stem, reject=[rid], reason=reason_of.get(rid, ""), reason_code="disagree", by=body.by, data_dir=DATA_DIR)
+            apply_review(pid, stem, reject=[rid], reason=reason_of.get(rid, ""), reason_code="disagree", by=body.by, data_dir=data_dir)
         if reject_unconfirmed:
-            apply_review(pid, stem, reject=reject_unconfirmed, reason="not confirmed at signing", reason_code="needs_confirmation", by=body.by, data_dir=DATA_DIR)
+            apply_review(pid, stem, reject=reject_unconfirmed, reason="not confirmed at signing", reason_code="needs_confirmation", by=body.by, data_dir=data_dir)
         # what was stated is accepted; a link into something rejected is skipped, not fatal
-        done = []
         for aid in accept:
             try:
-                done += apply_review(pid, stem, accept=[aid], by=body.by, data_dir=DATA_DIR)
+                apply_review(pid, stem, accept=[aid], by=body.by, data_dir=data_dir)
             except (ValueError, KeyError):
                 pass
-        apply_review(pid, stem, accept_changes=True, by=body.by, data_dir=DATA_DIR)
-    # close the dictated note without accepting what was set aside
-    p = load_patient(pid, DATA_DIR)
-    note = next((n for n in p.get("notes", []) if n["id"] == v["note"]["id"]), None)
-    if note is not None:
-        note["status"] = "signed"
-        note["review"] = review_record("accepted", body.by, encounter_id=note.get("encounter_id") or open_encounter(p))
-        save_patient(p, DATA_DIR)
-    # the visit note, compiled from the record as it now stands, edited, signed, attesting everything accepted
-    p = load_patient(pid, DATA_DIR)
+        apply_review(pid, stem, accept_changes=True, by=body.by, data_dir=data_dir)
+        # close the dictated note without accepting what was set aside
+        p = load_patient(pid, data_dir)
+        note = next((n for n in p.get("notes", []) if n["id"] == v["note"]["id"]), None)
+        if note is not None:
+            note["status"] = "signed"
+            note["review"] = review_record("accepted", body.by, encounter_id=note.get("encounter_id") or open_encounter(p))
+            save_patient(p, data_dir)
+    # the visit note, compiled from the record as it now stands
+    p = load_patient(pid, data_dir)
     enc = open_encounter(p)
-    batch = draft_note(p, enc, proposed_dir=PROPOSED_DIR, today=_today(as_of))
+    if not enc:
+        raise HTTPException(404, "no encounter to document")
+    batch = draft_note(p, enc, proposed_dir=proposed_dir, today=_today(as_of))
     doc = batch["proposed"]["documents"][0]
     edits = {(sec.get("heading") or "").strip(): sec.get("text") for sec in (body.sections or []) if isinstance(sec.get("text"), str)}
     for sec in doc["sections"]:
@@ -227,6 +237,19 @@ def sign_visit(pid: str, body: VisitSignBody, as_of: str | None = None):
             sec["text"] = t.strip(); sec["edited"] = True
     if body.authored and body.authored.strip():
         doc["sections"].append({"heading": "In the clinician's words", "text": body.authored.strip(), "cites": [], "source": "authored"})
+    return p, enc, batch, doc
+
+
+@router.post("/patients/{pid}/visit/sign")
+def sign_visit(pid: str, body: VisitSignBody, as_of: str | None = None):
+    """Dictate, then sign: the one act. Everything the dictation stated is accepted by the signature; what the reading
+    inferred beyond the dictation is taken only if the clinician said yes, rejected if they said no, and set aside
+    (rejected as unconfirmed, undoable) if they said nothing. Then the note is closed and the visit note is compiled from
+    the record as it now stands and signed, with the clinician's edits and their own words."""
+    v = visit(pid, as_of)
+    if v["note"].get("status") == "signed":
+        raise HTTPException(400, "this visit's note is already signed")
+    p, enc, batch, doc = _perform_signature(pid, v, body, data_dir=DATA_DIR, proposed_dir=PROPOSED_DIR, as_of=as_of)
     accept_item(p, batch, doc["id"], review=review_record("accepted", body.by, encounter_id=enc))
     stamped = attest(p, enc, doc["id"])
     save_patient(p, DATA_DIR)
@@ -238,50 +261,9 @@ def sign_visit(pid: str, body: VisitSignBody, as_of: str | None = None):
 
 @router.post("/patients/{pid}/visit/preview")
 def preview_visit_note(pid: str, body: VisitSignBody, as_of: str | None = None):
-    """The visit note as the signature would produce it, from a copy of the chart with the answers applied. Nothing is
-    written: the clinician reads what they are about to sign, edits it, and signs from here or from the visit."""
+    """The visit note as the signature would produce it: the same signature, run against a copy of the chart that is
+    thrown away. Nothing is written. The clinician reads what they are about to sign, edits it, and signs from here."""
     v = visit(pid, as_of)
-    p = deepcopy(load_patient(pid, DATA_DIR))
-    stem = next((x["stem"] for x in v["proposals"] if x.get("stem")), None)
-    enc = open_encounter(p)
-    if not enc:
-        raise HTTPException(404, "no encounter to document")
-    with tempfile.TemporaryDirectory(prefix="visit-preview-") as tmp:
-        # The compiler reads the queue from disk — a rejection marked only in memory would be invisible to it, and the
-        # preview would leave out the very sentence the signed note carries. So the copy is written where it can read it.
-        proposed = Path(tmp)
-        (proposed / pid).mkdir(parents=True)
-        for q in (PROPOSED_DIR / pid).glob("*.json"):
-            shutil.copy(q, proposed / pid / q.name)
-        if stem and v["note"].get("status") != "signed":
-            _, batch = load_queue(pid, stem, PROPOSED_DIR)
-            batch = deepcopy(batch)
-            accept, reject_yes, reject_unconfirmed, reason_of = _plan_of_signature(v, body)
-            for items in batch["proposed"].values():
-                for it in items:
-                    if it["id"] in reject_yes:
-                        it["status"] = "rejected"; it["review"] = review_record("rejected", body.by, reason_of.get(it["id"], ""), "disagree", encounter_id=enc)
-                    elif it["id"] in reject_unconfirmed:
-                        it["status"] = "rejected"; it["review"] = review_record("rejected", body.by, "not confirmed at signing", "needs_confirmation", encounter_id=enc)
-            for aid in accept:
-                try:
-                    accept_item(p, batch, aid, review=review_record("accepted", body.by, encounter_id=enc))
-                except (ValueError, KeyError):
-                    pass
-            for ch in batch.get("medication_changes", []):
-                if ch["status"] == "proposed":
-                    accept_medication_change(p, ch, review_record("accepted", body.by, encounter_id=enc))
-            note = next((n for n in p.get("notes", []) if n["id"] == v["note"]["id"]), None)
-            if note is not None:
-                note["status"] = "signed"; note["review"] = review_record("accepted", body.by, encounter_id=enc)
-            (proposed / pid / f"{stem}.json").write_text(json.dumps(batch, indent=2, ensure_ascii=False))
-        doc = draft_note(p, enc, proposed_dir=proposed, today=_today(as_of))["proposed"]["documents"][0]
-        out_manifest = manifest(p, enc, proposed_dir=proposed)
-    edits = {(sec.get("heading") or "").strip(): sec.get("text") for sec in (body.sections or []) if isinstance(sec.get("text"), str)}
-    for sec in doc["sections"]:
-        t = edits.get(sec["heading"])
-        if t is not None and t.strip() != sec["text"].strip():
-            sec["text"] = t.strip(); sec["edited"] = True
-    if body.authored and body.authored.strip():
-        doc["sections"].append({"heading": "In the clinician's words", "text": body.authored.strip(), "cites": [], "source": "authored"})
-    return {"document": doc, "manifest": out_manifest, "preview": True}
+    with _scratch(pid) as (data_dir, proposed_dir):
+        p, enc, _, doc = _perform_signature(pid, v, body, data_dir=data_dir, proposed_dir=proposed_dir, as_of=as_of)
+        return {"document": doc, "manifest": manifest(p, enc, proposed_dir=proposed_dir), "preview": True}

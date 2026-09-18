@@ -151,7 +151,7 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
             </>
           ) : (
             <>
-              <div className="big">{stated}<small> stated</small></div>
+              <button className="big asbtn" onClick={openPreview} title="read the note these become">{stated}<small> stated</small></button>
               <p className="muted">What the dictation states is accepted by your signature. Nothing to click.</p>
               <div className="big">{inferred.length}<small> added by the reading</small></div>
               <p className="muted">{inferred.length === 0 ? "Nothing the passage does not say." : unanswered.length ? `${unanswered.length} without an answer: left out of the note unless you say yes.` : "All answered."}</p>
@@ -164,6 +164,18 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
           )}
         </aside>
       </div>
+      {/* Below 1100px the note pane is static and falls to the foot of a very long page. The counts and the two acts
+          stay in reach: the note is the point of this screen, and it should never be four screens away. */}
+      {!signed && note.status !== "signed" && cursor >= 0 && (
+        <div className="vbar" role="group" aria-label="Visit note">
+          <button className="vbar-counts" onClick={openPreview} title="what the signature would accept, listed">
+            <b>{stated}</b> stated{inferred.length > 0 && <> · <b>{inferred.length}</b> added</>}
+            {unanswered.length > 0 && <span className="warn"> · {unanswered.length} unanswered</span>}
+          </button>
+          <button className="btn" disabled={!!busy} onClick={openPreview}>Review the note</button>
+          <button className="btn primary" disabled={!!busy} onClick={sign}>Sign the visit note</button>
+        </div>
+      )}
       {preview && (
         <>
           <div className="scrim" onClick={() => setPreview(null)} />
