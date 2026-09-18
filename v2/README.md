@@ -22,6 +22,32 @@ what `ehr/card.py`, `ehr/overview.py` and `ehr/draft.py` already compute.
    then per problem an assessment and a plan compiled from what was decided at this visit, every
    sentence citing the record. A box for the clinician's own words. Sign to freeze it.
 
+## What a change is expected to break
+
+A projection is about a value we are trying to improve. The other kind matters more at the bedside: a value the plan
+is expected to push the **wrong** way, where the clinical question is how far is too far.
+
+Starting lisinopril is expected to raise creatinine — it lowers pressure inside the glomerulus. A rise of up to 30%
+that settles within four weeks is acceptable and the drug is continued (Bakris & Weir 2000; KDIGO 2012 §3.1). On
+Jeane that threshold is **1.04 mg/dL, from her own baseline of 0.8** — and 1.04 is *inside* the lab's reference range
+of 0.6–1.2. The range cannot flag it. The same rule works the other way for potassium: the threshold is 5.5 mmol/L,
+*above* the range high of 5.1, so a result the lab flags high is still expected here.
+
+Three things follow, and each is visible in question 7:
+
+- The expectation names the test that will answer it. Here the plan already says "BMP in 2 weeks"; if it did not, the
+  line reads *nothing on the plan tests this*.
+- While an expectation is live it **replaces** the standing tripwire for that series. The generic rule watches for a
+  ±25% move and would have fired on the very rise the plan predicts; the threshold now reads "above 1.04 mg/dL, or
+  still rising after 4 weeks · set by Lisinopril 10 mg started 15 Sep 2026, not the standing rule".
+- Stopping the ibuprofen pushes creatinine the other way, so the card says a smaller rise, or none, is just as
+  consistent. Two changes at one visit, in opposite directions, on one value.
+
+Then **Two weeks later** lands the BMP: creatinine 0.9, potassium 4.4, both within. The expectation set at the visit
+is answered by the result, and the card says so.
+
+Rules, not a model (`v2/simulate.py`, `expectations`). Computed on demand, never stored.
+
 ## One signature
 
 Providers sign notes. Nothing else here is called a signature. A proposal from the reading is **accepted**

@@ -87,3 +87,65 @@ def test_willie_kidney_guidelines_and_no_projection_for_a_low_pressure():
     assert rules["ckd_metformin"]["source"].startswith("FDA")
     rows = {r["name"]: r for r in problem_list(p, proposed_dir=PROPOSED, today=date(2026, 9, 17))["problems"]}
     assert rows["Essential hypertension"]["forecast"] is None  # his pressure is low; lowering it further is not a projection
+
+
+def test_a_drug_started_at_this_visit_sets_an_expectation_the_reference_range_cannot_express(tmp_path):
+    """Starting an ACE inhibitor is expected to push creatinine and potassium the wrong way. How far is too far is set
+    from this patient's own baseline, so the threshold can fall inside the lab's range (creatinine) or outside it
+    (potassium) — which is exactly what a range-only chart gets wrong in both directions."""
+    from datetime import date as _date
+    from tests.test_draft import _visit
+    from ehr.trend import load_patient as lp
+    from v2.simulate import expectations
+    d = _visit(tmp_path)
+    p = lp("pt_002", d)
+    moves = {m["id"]: m for m in expectations(p, "prob_0007", today=_date(2026, 9, 17))}
+    assert set(moves) == {"acei_creatinine", "acei_potassium"}
+
+    cr = moves["acei_creatinine"]
+    assert cr["baseline"]["value"] == 0.8 and cr["limit"] == 1.04          # 30% above this patient's own baseline
+    assert cr["inside_range"] and cr["reference_range"]["high"] == 1.2      # ...and still "normal" to the lab
+    assert "the range will not flag this, the baseline will" in cr["note"]
+    assert "lisinopril" in cr["trigger"]["text"].lower()
+    assert cr["tested_by"]["text"] == "BMP in 2 weeks"                      # the plan already orders what answers it
+    assert cr["counter"] and "NSAID" in cr["counter"]                       # the ibuprofen stop pushes the other way
+    assert "Bakris" in cr["source"] and cr["observed"] is None
+
+    k = moves["acei_potassium"]
+    assert k["limit"] == 5.5 and not k["inside_range"] and k["reference_range"]["high"] == 5.1
+    assert "still expected here" in k["note"]
+
+    # it is an expectation of this problem's drug, not a global banner: a problem the drug does not treat has none
+    assert expectations(p, "prob_0009", today=_date(2026, 9, 17)) == []
+    # and it lapses once the answer is no longer ahead of us
+    assert expectations(p, "prob_0007", today=_date(2027, 3, 1)) == []
+
+
+def test_a_live_expectation_replaces_the_standing_tripwire_and_is_answered_by_the_follow_up(tmp_path):
+    """Two halves of one claim. The standing rule watches for a ±25% move, which would flag the very rise the ACE
+    inhibitor is expected to cause; while the expectation is live it is the threshold instead. Then the BMP lands and
+    the expectation is tested against it."""
+    from datetime import date as _date
+    from tests.test_draft import _visit
+    from ehr.trend import load_patient as lp
+    from ehr.extract import save_patient
+    from v2.monitor import problem_view
+    from v2.simulate import expectations
+    d = _visit(tmp_path)
+    PROPOSED = d.parent / "proposed"
+
+    cc = problem_view(lp("pt_002", d), "prob_0007", proposed_dir=PROPOSED, today=_date(2026, 9, 17))["answers"]["change_course"]
+    cr = next(t for t in cc["tripwires"] if t["code"] == "38483-4")
+    assert cr["threshold"] == "above 1.04 mg/dL, or still rising after 4 weeks" and "Lisinopril" in cr["set_by"]
+    assert "25%" not in cr["threshold"]  # the standing rule would have fired on a rise the plan predicts
+    assert cr["state"] == "as expected"
+
+    # the basic metabolic panel comes back two weeks later, as the plan ordered
+    p = lp("pt_002", d)
+    p["observations"].append({"id": "obs_followup_cr", "patient_id": "pt_002", "name": "Creatinine (whole blood)",
+                              "code": {"system": "LOINC", "value": "38483-4"}, "value": 0.9, "unit": "mg/dL",
+                              "effective_time": "2026-09-29T09:15:00-05:00", "reference_range": {"low": 0.6, "high": 1.2},
+                              "status": "accepted", "provenance": {"source": "curated", "followup": True}})
+    save_patient(p, d)
+    answered = next(m for m in expectations(lp("pt_002", d), "prob_0007", today=_date(2026, 9, 30)) if m["id"] == "acei_creatinine")
+    assert answered["observed"] == {"value": 0.9, "time": "2026-09-29", "id": "obs_followup_cr", "status": "within"}

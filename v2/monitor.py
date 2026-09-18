@@ -20,7 +20,7 @@ from ehr.overview import _pending_loops, _since, patient_overview
 from ehr.reason import _accepted
 from ehr.review import list_queues
 from v2.guidelines import guidelines
-from v2.simulate import simulate
+from v2.simulate import expectations, simulate
 
 DEFAULT_RANGES = {"14959-1": {"low": None, "high": 30.0}}  # urine albumin/creatinine, mg/g
 STANDING_WORD = {"off_course": "off course", "watch": "watch", "good": "in good standing", "unmonitored": "not monitored"}
@@ -198,7 +198,21 @@ def problem_view(patient: dict, problem_id: str, *, proposed_dir: Path = PROPOSE
     problem = next(p for p in patient["problems"] if p["id"] == problem_id)
     sim = simulate(patient, problem_id, [r["code"] for r in card["surveillance"]["rows"]], today=today)
     rules = guidelines(patient, problem, today=today)
-    change_course = {"expected": card["expected"], "projection": (sim or {}).get("current_plan"), "projection_of": {k: sim[k] for k in ("code", "name", "unit", "from", "goal", "note")} if sim else None, "tripwires": [{"name": r["name"], "code": r["code"], "threshold": r["threshold"], "state": r["state"], "latest": r["latest"], "ids": r["ids"]} for r in card["surveillance"]["rows"]],
+    # A drug started at this visit changes what counts as abnormal for the values it moves: the standing tripwire would
+    # otherwise flag the very rise the expectation predicts. While an expectation is live, it is the threshold.
+    moves = expectations(patient, problem_id, today=today)
+    by_code = {m["value"]["code"]: m for m in moves}
+    tripwires = []
+    for r in card["surveillance"]["rows"]:
+        t = {"name": r["name"], "code": r["code"], "threshold": r["threshold"], "state": r["state"], "latest": r["latest"], "ids": r["ids"]}
+        m = by_code.get(r["code"])
+        if m:
+            t["threshold"] = m["not_expected"]
+            t["set_by"] = m["trigger"]["text"]
+            t["state"] = (m["observed"] or {}).get("status") == "beyond" and "beyond expected" or "as expected"
+        tripwires.append(t)
+    change_course = {"expected": card["expected"], "projection": (sim or {}).get("current_plan"), "projection_of": {k: sim[k] for k in ("code", "name", "unit", "from", "goal", "note")} if sim else None, "tripwires": tripwires,
+                     "expected_moves": moves,
                      "reconsider_if": [f"{r['trigger']} → {r['then']}" if isinstance(r, dict) else str(r) for r in ((card.get("expected") or {}).get("reconsider_if") or [])]}
     return {"problem": {"id": problem_id, "name": card["problem"]["name"], "standing": standing, "standing_word": STANDING_WORD[standing], "why": why,
                         "epistemic": card["epistemic"], "qualifiers": card["qualifiers"], "steward": card.get("steward"), "onset": card["problem"].get("onset_date"),

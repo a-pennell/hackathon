@@ -152,8 +152,23 @@ export default function Problem({ pid, problemId, busy, run, go, refreshKey, emb
         {a.change_course.projection && a.change_course.projection_of && (
           <p className="serif">On the current plan ({a.change_course.projection.labels.join("; ").toLowerCase()}), {a.change_course.projection_of.name.toLowerCase()} is projected at <b className="num">{a.change_course.projection.at_full_effect.low} to {a.change_course.projection.at_full_effect.high}</b> by {dmy(a.change_course.projection.full_effect_by)}{a.change_course.projection.reaches_goal_by ? `, under goal by about ${dmy(a.change_course.projection.reaches_goal_by)}` : ", not to goal"}. A value above that band after that date is a miss, and the plan is what changes.{a.change_course.projection.observed ? ` Observed ${a.change_course.projection.observed.value} on ${dmy(a.change_course.projection.observed.time)}: ${a.change_course.projection.observed.status}.` : ""}</p>
         )}
+        {a.change_course.expected_moves.map((m) => (
+          <div key={m.id} className={`emove ${m.observed ? m.observed.status : ""}`} onMouseEnter={() => hover(m.ids)} onMouseLeave={() => hover(null)}>
+            <div className="emove-head"><b>{m.value.name}</b> is expected to rise · <span className="trigger">{m.trigger.text}</span></div>
+            <p className="serif">From <b className="num">{m.baseline.value} {m.value.unit}</b> on {dmy(m.baseline.time)}, expect {m.expect}, because {m.because}. Not expected: <b>{m.not_expected}</b> — {m.then}</p>
+            {m.note && <p className="emove-note">{m.note}</p>}
+            {m.counter && <p className="emove-note">{m.counter}</p>}
+            <div className="emove-foot">
+              {m.tested_by ? <span className="pill ok">tested by: {m.tested_by.text}</span> : <span className="pill gap">nothing on the plan tests this</span>}
+              {m.observed
+                ? <span className={`pill ${m.observed.status === "beyond" ? "gap" : "ok"}`}>observed {m.observed.value} {m.value.unit} on {dmy(m.observed.time)} · {m.observed.status === "beyond" ? "beyond what was expected" : "within"}</span>
+                : <span className="pill">answered by {dmy(m.by)}</span>}
+              <span className="src">{m.source}</span>
+            </div>
+          </div>
+        ))}
         {a.change_course.reconsider_if.map((r, i) => <Line key={`r${i}`} x={{ text: `Reassess if ${r}`, ids: [] }} v="unx" />)}
-        {a.change_course.tripwires.map((t, i) => <Line key={i} x={{ text: `${t.name} ${nice(t.latest.value)} · ${t.state}`, detail: `tripwire: ${t.threshold}`, ids: t.ids }} />)}
+        {a.change_course.tripwires.map((t, i) => <Line key={i} x={{ text: `${t.name} ${nice(t.latest.value)} · ${t.state}`, detail: t.set_by ? `tripwire: ${t.threshold} · set by ${t.set_by}, not the standing rule` : `tripwire: ${t.threshold}`, ids: t.ids }} />)}
       </Q>
     </div>
     </HoverCtx.Provider>

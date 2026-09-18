@@ -1053,3 +1053,17 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .rv .item .why { grid-column: 2 / -1; display: flex; gap: 6px; margin-top: 6px; }
 .rv .item .why input { flex: 1; font: 13px var(--sans); padding: 5px 8px; border: 1px solid var(--rule-strong); border-radius: var(--r-sm); background: var(--paper-2); color: var(--ink); }
 .link.more { color: var(--select); font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }
+
+/* An expected move: a value the plan should push the wrong way, and how far is too far. */
+.emove { border: 1px solid var(--rule); border-left: 3px solid var(--pending); border-radius: var(--r-sm); padding: 10px 12px; margin: 8px 0; background: var(--paper); }
+.emove.beyond { border-left-color: var(--flag); }
+.emove.within { border-left-color: var(--accepted); }
+.emove-head { font-size: 12px; color: var(--graphite); margin-bottom: 4px; }
+.emove-head b { color: var(--ink); }
+.emove-head .trigger { font-family: var(--mono); font-size: 11px; }
+.emove .serif { margin: 0 0 6px; }
+.emove-note { font-size: 12px; color: var(--graphite); margin: 0 0 6px; font-style: italic; }
+.emove-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.emove-foot .src { font-size: 10.5px; color: var(--graphite); }
+.emove-foot .pill.gap { border-color: var(--flag); color: var(--flag); }
+.emove-foot .pill.ok { border-color: var(--rule-strong); }

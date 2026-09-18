@@ -26,13 +26,21 @@ export type ProblemView = {
     next: Line[];
     options: SimOption[];
     guidelines: Guideline[];
-    change_course: { projection: Projection | null; projection_of: { code: string; name: string; unit: string | null; from: { value: number; time: string }; goal: number | null; note: string } | null; expected: CardExpectation | null; tripwires: { name: string; code: string; threshold: string; state: string; latest: { value: number; time: string }; ids: string[] }[]; reconsider_if: string[] };
+    change_course: { projection: Projection | null; projection_of: { code: string; name: string; unit: string | null; from: { value: number; time: string }; goal: number | null; note: string } | null; expected: CardExpectation | null; expected_moves: ExpectedMove[]; tripwires: { name: string; code: string; threshold: string; state: string; latest: { value: number; time: string }; ids: string[]; set_by?: string }[]; reconsider_if: string[] };
   };
   decisions: number; pending: number;
 };
 export type Band = { t: string; low: number; high: number };
 export type SimOption = { id: string; label: string; kind: string; text: string; on_plan: boolean; effect: { low: number; high: number }; weeks: number; full_effect_by: string; points: Band[]; reaches_goal_by: string | null; source: string };
 export type Projection = { options: string[]; labels: string[]; points: Band[]; weeks: number; full_effect_by: string; at_full_effect: { low: number; high: number }; reaches_goal_by: string | null; observed?: { value: number; time: string; status: string } };
+export type ExpectedMove = {
+  id: string; value: { code: string; name: string; unit: string }; trigger: { text: string; ids: string[] };
+  baseline: { value: number; time: string; id: string }; because: string; expect: string; limit: number; by: string;
+  not_expected: string; then: string; reference_range: { low: number; high: number } | null; inside_range: boolean;
+  note: string; tested_by: { text: string; ids: string[] } | null;
+  observed: { value: number; time: string; id: string; status: "within" | "beyond" } | null;
+  source: string; counter: string | null; ids: string[];
+};
 export type Guideline = { id: string; text: string; source: string; status: "covered" | "gap"; ids: string[]; action: { kind: string; text: string } | null };
 export type NoteSection = { heading: string; text: string; cites: string[]; source?: string; edited?: boolean; collapsed?: boolean; problem_id?: string };
 export type NoteDoc = { id: string; title: string; sections: NoteSection[]; status: string; problems_addressed?: string[]; review?: { by: string; at: string }; created_at: string };
