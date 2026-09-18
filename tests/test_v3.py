@@ -166,3 +166,21 @@ def test_an_edit_lands_on_the_section_it_was_made_in_even_when_two_problems_shar
     edited = v3api.preview_visit_note("pt_002", v3api.VisitSignBody(sections=[{"key": plan["key"], "text": "Rewritten by key."}]))["document"]
     hit = [s for s in edited["sections"] if s.get("edited")]
     assert len(hit) == 1 and hit[0]["key"] == plan["key"] and hit[0]["text"] == "Rewritten by key."
+
+
+def test_the_note_records_what_the_plan_is_expected_to_do_and_what_the_visit_left(visit):
+    """A good note records reasoning, not only data. Two steps of it were computed and shown on screen but never written:
+    what a drug started today is expected to push the wrong way (so a creatinine of 1.0 next month reads as expected, not
+    as harm), and which problems this visit did not touch (so silence does not read as forgetting)."""
+    doc = v3api.preview_visit_note("pt_002", v3api.VisitSignBody())["document"]
+    by = {s["key"]: s for s in doc["sections"]}
+    htn = by["plan:prob_0007"]["text"]
+    assert "Expected on lisinopril: creatinine up to 1.04 mg/dL (from 0.8) and potassium under 5.5 mmol/L; the BMP in 2 weeks tests both." in htn
+    assert "If creatinine is above 1.04 mg/dL, or still rising after 4 weeks:" in htn
+    assert any(c.startswith("plan_") for c in by["plan:prob_0007"]["cites"])       # tied to the plan line that tests it
+    # the drug treats two problems; its expectation is written once, not under both
+    albuminuria = next(s for s in doc["sections"] if s["heading"] == "Plan · Albuminuria")
+    assert "Expected on lisinopril" not in albuminuria["text"]
+    closing = by["not_addressed"]
+    assert closing["heading"] == "Not addressed at this visit" and closing["text"] == "Hypertriglyceridemia."
+    assert closing["cites"] == ["prob_0011"]

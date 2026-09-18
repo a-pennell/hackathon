@@ -22,6 +22,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 from ehr.card import problem_card
+from ehr.expect import expectations
 from ehr.extract import PROPOSED_DIR, save_patient
 from ehr.reason import _accepted
 from ehr.review import DEFAULT_REVIEWER, accept_item, list_queues, load_queue, review_record
@@ -200,6 +201,7 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
 
     order = [p["id"] for p in patient["problems"] if p["id"] in touched]
     win = {"start": (date.fromisoformat(enc_day).replace(year=date.fromisoformat(enc_day).year - 1)).isoformat(), "end": enc_day}
+    expected_said: set[str] = set()  # courses whose expectations are already written, under an earlier problem
     for pid in order:
         t = touched[pid]
         pname = names[pid]
@@ -264,8 +266,39 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
             if i.get("suggested_action"):
                 a = i["suggested_action"].removeprefix("Consider ").rstrip(".")
                 plan_lines.append(a[:1].upper() + a[1:] + " (signed insight)."); pcites.append(i["id"])
+        # What the plan is expected to do that looks like harm, and how far is too far. It is reasoning the next reader
+        # needs — a creatinine of 1.0 after lisinopril reads as a problem to anyone who does not know it was expected —
+        # so the note records it rather than leaving it on a screen. It belongs to the drug, not the problem: a course
+        # that treats two problems is written up once, under the first. Only for courses started at this visit.
+        started_here = {c["id"] for c in patient["medications"] if (c["segments"][-1].get("start") or "") == enc_day}
+        by_drug: dict[str, list[dict]] = {}
+        for m in expectations(patient, pid, today=max(today, date.fromisoformat(enc_day))):
+            mid = next((i for i in m["trigger"]["ids"] if i in started_here), None)
+            if mid and mid not in expected_said:
+                by_drug.setdefault(mid, []).append(m)
+        for mid, ms in by_drug.items():
+            expected_said.add(mid)
+            drug = names.get(mid, mid).lower()
+            what = " and ".join(
+                (f"{x['value']['name'].split(' (')[0].lower()} up to {_num(x['limit'])} {x['value']['unit']} (from {_num(x['baseline']['value'])})"
+                 if x["limit_kind"] == "rise" else f"{x['value']['name'].split(' (')[0].lower()} under {_num(x['limit'])} {x['value']['unit']}")
+                for x in ms)
+            tests = list(dict.fromkeys(x["tested_by"]["text"] for x in ms if x.get("tested_by")))
+            tested = (f"; the {_lead_lower(tests[0])} tests {'both' if len(ms) == 2 else 'it'}" if len(tests) == 1 and len(ms) <= 2
+                      else f"; tested by {', '.join(tests)}" if tests else "; nothing on the plan tests it yet")
+            plan_lines.append(f"Expected on {drug}: {what}{tested}.")
+            for x in ms:
+                name = x["value"]["name"].split(" (")[0].lower()
+                plan_lines.append(f"If {name} is {x['not_expected']}: {_lead_lower(x['then'])}")
+            pcites += [i for x in ms for i in x["ids"] if i not in pcites]
         if plan_lines:
             add(f"Plan · {pname}", " ".join(plan_lines), pcites, "compiled", pid, key=f"plan:{pid}")
+
+    # Closing the loop: what is on the problem list and was not touched at this visit. Stated as a fact, not a judgement
+    # — a problem can be left for a good reason — but a note that is silent about it reads as if it was forgotten.
+    untouched = [p for p in patient["problems"] if p["status"] == "active" and p["id"] not in touched]
+    if untouched:
+        add("Not addressed at this visit", "; ".join(p["name"] for p in untouched) + ".", [p["id"] for p in untouched], "compiled", key="not_addressed")
 
     now = datetime.now().astimezone().isoformat(timespec="seconds")
     author = (note or {}).get("author") or DEFAULT_REVIEWER
@@ -279,6 +312,15 @@ def draft_note(patient: dict, encounter_id: str, *, proposed_dir: Path = PROPOSE
     }
     return {"patient_id": patient["patient"]["id"], "encounter_id": encounter_id, "kind": KIND, "model": DRAFTER, "composed_at": now,
             "proposed": {"documents": [doc]}, "review_hints": {}, "rejected": []}
+
+
+def _lead_lower(t: str) -> str:
+    """Lower the first letter to run a phrase on inside a sentence — unless it opens an acronym (BMP, ACR, HCTZ)."""
+    return t[:1].lower() + t[1:] if len(t) > 1 and not t[1].isupper() else t
+
+
+def _num(v: float) -> str:
+    return f"{v:.2f}".rstrip("0").rstrip(".") if v != int(v) else str(int(v))
 
 
 def stem_for(encounter_id: str) -> str:
