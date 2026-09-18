@@ -1067,3 +1067,7 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .emove-foot .src { font-size: 10.5px; color: var(--graphite); }
 .emove-foot .pill.gap { border-color: var(--flag); color: var(--flag); }
 .emove-foot .pill.ok { border-color: var(--rule-strong); }
+
+/* The header's finished state is a fact, not an action: nothing to press. */
+.cta-status { font-size: 12.5px; color: var(--accepted); padding: 6px 4px; white-space: nowrap; }
+.cta-status::before { content: "✓ "; }

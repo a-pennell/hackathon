@@ -69,7 +69,7 @@ def _next_action(patient: dict, listing: dict) -> dict:
         if not signed:
             draft = queues.get(stem_for(enc["id"]))
             return {"kind": "sign-draft" if draft else "draft", "label": "Sign the visit note", "hint": "the one signature: it attests everything accepted at this visit", "encounter_id": enc["id"]}
-    return {"kind": "done", "label": "Nothing owed", "hint": "the visit is documented"}
+    return {"kind": "done", "label": "Visit signed", "hint": "the visit note is signed; nothing is left for you to do here"}
 
 
 FOLLOWUPS = ROOT / "data" / "followups"

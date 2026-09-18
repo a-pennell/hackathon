@@ -135,7 +135,7 @@ Every clinician role shares a job: **see my notes in progress and completed for 
 a draft, and know which are unsigned.** Half is built. The **Notes** tab (`frontend/src/NotesTab.tsx`)
 lists one patient's notes as *In progress* (read, decisions or signature owed, with the count),
 *Waiting to be read* and *Signed* (by whom, when); each row's button is the next thing owed on
-that note: *Read*, *Review · n*, *Sign*, *Open*. "Nothing owed" opens it. Missing: notes are never
+that note: *Read*, *Review · n*, *Sign*, *Open*. "Visit signed" opens it. Missing: notes are never
 written here (`received` or `signed` only; no composer, PRD-06), so there is no draft to resume;
 notes have an author but no *mine*; and the list is per patient, so the clinician's day is invisible.
 
@@ -154,9 +154,9 @@ version with `amends`). Draft and awaiting signature are unsigned.
 | Everything decided | *Sign the note* (built) | sign gate |
 | Signed; concern moving | *Ask what changed on hypertension* (built) | card |
 | Nothing owed here, unsigned notes elsewhere | *Unsigned notes · n* (not built) | the notes list, mine, across patients |
-| Nothing owed anywhere | *Nothing owed* (built) | this patient's Notes tab |
+| Nothing owed anywhere | *Visit signed* (built; was "Nothing owed") | this patient's Notes tab |
 
-The change to the built machine is the second-to-last row: **"Nothing owed" must not be reachable
+The change to the built machine is the second-to-last row: **"Visit signed" must not be reachable
 while the same clinician has unsigned notes on other patients.** The button's idle state is the
 clinician's documentation debt, not the patient's.
 

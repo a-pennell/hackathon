@@ -60,5 +60,5 @@ export function nextAction(overview: Overview | null, notes: NoteFile[], queues:
   // other patients come first, and only then "nothing owed".
   const elsewhere = notes.filter((n) => n.patient_id !== summary?.patient.id && n.status !== "signed").length;
   if (elsewhere > 0) return { label: `Unsigned notes · ${elsewhere}`, hint: "nothing is owed on this patient; these notes on other patients are still unsigned", kind: "done", notesScope: "mine" };
-  return { label: "Nothing owed", hint: "the visit is documented; results will reopen loops when they land. Opens the notes on file", kind: "done", notesScope: "patient" };
+  return { label: "Visit signed", hint: "the visit is documented; results will reopen loops when they land. Opens the notes on file", kind: "done", notesScope: "patient" };
 }

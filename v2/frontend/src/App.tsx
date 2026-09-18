@@ -69,7 +69,8 @@ export default function App() {
           <a href="#/note" className={view === "note" ? "on" : ""}>Visit note</a>
         </nav>
         <span className="spacer" />
-        {busy ? <span className="busy-inline">Working…</span> : next && <button className={`btn cta ${next.kind === "done" ? "quiet" : "primary"}`} title={next.hint} onClick={doNext} disabled={next.kind === "done"}>{next.label}</button>}
+        {busy ? <span className="busy-inline">Working…</span> : next && (next.kind === "done" ? <span className="cta-status" title={next.hint}>{next.label}</span>
+          : <button className="btn cta primary" title={next.hint} onClick={doNext}>{next.label}</button>)}
         {listing.followup && !listing.followup.applied && next?.kind === "done" && <button className="btn small" disabled={!!busy} title={listing.followup.label} onClick={() => run("advance", () => api.advance(PID), "Two weeks on: the home log and the BMP have landed").then(() => go("#/"))}>Two weeks later</button>}
         <button className="btn small ghost" disabled={!!busy} onClick={() => run("reset", () => api.reset(PID), "Chart reset").then(() => go("#/"))} title="Restore the chart to its server-start state">Reset demo</button>
       </header>
