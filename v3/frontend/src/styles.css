@@ -1102,3 +1102,13 @@ textarea.dtext:focus { outline: 2px solid var(--select); outline-offset: 1px; bo
 .hline.accept .kind, .hline.accept .tag { color: var(--accepted); }
 .hline .d { display: block; font-size: 11.5px; color: var(--graphite); }
 .link.small { font-size: 11px; color: var(--select); text-decoration: underline; text-underline-offset: 2px; }
+.pv { position: fixed; top: 4vh; left: 50%; transform: translateX(-50%); width: min(900px, 94vw); max-height: 92vh; display: flex; flex-direction: column; background: var(--paper-2); border: 1px solid var(--rule-strong); border-radius: var(--r-md); box-shadow: 0 24px 60px -20px rgba(0,0,0,.4); z-index: 30; }
+.pv-head { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--rule); }
+.pv-head h2 { font-family: var(--serif); font-weight: 400; font-size: 20px; margin: 2px 0 0; }
+.pv-head .dclose { margin-left: auto; font-size: 16px; color: var(--graphite); }
+.pv-body { overflow: auto; padding: 8px 18px; }
+.pv-manifest { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0; }
+.pv-body .note-sec textarea { width: 100%; field-sizing: content; resize: vertical; font-family: var(--serif); font-size: 14px; line-height: 1.55; border: 1px dashed var(--pending); background: var(--pending-wash); border-radius: var(--r-sm); padding: 8px 10px; }
+.pv-foot { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--rule); }
+.pv-foot .spacer { flex: 1; }
+.scrim { position: fixed; inset: 0; background: rgba(35,38,47,.35); z-index: 29; }

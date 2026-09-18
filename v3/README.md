@@ -32,6 +32,12 @@ the reasoning and the projections are there to think with, and none of them is o
 `POST /v3/api/patients/{pid}/visit/sign` does all of it. The visit's working state (where the transcript is, the
 answers given, the clinician's words) survives navigating to Problems and back within the session.
 
+**Review the note** shows the same note first. `POST /v3/api/patients/{pid}/visit/preview` runs the signature on a
+copy of the chart and the queue — the same decisions, the same compile — and returns the document and the manifest
+without writing anything. The dictated sections are shown as dictated; the compiled sections are editable there,
+and an edit travels with the signature as `sections`, so what the provider reads is what gets signed. Signing is
+available from the panel, so reading the note first costs one extra click and no second pass.
+
 API: `GET /v3/api/patients/{pid}/visit` returns the utterances with character offsets and every proposal of the
 visit's note positioned in the transcript (`v3/api.py`). All actions reuse the v1 review endpoints and the v2
 note endpoints; no new model call is made.

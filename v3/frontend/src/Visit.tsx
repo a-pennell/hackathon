@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api";
 import type { Ctx } from "./App";
-import type { Proposal, VisitData } from "./v2types";
+import type { ManifestGroup, NoteDoc, Proposal, VisitData } from "./v2types";
 import Problem from "./Problem";
 
 const PACE_MS = 2200;
@@ -24,11 +24,19 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
   const [reasons, setReasons] = useState<Record<string, string>>(saved?.reasons ?? {});
   const [authored, setAuthored] = useState(saved?.authored ?? "");
   const [signed, setSigned] = useState<{ attested: number } | null>(null);
+  const [preview, setPreview] = useState<{ document: NoteDoc; manifest: ManifestGroup[] } | null>(null);
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const sectionsBody = () => Object.entries(edits).map(([heading, text]) => ({ heading, text }));
+  const openPreview = () => run("preview", async () => { setPreview(await api.previewVisit(pid, { decisions, reasons, authored, sections: sectionsBody() })); });
   useEffect(() => { if (saved) { if (typeof saved.cursor === "number") setCursor(saved.cursor); if (saved.selected) setSelected(saved.selected); } }, []);  // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { try { sessionStorage.setItem(KEY, JSON.stringify({ cursor, decisions, reasons, authored, selected })); } catch { /* per-viewer convenience only */ } }, [KEY, cursor, decisions, reasons, authored, selected]);
   const [tick, setTick] = useState(0);
   const timer = useRef<number | null>(null);
-  const load = useCallback(() => api.visit(pid).then(setV).catch(() => setV(null)), [pid]);
+  const load = useCallback(() => api.visit(pid).then((d) => {
+    setV(d);
+    // A remembered transcript position outlives a chart reset; without the reading it is stale.
+    if (!d.note.read && d.proposals.length === 0) { setCursor(-1); setPlaying(false); setDecisions({}); setReasons({}); }
+  }).catch(() => setV(null)), [pid]);
   useEffect(() => { load(); }, [load, refreshKey]);
 
   const n = v?.utterances.length ?? 0;
@@ -64,7 +72,8 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
     setRejecting(null); setReason("");
   };
   const sign = () => v && run("sign", async () => {
-    const r = await api.signVisit(pid, { decisions, reasons, authored });
+    const r = await api.signVisit(pid, { decisions, reasons, authored, sections: sectionsBody() });
+    setPreview(null);
     setSigned({ attested: r.attested }); try { sessionStorage.removeItem(KEY); } catch { /* ignore */ } await load(); setTick((t) => t + 1);
   }, "Signed. The dictation's findings are on the record; the visit note attests them.");
 
@@ -147,6 +156,7 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
               <div className="big">{inferred.length}<small> added by the reading</small></div>
               <p className="muted">{inferred.length === 0 ? "Nothing the passage does not say." : unanswered.length ? `${unanswered.length} without an answer: left out of the note unless you say yes.` : "All answered."}</p>
               <textarea className="own" value={authored} rows={3} placeholder="Your own words, if any. The rest is compiled from what was said and decided." onChange={(e) => setAuthored(e.target.value)} aria-label="Your own words" />
+              <button className="btn" disabled={!!busy || cursor < 0} title="the visit note exactly as the signature would produce it, to read and edit before signing" onClick={openPreview}>Review the note</button>
               <button className="btn primary" disabled={!!busy || cursor < 0} title="accepts everything the dictation stated, takes what you said yes to, and signs the visit note" onClick={sign}>Sign the visit note</button>
               {!done && cursor >= 0 && <div className="muted">Signing before the end takes what has been heard so far; the rest is still in the dictation.</div>}
               <div className="muted">{v.unattested > 0 ? `${v.unattested} to attest from earlier.` : ""}</div>
@@ -154,6 +164,33 @@ export default function Visit({ pid, listing, busy, run, go, refreshKey }: Ctx) 
           )}
         </aside>
       </div>
+      {preview && (
+        <>
+          <div className="scrim" onClick={() => setPreview(null)} />
+          <div className="pv" role="dialog" aria-modal="true" aria-labelledby="pv-title">
+            <div className="pv-head">
+              <div><span className="eyebrow">Review before signing · nothing is on the chart yet</span><h2 id="pv-title">{preview.document.title}</h2></div>
+              <button className="dclose" aria-label="Close" onClick={() => setPreview(null)}>✕</button>
+            </div>
+            <div className="pv-body">
+              <div className="pv-manifest">{preview.manifest.map((g) => <span key={g.kind} className="pill">{g.count} {g.label}</span>)}</div>
+              {preview.document.sections.map((sec) => (
+                <section key={sec.heading} className={`note-sec ${sec.source ?? "compiled"}`}>
+                  <h2>{sec.heading} {sec.source !== "transcript" && <span className="pill">{sec.source === "authored" ? "your words" : edits[sec.heading] != null ? "compiled · edited" : "compiled from the record"}</span>}</h2>
+                  {sec.source === "transcript" || sec.source === "authored" ? <p className="ro">{sec.text}</p>
+                    : <textarea value={edits[sec.heading] ?? sec.text} rows={Math.max(2, Math.ceil((edits[sec.heading] ?? sec.text).length / 70))} onChange={(e) => setEdits((x) => ({ ...x, [sec.heading]: e.target.value }))} aria-label={sec.heading} />}
+                </section>
+              ))}
+              <p className="muted">Compiled sections can be edited here; edits are kept and travel with the signature.</p>
+            </div>
+            <div className="pv-foot">
+              <button className="btn ghost" onClick={() => setPreview(null)}>Back to the visit</button>
+              <span className="spacer" />
+              <button className="btn primary" disabled={!!busy} onClick={sign}>Sign the visit note</button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { QueueBatch, Timeline } from "./types";
-import type { Listing, NoteView, ProblemView, VisitData } from "./v2types";
+import type { Listing, ManifestGroup, NoteDoc, NoteView, ProblemView, VisitData } from "./v2types";
 
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, { headers: { "Content-Type": "application/json" }, ...init });
@@ -21,7 +21,8 @@ export const api = {
   patients: () => req<{ id: string; name: string }[]>("/api/patients"),
   problems: (pid: string) => req<Listing>(`/v2/api/patients/${pid}/problems${q()}`),
   visit: (pid: string) => req<VisitData>(`/v3/api/patients/${pid}/visit${q()}`),
-  signVisit: (pid: string, body: { decisions: Record<string, string>; reasons: Record<string, string>; authored: string }) => req<{ document_id: string; attested: number }>(`/v3/api/patients/${pid}/visit/sign${q()}`, post(body)),
+  signVisit: (pid: string, body: { decisions: Record<string, string>; reasons: Record<string, string>; authored: string; sections?: { heading: string; text: string }[] }) => req<{ document_id: string; attested: number }>(`/v3/api/patients/${pid}/visit/sign${q()}`, post(body)),
+  previewVisit: (pid: string, body: { decisions: Record<string, string>; reasons: Record<string, string>; authored: string; sections?: { heading: string; text: string }[] }) => req<{ document: NoteDoc; manifest: ManifestGroup[] }>(`/v3/api/patients/${pid}/visit/preview${q()}`, post(body)),
   problem: (pid: string, prob: string) => req<ProblemView>(`/v2/api/patients/${pid}/problems/${prob}${q()}`),
   trajectory: (pid: string, prob: string) => req<Timeline>(`/api/patients/${pid}/problems/${prob}/timeline?window=9m${q(false)}`),
   advance: (pid: string) => req<{ as_of: string; label: string }>(`/v2/api/patients/${pid}/advance`, post()),
