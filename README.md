@@ -60,6 +60,24 @@ note on screen and the note that gets signed can be proved identical (`tests/tes
 **The demo makes no model calls.** Both model-backed buttons post `mode: "replay"` and read a recorded response from
 `data/proposed/<pt>/*.raw.json`, so it runs offline and identically every time.
 
+### What this table is, and is not
+
+It describes **the code in this repo as built**, which is the path the demo runs. It is not a description of how this
+would run in a hospital. Two differences are already live, and both are noted above: the demo replays recorded model
+responses rather than calling the model, and `provenance.asserted` exists in the extractor but is absent from every
+recording, so the reader falls back to its rule.
+
+What a production system would need, **none of which is in this repo**:
+
+| | Today | In real life |
+|---|---|---|
+| The dictation | a hand-written note file, played back sentence by sentence | speech recognition, or a feed from an ambient scribe, with no canonical text to anchor quotes to |
+| Model calls | replayed from `*.raw.json`, instant and free | two live calls per note: latency a clinician waits through, and a cost per visit |
+| The patient record | JSON files, imported once from a Synthea FHIR bundle | reading and writing a live EHR, which is most of the engineering |
+| Codes | a small allowed table of LOINC / SNOMED / RxNorm values | a terminology service, and mapping that has to be right |
+| The rule set | a hand-written set for hypertension, diabetes and kidney disease, each citing a guideline | a governed, versioned, clinically owned rule base |
+| Data | synthetic patients, no PHI | note text leaving for a model provider: data agreements, a security review, and a regulatory opinion |
+
 **Where ML would come in later**, none of it built: speech recognition ahead of the dictation, mapping findings to
 SNOMED / LOINC / RxNorm, and projections fitted to the patient rather than published averages.
 
