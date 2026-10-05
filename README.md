@@ -31,6 +31,38 @@ human accepts it.
 
 Stdlib-only except `anthropic` (needed only for live extraction / reasoning). Python 3.11+.
 
+## What runs on what
+
+One job uses a large language model. Everything else is ordinary Python. There is no other machine learning in the
+repo: nothing is trained or fitted, and no ML library is imported anywhere.
+
+| What | Where | Runs on |
+|---|---|---|
+| Reading a note into proposed findings, problems, causes and plan items, each quoting its passage, and answering whether that passage asserted the claim (§7.1) | `ehr/extract.py` | **LLM** · two calls per note |
+| Explaining what changed on a problem ("Ask what changed") | `ehr/reason.py` | **LLM** · one call |
+| Pre-visit brief, referral letter, drafting orders — v1 only, not in the v3 demo | `ehr/brief.py` (also has a no-model version), `ehr/compose.py`, `ehr/orders.py` | **LLM** |
+| The one place any of them talks to the API | `ehr/llm.py` | **LLM** · `claude-opus-5`, structured output |
+| Validating what the model returned: every quote verbatim in the note, codes from the allowed table, every ref resolving; failures rejected with a reason | `ehr/extract.py` validator | Python |
+| Stated or inferred, and the denial veto over the model's own answer | `v3/api.py::_origin` | Python |
+| Whether a problem is on course, and what changed | `v2/monitor.py`, `ehr/card.py`, `ehr/overview.py` | Python |
+| Trends: deltas, slopes, direction. Computed on demand, never stored | `ehr/trend.py` | Python · arithmetic |
+| Best practice, each rule naming its guideline | `v2/guidelines.py` | Python |
+| Projections from published average effects, as ranges | `v2/simulate.py` | Python · arithmetic |
+| Expected moves and their thresholds, taken from the patient's own baseline | `ehr/expect.py` | Python |
+| Compiling the visit note, and what the chart waits for afterwards | `ehr/draft.py`, `v3/api.py::commitments` | Python |
+| Importing a Synthea FHIR bundle into our model, once | `scripts/import_patient.py` | Python · stdlib only |
+| The screens | `frontend/`, `v2/frontend/`, `v3/frontend/` | TypeScript · React |
+| Storage | `data/patients/*.json` | JSON files · no database |
+
+**The note is not written by the model.** `ehr/draft.py` assembles it from what the clinician accepted, which is why the
+note on screen and the note that gets signed can be proved identical (`tests/test_v3.py`).
+
+**The demo makes no model calls.** Both model-backed buttons post `mode: "replay"` and read a recorded response from
+`data/proposed/<pt>/*.raw.json`, so it runs offline and identically every time.
+
+**Where ML would come in later**, none of it built: speech recognition ahead of the dictation, mapping findings to
+SNOMED / LOINC / RxNorm, and projections fitted to the patient rather than published averages.
+
 ## Run the app
 
 ```bash

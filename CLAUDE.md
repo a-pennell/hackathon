@@ -45,6 +45,8 @@ frontend, run `npm install` in `frontend/` once first (v2/v3 `node_modules` are 
 `npm run build` in that front's directory. Index documents are served `no-store`; if a URL shows the
 wrong app, the browser is holding a pre-fix copy and one reload clears it.
 
+Which parts use the model and which are ordinary Python is a table in `README.md` ("What runs on what"): one job
+(reading a note) is the LLM, everything else is rules and arithmetic, and there is no other machine learning.
 Model calls are recorded — the demo runs offline from `data/proposed/**/*.raw.json`. A live call needs
 `ANTHROPIC_API_KEY` exported in the user's own terminal, never pasted into chat or read by Claude.
 Extraction reads a note in two passes (what it is about, then what is done about it) because one schema
